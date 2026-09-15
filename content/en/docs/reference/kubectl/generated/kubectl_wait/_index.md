@@ -3,6 +3,8 @@ title: kubectl wait
 content_type: tool-reference
 weight: 30
 auto_generated: true
+description: >-
+  Wait for a specific condition on one or many resources
 no_list: true
 ---
 
@@ -22,16 +24,16 @@ guide. You can file document formatting bugs against the
 ## {{% heading "synopsis" %}}
 
 
-Experimental: Wait for a specific condition on one or many resources.
+Wait for a specific condition on one or many resources.
 
  The command takes multiple resources and waits until the specified condition is seen in the Status field of every given resource.
 
- Alternatively, the command can wait for the given set of resources to be deleted by providing the "delete" keyword as the value to the --for flag.
+ Alternatively, the command can wait for the given set of resources to be created or deleted by providing the "create" or "delete" keyword as the value to the --for flag.
 
  A successful message will be printed to stdout indicating when the specified condition has been met. You can use -o option to change to output destination.
 
 ```
-kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'[=value]]
+kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=create|--for=delete|--for condition=available|--for=jsonpath='{}'[=value]]
 ```
 
 ## {{% heading "examples" %}}
@@ -49,12 +51,24 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
   # Wait for pod "busybox1" to be Ready
   kubectl wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].status}=True' pod/busybox1
   
-  # Wait for the service "loadbalancer" to have ingress.
+  # Wait for the service "loadbalancer" to have ingress
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' service/loadbalancer
+  
+  # Wait for the secret "busybox1" to be created, with a timeout of 30s
+  kubectl create secret generic busybox1
+  kubectl wait --for=create secret/busybox1 --timeout=30s
   
   # Wait for the pod "busybox1" to be deleted, with a timeout of 60s, after having issued the "delete" command
   kubectl delete pod/busybox1
   kubectl wait --for=delete pod/busybox1 --timeout=60s
+  
+  # Wait for pod "busybox1" to be created AND reach the "Ready" status condition
+  kubectl wait --for=condition=Ready --for=create pod/busybox1
+  
+  # Wait for pod "busybox1" to reach the "Ready" status OR for its containers to report a "False" readiness state
+  until kubectl wait pod/busybox1 --for=condition=Ready --timeout=1s 2>/dev/null || \
+  kubectl wait pod/busybox1 --for=condition=ContainersReady=False --timeout=1s 2>/dev/null; \
+  do echo "Checking conditions..."; sleep 1; done
 ```
 
 ## {{% heading "options" %}}
@@ -102,10 +116,10 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 </tr>
 
 <tr>
-<td colspan="2">--for string</td>
+<td colspan="2">--for strings</td>
 </tr>
 <tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>The condition to wait on: [delete|condition=condition-name[=condition-value]|jsonpath='{JSONPath expression}'=[JSONPath value]]. The default condition-value is true.  Condition values are compared after Unicode simple case folding, which is a more general form of case-insensitivity.</p></td>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>The condition to wait on: [create|delete|condition=condition-name[=condition-value]|jsonpath='{JSONPath expression}'=[JSONPath value]]. The default condition-value is true. Condition values are compared after Unicode simple case folding, which is a more general form of case-insensitivity. Multiple conditions are supported and AND'ed to each other in a sequential order. If --for=create is passed, it is always waited first.</p></td>
 </tr>
 
 <tr>
@@ -126,7 +140,7 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 <td colspan="2">-o, --output string</td>
 </tr>
 <tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).</p></td>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).</p></td>
 </tr>
 
 <tr>
@@ -161,7 +175,7 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 <td colspan="2">--timeout duration&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 30s</td>
 </tr>
 <tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>The length of time to wait before giving up.  Zero means check once and don't wait, negative means wait for a week.</p></td>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>The length of time to wait before giving up. Zero means check once and don't wait, negative means wait for a week.</p></td>
 </tr>
 
 </tbody>
@@ -200,6 +214,13 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 </tr>
 
 <tr>
+<td colspan="2">--as-user-extra strings</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>User extras to impersonate for the operation, this flag can be repeated to specify multiple values for the same key.</p></td>
+</tr>
+
+<tr>
 <td colspan="2">--cache-dir string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: "$HOME/.kube/cache"</td>
 </tr>
 <tr>
@@ -228,20 +249,6 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 </tr>
 
 <tr>
-<td colspan="2">--cloud-provider-gce-l7lb-src-cidrs cidrs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 130.211.0.0/22,35.191.0.0/16</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>CIDRs opened in GCE firewall for L7 LB traffic proxy &amp; health checks</p></td>
-</tr>
-
-<tr>
-<td colspan="2">--cloud-provider-gce-lb-src-cidrs cidrs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 130.211.0.0/22,209.85.152.0/22,209.85.204.0/22,35.191.0.0/16</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>CIDRs opened in GCE firewall for L4 LB traffic proxy &amp; health checks</p></td>
-</tr>
-
-<tr>
 <td colspan="2">--cluster string</td>
 </tr>
 <tr>
@@ -253,20 +260,6 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 </tr>
 <tr>
 <td></td><td style="line-height: 130%; word-wrap: break-word;"><p>The name of the kubeconfig context to use</p></td>
-</tr>
-
-<tr>
-<td colspan="2">--default-not-ready-toleration-seconds int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 300</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Indicates the tolerationSeconds of the toleration for notReady:NoExecute that is added by default to every pod that does not already have such a toleration.</p></td>
-</tr>
-
-<tr>
-<td colspan="2">--default-unreachable-toleration-seconds int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 300</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Indicates the tolerationSeconds of the toleration for unreachable:NoExecute that is added by default to every pod that does not already have such a toleration.</p></td>
 </tr>
 
 <tr>
@@ -288,6 +281,13 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 </tr>
 <tr>
 <td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Path to the kubeconfig file to use for CLI requests.</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--kuberc string</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Path to the kuberc file to use for preferences. This can be disabled by exporting KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.</p></td>
 </tr>
 
 <tr>
@@ -315,7 +315,7 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 <td colspan="2">--profile string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: "none"</td>
 </tr>
 <tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)</p></td>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)</p></td>
 </tr>
 
 <tr>
@@ -323,6 +323,13 @@ kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l
 </tr>
 <tr>
 <td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Name of the file to write the profile to</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--proxy-url string</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Proxy URL to use for requests to the API server</p></td>
 </tr>
 
 <tr>

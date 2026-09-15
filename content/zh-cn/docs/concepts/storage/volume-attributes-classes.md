@@ -14,7 +14,7 @@ weight: 40
 
 <!-- overview -->
 
-{{< feature-state for_k8s_version="v1.29" state="alpha" >}}
+{{< feature-state feature_gate_name="VolumeAttributesClass" >}}
 
 <!--
 This page assumes that you are familiar with [StorageClasses](/docs/concepts/storage/storage-classes/),
@@ -30,25 +30,14 @@ in Kubernetes.
 <!--
 A VolumeAttributesClass provides a way for administrators to describe the mutable
 "classes" of storage they offer. Different classes might map to different quality-of-service levels.
-Kubernetes itself is unopinionated about what these classes represent.
+Kubernetes itself is un-opinionated about what these classes represent.
 
-This is an alpha feature and disabled by default.
-
-If you want to test the feature whilst it's alpha, you need to enable the `VolumeAttributesClass`
-[feature gate](/docs/reference/command-line-tools-reference/feature-gates/) for the kube-controller-manager and the kube-apiserver. You use the `--feature-gates` command line argument:
+This feature is generally available (GA) as of version 1.34, and users have the option to disable it.
 -->
 卷属性类（VolumeAttributesClass）为管理员提供了一种描述可变更的存储“类”的方法。
 不同的类可以映射到不同的服务质量级别。Kubernetes 本身不关注这些类代表什么。
 
-这是一个 Alpha 特性，默认被禁用。
-
-如果你想测试这一处于 Alpha 阶段的特性，你需要为 kube-controller-manager 和 kube-apiserver 启用
-`VolumeAttributesClass` [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)。
-你可以使用 `--feature-gates` 命令行参数：
-
-```
---feature-gates="...,VolumeAttributesClass=true"
-```
+此特性从 Kubernetes 1.34 版本开始一般可用（GA），用户可以选择禁用它。
 
 <!--
 You can also only use VolumeAttributesClasses with storage backed by
@@ -80,7 +69,7 @@ VolumeAttributesClass 对象的名称比较重要，用户用对象名称来请�
 但现有类中的参数是不可变的。
 
 ```yaml
-apiVersion: storage.k8s.io/v1alpha1
+apiVersion: storage.k8s.io/v1
 kind: VolumeAttributesClass
 metadata:
   name: silver
@@ -90,13 +79,14 @@ parameters:
   provisioned-throughput: "50" 
 ```
 
-
 <!--
 ### Provisioner
 
-Each VolumeAttributesClass has a provisioner that determines what volume plugin is used for provisioning PVs. The field `driverName` must be specified. 
+Each VolumeAttributesClass has a provisioner that determines what volume plugin is used for
+provisioning PVs. The field `driverName` must be specified. 
 
-The feature support for VolumeAttributesClass is implemented in [kubernetes-csi/external-provisioner](https://github.com/kubernetes-csi/external-provisioner).
+The feature support for VolumeAttributesClass is implemented in
+[kubernetes-csi/external-provisioner](https://github.com/kubernetes-csi/external-provisioner).
 -->
 ### 存储制备器   {#provisioner}
 
@@ -107,7 +97,8 @@ The feature support for VolumeAttributesClass is implemented in [kubernetes-csi/
 [kubernetes-csi/external-provisioner](https://github.com/kubernetes-csi/external-provisioner) 中实现。
 
 <!--
-You are not restricted to specifying the [kubernetes-csi/external-provisioner](https://github.com/kubernetes-csi/external-provisioner). You can also run and specify external provisioners,
+You are not restricted to specifying the [kubernetes-csi/external-provisioner](https://github.com/kubernetes-csi/external-provisioner).
+You can also run and specify external provisioners,
 which are independent programs that follow a specification defined by Kubernetes.
 Authors of external provisioners have full discretion over where their code lives, how
 the provisioner is shipped, how it needs to be run, what volume plugin it uses, etc.
@@ -117,13 +108,22 @@ the provisioner is shipped, how it needs to be run, what volume plugin it uses, 
 外部制备器的作者可以完全自行决定他们的代码放在哪儿、如何交付制备器、以何种方式运行、使用什么卷插件等。
 
 <!--
+To understand how the provisioner works with VolumeAttributesClass, refer to 
+the [CSI external-provisioner documentation](https://kubernetes-csi.github.io/docs/external-provisioner.html).
+-->
+要了解制备组件如何使用 VolumeAttributesClass，请参阅 
+[CSI 外部制备器文档](https://kubernetes-csi.github.io/docs/external-provisioner.html)。
+
+<!--
 ### Resizer
 
-Each VolumeAttributesClass has a resizer that determines what volume plugin is used for modifying PVs. The field `driverName` must be specified. 
+Each VolumeAttributesClass has a resizer that determines what volume plugin is used
+for modifying PVs. The field `driverName` must be specified. 
 
-The modifying volume feature support for VolumeAttributesClass is implemented in [kubernetes-csi/external-resizer](https://github.com/kubernetes-csi/external-resizer).
+The modifying volume feature support for VolumeAttributesClass is implemented in
+[kubernetes-csi/external-resizer](https://github.com/kubernetes-csi/external-resizer).
 
-For example, a existing PersistentVolumeClaim is using a VolumeAttributesClass named silver:
+For example, an existing PersistentVolumeClaim is using a VolumeAttributesClass named silver:
 -->
 ### 调整器   {#resizer}
 
@@ -152,7 +152,7 @@ A new VolumeAttributesClass gold is available in the cluster:
 集群中有一个新的名为 gold 的 VolumeAttributesClass：
 
 ```yaml
-apiVersion: storage.k8s.io/v1alpha1
+apiVersion: storage.k8s.io/v1
 kind: VolumeAttributesClass
 metadata:
   name: gold
@@ -179,14 +179,21 @@ spec:
 ```
 
 <!--
+To understand how the resizer works with VolumeAttributesClass, refer to 
+the [CSI external-resizer documentation](https://kubernetes-csi.github.io/docs/external-resizer.html).
+-->
+要了解扩缩容组件如何使用 VolumeAttributesClass，请参阅 
+[CSI 外部扩缩容组件文档](https://kubernetes-csi.github.io/docs/external-resizer.html)。
+
+<!--
 ## Parameters
 
 VolumeAttributeClasses have parameters that describe volumes belonging to them. Different parameters may be accepted
 depending on the provisioner or the resizer. For example, the value `4000`, for the parameter `iops`,
-and the parameter `throughput` are specific to GCE PD. 
+and the parameter `throughput` are specific to GCE PD.
 When a parameter is omitted, the default is used at volume provisioning.
-If a user apply the PVC with a different VolumeAttributesClass with omitted parameters, the default value of
-the parameters may be used depends on the CSI driver implementation.
+If a user applies the PVC with a different VolumeAttributesClass with omitted parameters, the default value of
+the parameters may be used depending on the CSI driver implementation.
 Please refer to the related CSI driver documentation for more details.
 -->
 ## 参数   {#parameters}

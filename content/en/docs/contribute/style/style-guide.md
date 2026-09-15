@@ -3,6 +3,7 @@ title: Documentation Style Guide
 linktitle: Style guide
 content_type: concept
 weight: 40
+math: true
 ---
 
 <!-- overview -->
@@ -19,13 +20,13 @@ SIG Docs meeting, and attend the meeting to participate in the discussion.
 
 <!-- body -->
 
-{{< note >}}
+{{< alert color="info" title="Note" >}}
 Kubernetes documentation uses
 [Goldmark Markdown Renderer](https://github.com/yuin/goldmark)
 with some adjustments along with a few
 [Hugo Shortcodes](/docs/contribute/style/hugo-shortcodes/) to support
 glossary entries, tabs, and representing feature state.
-{{< /note >}}
+{{< /alert >}}
 
 ## Language
 
@@ -114,6 +115,14 @@ events are recorded with an associated "stage". | events are recorded with an as
 The copy is called a "fork". | The copy is called a "fork."
 {{< /table >}}
 
+### Use start case for enhancement graduation phases
+
+{{< table caption = "Do and Don't - Use start case for enhancement graduation phases" >}}
+Do | Don't
+:--| :-----
+Dynamic Resource Allocation (DRA) is Beta. | Dynamic Resource Allocation (DRA) is beta.
+{{< /table >}}
+
 ## Inline code formatting
 
 ### Use code style for inline code, commands {#code-style-inline-code}
@@ -138,11 +147,11 @@ Use meaningful variable names that have a context. | Use variable names such as 
 Remove trailing spaces in the code. | Add trailing spaces in the code, where these are important, because the screen reader will read out the spaces as well.
 {{< /table >}}
 
-{{< note >}}
+{{< alert color="info" title="Note" >}}
 The website supports syntax highlighting for code samples, but specifying a language
 is optional. Syntax highlighting in the code block should conform to the
 [contrast guidelines.](https://www.w3.org/WAI/WCAG21/quickref/?versions=2.0&showtechniques=141%2C143#contrast-minimum)
-{{< /note >}}
+{{< /alert >}}
 
 ### Use code style for object field names and namespaces
 
@@ -317,6 +326,18 @@ kind: Pod
 ...
 ```
 
+## Formulae and equations
+
+You can use the Docsy support for [diagrams and formulae](https://www.docsy.dev/docs/adding-content/diagrams-and-formulae/#latex-support-with-katex).
+
+For example: `\\(\frac{7}{9} \sqrt{K^8 s}\\)`, which renders as \\(\frac{7}{9} \sqrt{K^8 s}\\).
+
+Prefer inline formulae where reasonable, but you can use a `math` block if that's likely to help readers.
+
+Read the Docsy guide to find out what you need to change in your page to activate support;
+if you have problems, add `math: true` to the page [front matter](https://gohugo.io/content-management/front-matter/)
+(you can do this even if you think the automatic activation should be enough).
+
 ## Kubernetes.io word list
 
 A list of Kubernetes-specific terms and words to be used consistently across the site.
@@ -335,54 +356,59 @@ open source | Open source or open source as appropriate for sentence structure r
 ## Shortcodes
 
 Hugo [Shortcodes](https://gohugo.io/content-management/shortcodes) help create
-different rhetorical appeal levels. Our documentation supports three different
-shortcodes in this category: **Note** `{{</* note */>}}`,
-**Caution** `{{</* caution */>}}`, and **Warning** `{{</* warning */>}}`.
+different rhetorical appeal levels. Our documentation supports three variants of
+the Docsy [`alert`](https://www.docsy.dev/docs/adding-content/shortcodes/#alert)
+shortcode in this category: **Note**, **Caution**, and **Warning**.
 
-1. Surround the text with an opening and closing shortcode.
+1. Surround the text with an opening and closing `alert` shortcode, choosing the
+   `color` and `title` attributes for the variant you need.
 
 2. Use the following syntax to apply a style:
 
    ```none
-   {{</* note */>}}
-   No need to include a prefix; the shortcode automatically provides one. (Note:, Caution:, etc.)
-   {{</* /note */>}}
+   {{</* alert color="info" title="Note" */>}}
+   The shortcode renders the title as a heading, so do not repeat it inside the body.
+   {{</* /alert */>}}
    ```
 
    The output is:
 
-   {{< note >}}
-   The prefix you choose is the same text for the tag.
-   {{< /note >}}
+   {{< alert color="info" title="Note" >}}
+   The shortcode renders the title as a heading, so do not repeat it inside the body.
+   {{< /alert >}}
+
+Many existing pages still use the legacy `{{</* note */>}}`, `{{</* caution */>}}`,
+and `{{</* warning */>}}` shortcodes. These still work — prefer the `alert`
+shortcode for new content and when editing existing pages.
 
 ### Note
 
-Use `{{</* note */>}}` to highlight a tip or a piece of information that may be helpful to know.
+Use `{{</* alert color="info" title="Note" */>}}` to highlight a tip or a piece of information that may be helpful to know.
 
 For example:
 
 ```
-{{</* note */>}}
+{{</* alert color="info" title="Note" */>}}
 You can _still_ use Markdown inside these callouts.
-{{</* /note */>}}
+{{</* /alert */>}}
 ```
 
 The output is:
 
-{{< note >}}
+{{< alert color="info" title="Note" >}}
 You can _still_ use Markdown inside these callouts.
-{{< /note >}}
+{{< /alert >}}
 
-You can use a `{{</* note */>}}` in a list:
+You can use an `alert` shortcode in a list:
 
 ```
-1. Use the note shortcode in a list
+1. Use the alert shortcode in a list
 
 1. A second item with an embedded note
 
-   {{</* note */>}}
+   {{</* alert color="info" title="Note" */>}}
    Warning, Caution, and Note shortcodes, embedded in lists, need to be indented four spaces. See [Common Shortcode Issues](#common-shortcode-issues).
-   {{</* /note */>}}
+   {{</* /alert */>}}
 
 1. A third item in a list
 
@@ -391,13 +417,13 @@ You can use a `{{</* note */>}}` in a list:
 
 The output is:
 
-1. Use the note shortcode in a list
+1. Use the alert shortcode in a list
 
 1. A second item with an embedded note
 
-    {{< note >}}
+    {{< alert color="info" title="Note" >}}
     Warning, Caution, and Note shortcodes, embedded in lists, need to be indented four spaces. See [Common Shortcode Issues](#common-shortcode-issues).
-    {{< /note >}}
+    {{< /alert >}}
 
 1. A third item in a list
 
@@ -405,39 +431,39 @@ The output is:
 
 ### Caution
 
-Use `{{</* caution */>}}` to call attention to an important piece of information to avoid pitfalls.
+Use `{{</* alert color="caution" title="Caution" */>}}` to call attention to an important piece of information to avoid pitfalls.
 
 For example:
 
 ```
-{{</* caution */>}}
+{{</* alert color="caution" title="Caution" */>}}
 The callout style only applies to the line directly above the tag.
-{{</* /caution */>}}
+{{</* /alert */>}}
 ```
 
 The output is:
 
-{{< caution >}}
+{{< alert color="caution" title="Caution" >}}
 The callout style only applies to the line directly above the tag.
-{{< /caution >}}
+{{< /alert >}}
 
 ### Warning
 
-Use `{{</* warning */>}}` to indicate danger or a piece of information that is crucial to follow.
+Use `{{</* alert color="danger" title="Warning" */>}}` to indicate danger or a piece of information that is crucial to follow.
 
 For example:
 
 ```
-{{</* warning */>}}
+{{</* alert color="danger" title="Warning" */>}}
 Beware.
-{{</* /warning */>}}
+{{</* /alert */>}}
 ```
 
 The output is:
 
-{{< warning >}}
+{{< alert color="danger" title="Warning" >}}
 Beware.
-{{< /warning >}}
+{{< /alert >}}
 
 ## Common Shortcode Issues
 
@@ -450,7 +476,7 @@ For example:
     1. Preheat oven to 350˚F
 
     1. Prepare the batter, and pour into springform pan.
-       {{</* note */>}}Grease the pan for best results.{{</* /note */>}}
+       {{</* alert color="info" title="Note" */>}}Grease the pan for best results.{{</* /alert */>}}
 
     1. Bake for 20-25 minutes or until set.
 
@@ -460,7 +486,7 @@ The output is:
 
 1. Prepare the batter, and pour into springform pan.
 
-   {{< note >}}Grease the pan for best results.{{< /note >}}
+   {{< alert color="info" title="Note" >}}Grease the pan for best results.{{< /alert >}}
 
 1. Bake for 20-25 minutes or until set.
 
@@ -470,9 +496,9 @@ Shortcodes inside include statements will break the build. You must insert them
 in the parent document, before and after you call the include. For example:
 
 ```
-{{</* note */>}}
+{{</* alert color="info" title="Note" */>}}
 {{</* include "task-tutorial-prereqs.md" */>}}
-{{</* /note */>}}
+{{</* /alert */>}}
 ```
 
 ## Markdown elements
@@ -510,6 +536,8 @@ Use ordered headings to provide a meaningful high-level outline of your content.
 Use pound or hash signs (`#`) for non-blog post content. | Use underlines (`---` or `===`) to designate first-level headings.
 Use sentence case for headings in the page body. For example, **Extend kubectl with plugins** | Use title case for headings in the page body. For example, **Extend Kubectl With Plugins**
 Use title case for the page title in the front matter. For example, `title: Kubernetes API Server Bypass Risks` | Use sentence case for page titles in the front matter. For example, don't use `title: Kubernetes API server bypass risks`
+Place relevant links in the body copy. | Include hyperlinks (`<a href=""></a>`) in headings.
+Use pound or hash signs (`#`) to indicate headings. | Use **bold** text or other indicators to split paragraphs.
 {{< /table >}}
 
 ### Paragraphs
@@ -542,10 +570,10 @@ marked up as list items; after all they are nothing but a group of related links
 - End each item in a list with a period if one or more items in the list are complete
   sentences. For the sake of consistency, normally either all items or none should be complete sentences.
 
-  {{< note >}}
+  {{< alert color="info" title="Note" >}}
   Ordered lists that are part of an incomplete introductory sentence can be in lowercase
   and punctuated as if each item was a part of the introductory sentence.
-  {{< /note >}}
+  {{< /alert >}}
 
 - Use the number one (`1.`) for ordered lists.
 

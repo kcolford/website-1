@@ -65,7 +65,7 @@ The cluster that `kubeadm init` and `kubeadm join` set up should be:
 - **User-friendly**: The user should not have to run anything more than a couple of commands:
   - `kubeadm init`
   - `export KUBECONFIG=/etc/kubernetes/admin.conf`
-  - `kubectl apply -f <network-of-choice.yaml>`
+  - `kubectl apply -f <network-plugin-of-choice.yaml>`
   - `kubeadm join --token <token> <endpoint>:<port>`
 - **Extendable**:
   - It should _not_ favor any particular network provider. Configuring the cluster network is out-of-scope
@@ -74,7 +74,7 @@ The cluster that `kubeadm init` and `kubeadm join` set up should be:
 - **用户友好**：用户只需要运行几个命令即可：
   - `kubeadm init`
   - `export KUBECONFIG=/etc/kubernetes/admin.conf`
-  - `kubectl apply -f <所选网络.yaml>`
+  - `kubectl apply -f <所选网络插件.yaml>`
   - `kubeadm join --token <令牌> <端点>:<端口>`
 - **可扩展的**：
   - **不**应偏向任何特定的网络提供商，不涉及配置集群网络
@@ -103,7 +103,8 @@ Kubernetes 目录 `/etc/kubernetes` 在应用程序中是一个常量，
 - `/etc/kubernetes/manifests` as the path where the kubelet should look for static Pod manifests.
   Names of static Pod manifests are:
 -->
-- `/etc/kubernetes/manifests` 作为 kubelet 查找静态 Pod 清单的路径。静态 Pod 清单的名称为：
+- `/etc/kubernetes/manifests` 作为 kubelet 查找静态 Pod 清单的路径。
+  静态 Pod 清单的名称为：
 
   - `etcd.yaml`
   - `kube-apiserver.yaml`
@@ -120,7 +121,9 @@ Kubernetes 目录 `/etc/kubernetes` 在应用程序中是一个常量，
   - `admin.conf` for the cluster admin and kubeadm itself
   - `super-admin.conf` for the cluster super-admin that can bypass RBAC
 -->
-- `/etc/kubernetes/` 作为带有控制平面组件身份标识的 kubeconfig 文件的路径。kubeconfig 文件的名称为：
+- `/etc/kubernetes/` 作为带有控制平面组件身份标识的 kubeconfig 文件的路径。
+  kubeconfig 文件的名称为：
+
   - `kubelet.conf`（在 TLS 引导时名称为 `bootstrap-kubelet.conf`）
   - `controller-manager.conf`
   - `scheduler.conf`
@@ -139,6 +142,7 @@ Kubernetes 目录 `/etc/kubernetes` 在应用程序中是一个常量，
   - `front-proxy-client.crt`, `front-proxy-client.key` for the front proxy client
 -->
 - 证书和密钥文件的名称：
+
   - `ca.crt`、`ca.key` 用于 Kubernetes 证书颁发机构
   - `apiserver.crt`、`apiserver.key` 用于 API 服务器证书
   - `apiserver-kubelet-client.crt`、`apiserver-kubelet-client.key`
@@ -146,6 +150,41 @@ Kubernetes 目录 `/etc/kubernetes` 在应用程序中是一个常量，
   - `sa.pub`、`sa.key` 用于控制器管理器签署 ServiceAccount 时使用的密钥
   - `front-proxy-ca.crt`、`front-proxy-ca.key` 用于前端代理证书颁发机构
   - `front-proxy-client.crt`、`front-proxy-client.key` 用于前端代理客户端
+
+<!--
+## The kubeadm configuration file format
+
+Most kubeadm commands support a `--config` flag which allows passing a configuration file from
+disk. The configuration file format follows the common Kubernetes API `apiVersion` / `kind` scheme,
+but is considered a component configuration format. Several Kubernetes components, such as the kubelet,
+also support file-based configuration.
+-->
+## kubeadm 配置文件格式
+
+大多数 kubeadm 命令支持 `--config` 标志，允许将磁盘上的配置文件传递给命令。
+配置文件格式遵循常见的 Kubernetes API `apiVersion` / `kind` 方案，
+但被视为组件配置格式。包括 kubelet 在内的几个 Kubernetes 组件也支持基于文件的配置。
+
+<!--
+Different kubeadm subcommands require a different `kind` of configuration file.
+For example, `InitConfiguration` for `kubeadm init`, `JoinConfiguration` for `kubeadm join`, `UpgradeConfiguration` for `kubeadm upgrade` and `ResetConfiguration`
+for `kubeadm reset`.
+-->
+不同的 kubeadm 子命令需要不同 `kind` 的配置文件。
+例如，`kubeadm init` 需要 `InitConfiguration`，`kubeadm join` 需要 `JoinConfiguration`，
+`kubeadm upgrade` 需要 `UpgradeConfiguration`，而 `kubeadm reset` 需要 `ResetConfiguration`。
+
+<!--
+The command `kubeadm config migrate` can be used to migrate an older format configuration
+file to a newer (current) configuration format. The kubeadm tool only supports migrating from
+deprecated configuration formats to the current format.
+
+See the [kubeadm configuration reference](/docs/reference/config-api/kubeadm-config.v1beta4/) page for more details.
+-->
+命令 `kubeadm config migrate` 可用于将旧格式的配置文件迁移到更新（当前）的配置格式。
+kubeadm 工具仅支持从已弃用的配置格式迁移到当前格式。
+
+更多详情，请参阅 [kubeadm 配置参考](/zh-cn/docs/reference/config-api/kubeadm-config.v1beta4/)页面。
 
 <!--
 ## kubeadm init workflow internal design
@@ -218,20 +257,20 @@ kubeadm 在启动 init 之前执行一组预检，目的是验证先决条件并
 - [Error] if API server bindPort or ports 10250/10251/10252 are used
 - [Error] if `/etc/kubernetes/manifest` folder already exists and it is not empty
 - [Error] if swap is on
-- [Error] if `conntrack`, `ip`, `iptables`, `mount`, `nsenter` commands are not present in the command path
+- [Error] if `ip`, `iptables`, `mount`, `nsenter` commands are not present in the command path
 -->
 - [错误] 如果 API 服务器绑定的端口或 10250/10251/10252 端口已被占用
 - [错误] 如果 `/etc/kubernetes/manifest` 文件夹已经存在并且不为空
 - [错误] 如果启用了交换分区
-- [错误] 如果命令路径中没有 `conntrack`、`ip`、`iptables`、`mount`、`nsenter` 命令
+- [错误] 如果命令路径中没有 `ip`、`iptables`、`mount`、`nsenter` 命令
 <!--
-- [Warning] if `ebtables`, `ethtool`, `socat`, `tc`, `touch`, `crictl` commands are not present in the command path
+- [Warning] if `ethtool`, `tc`, `touch` commands are not present in the command path
 - [Warning] if extra arg flags for API server, controller manager, scheduler contains some invalid options
 - [Warning] if connection to https://API.AdvertiseAddress:API.BindPort goes through proxy
 - [Warning] if connection to services subnet goes through proxy (only first address checked)
 - [Warning] if connection to Pods subnet goes through proxy (only first address checked)
 -->
-- [警告] 如果命令路径中没有 `ebtables`、`ethtool`、`socat`、`tc`、`touch`、`crictl` 命令
+- [警告] 如果命令路径中没有 `ethtool`、`tc`、`touch` 命令
 - [警告] 如果 API 服务器、控制器管理器、调度程序的其他参数标志包含一些无效选项
 - [警告] 如果与 https://API.AdvertiseAddress:API.BindPort 的连接通过代理
 - [警告] 如果服务子网的连接通过代理（仅检查第一个地址）
@@ -391,7 +430,7 @@ kubeadm 生成具有用于控制平面组件身份标识的 kubeconfig 文件：
 
 <!--  
 - A kubeconfig file for the kubelet to use during TLS bootstrap -
-  /etc/kubernetes/bootstrap-kubelet.conf. Inside this file, there is a bootstrap-token or embedded
+  `/etc/kubernetes/bootstrap-kubelet.conf`. Inside this file, there is a bootstrap-token or embedded
   client certificates for authenticating this node with the cluster.
 
   This client certificate should:
@@ -467,9 +506,24 @@ for additional information on RBAC and built-in ClusterRoles and groups.
 请参阅[面向用户的 RBAC 角色绑定](/zh-cn/docs/reference/access-authn-authz/rbac/#user-facing-roles)。
 
 <!--
-Please note that:
+You can run [`kubeadm kubeconfig user`](/docs/reference/setup-tools/kubeadm/kubeadm-kubeconfig/#cmd-kubeconfig-user)
+to generate kubeconfig files for additional users.
 -->
-请注意：
+你可以运行 [`kubeadm kubeconfig user`](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-kubeconfig/#cmd-kubeconfig-user)
+来为额外的用户生成 kubeconfig 文件。
+
+{{< caution >}}
+<!--
+The generated configuration files include an embedded authentication key, and you should treat
+them as confidential.
+-->
+生成的配置文件包含嵌入的认证密钥，你应当将其视为机密内容。
+{{< /caution >}}
+
+<!--
+Also note that:
+-->
+另外请注意：
 
 <!--  
 1. `ca.crt` certificate is embedded in all the kubeconfig files.
@@ -537,7 +591,7 @@ Static Pod manifest share a set of common properties:
 - 同时为控制器管理器和调度器启用了领导者选举
 - 控制器管理器和调度器将引用 kubeconfig 文件及其各自的唯一标识
 - 如[将自定义参数传递给控制平面组件](/zh-cn/docs/setup/production-environment/tools/kubeadm/control-plane-flags/)
-  中所述，所有静态 Pod 都会获得用户指定的额外标志
+  中所述，所有静态 Pod 都会获得用户指定的额外标志或补丁
 - 所有静态 Pod 都会获得用户指定的额外卷（主机路径）
 
 <!--
@@ -581,15 +635,10 @@ API 服务器的静态 Pod 清单会受到用户提供的以下参数的影响�
 - If an external etcd server is specified, the `etcd-servers` address and related TLS settings
   (`etcd-cafile`, `etcd-certfile`, `etcd-keyfile`);
   if an external etcd server is not provided, a local etcd will be used (via host network)
-- If a cloud provider is specified, the corresponding `--cloud-provider` parameter is configured together
-  with the `--cloud-config` path if such file exists (this is experimental, alpha and will be
-  removed in a future version)
 -->
 - 如果指定了外部 etcd 服务器，则应指定 `etcd-servers` 地址和相关的 TLS 设置
   （`etcd-cafile`、`etcd-certfile`、`etcd-keyfile`）；
   如果未提供外部 etcd 服务器，则将使用本地 etcd（通过主机网络）
-- 如果指定了云提供商，则配置相应的 `--cloud-provider` 参数，如果该路径存在，则配置 `--cloud-config`
-  （这是实验性的，是 Alpha 版本，将在以后的版本中删除）
 
 <!--
 Other API server flags that are set unconditionally are:
@@ -693,11 +742,6 @@ Other API server flags that are set unconditionally are:
 - Other flags for securing the front proxy
   ([API Aggregation](/docs/concepts/extend-kubernetes/api-extension/apiserver-aggregation/))
   communications:
-
-  - `--requestheader-username-headers=X-Remote-User`
-  - `--requestheader-group-headers=X-Remote-Group`
-  - `--requestheader-extra-headers-prefix=X-Remote-Extra-`
-  - `--requestheader-allowed-names=front-proxy-client`
 -->
 - 其他用于保护前端代理（
   [API 聚合层](/zh-cn/docs/concepts/extend-kubernetes/api-extension/apiserver-aggregation/)）
@@ -738,7 +782,7 @@ the users:
   and will be removed in a future version)
 -->
 - 如果指定了云提供商，则指定相应的 `--cloud-provider`，如果存在这样的配置文件，
-  则指定 `--cloud-config` 路径（此为试验性功能，是 Alpha 版本，将在以后的版本中删除）。
+  则指定 `--cloud-config` 路径（此为试验性特性，是 Alpha 版本，将在以后的版本中删除）。
 
 <!--
 Other flags that are set unconditionally are:
@@ -776,7 +820,7 @@ Other flags that are set unconditionally are:
 <!--
 #### Scheduler
 
-The static Pod manifest for the scheduler is not affected by parameters provided by the users.
+The static Pod manifest for the scheduler is not affected by parameters provided by the user.
 -->
 #### 调度器  {#scheduler}
 
@@ -821,7 +865,7 @@ Please note that:
 1. etcd 容器镜像默认从 `registry.gcr.io` 拉取。有关自定义镜像仓库，
    请参阅[使用自定义镜像](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-init/#custom-images)。
 2. 如果你以 `--dry-run` 模式执行 kubeadm 命令，etcd 的静态 Pod 清单将被写入一个临时文件夹。
-3. 你可以使用 ['kubeadm init phase etcd local'](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-etcd)
+3. 你可以使用 [`kubeadm init phase etcd local`](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-etcd)
    命令为本地 etcd 直接调用静态 Pod 清单生成逻辑。
 
 <!--
@@ -830,21 +874,15 @@ Please note that:
 ### 等待控制平面启动  {#wait-for-the-control-plane-to-come-up}
 
 <!--  
-kubeadm waits (upto 4m0s) until `localhost:6443/healthz` (kube-apiserver liveness) returns `ok`.
-However, in order to detect deadlock conditions, kubeadm fails fast if `localhost:10255/healthz`
-(kubelet liveness) or `localhost:10255/healthz/syncloop` (kubelet readiness) don't return `ok`
-within 40s and 60s respectively.
--->
-kubeadm 等待（最多 4m0s），直到 `localhost:6443/healthz`（kube-apiserver 存活）返回 `ok`。
-但是为了检测死锁条件，如果 `localhost:10255/healthz`（kubelet 存活）或
-`localhost:10255/healthz/syncloop`（kubelet 就绪）未能在 40s 和 60s 内未返回 `ok`，
-则 kubeadm 会快速失败。
+On control plane nodes, kubeadm waits up to 4 minutes for the control plane components
+and the kubelet to be available. It does that by performing a health check on the respective
+component `/healthz` or `/livez` endpoints.
 
-<!--  
-kubeadm relies on the kubelet to pull the control plane images and run them properly as static Pods.
 After the control plane is up, kubeadm completes the tasks described in following paragraphs.
 -->
-kubeadm 依靠 kubelet 拉取控制平面镜像并将其作为静态 Pod 正确运行。
+在控制平面节点上，kubeadm 会等待最多4分钟，以确保控制平面组件和 kubelet 可用。
+它通过检查相应组件的 `/healthz` 或 `/livez` 端点来进行健康检查。
+
 控制平面启动后，kubeadm 将完成以下段落中描述的任务。
 
 <!--
@@ -1084,7 +1122,7 @@ kubeadm 通过 API 服务器安装内部 DNS 服务器和 kube-proxy 插件。
 This phase can be invoked individually with the command
 [`kubeadm init phase addon all`](/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-addon).
 -->
-此步骤可以通过 ['kubeadm init phase addon all'](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-addon)
+此步骤可以通过 [`kubeadm init phase addon all`](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-addon)
 命令单独执行。
 {{< /note >}}
 
@@ -1111,17 +1149,14 @@ deployed as a DaemonSet:
 #### DNS
 
 <!--  
-- The CoreDNS service is named `kube-dns`. This is done to prevent any interruption
-  in service when the user is switching the cluster DNS from kube-dns to CoreDNS
-  through the `--config` method described [here](/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-addon).
+- The CoreDNS service is named `kube-dns` for compatibility reasons with the legacy `kube-dns`
+  addon.
 
 - A ServiceAccount for CoreDNS is created in the `kube-system` namespace.
 
 - The `coredns` ServiceAccount is bound to the privileges in the `system:coredns` ClusterRole
 -->
-- CoreDNS Service 的名称为 `kube-dns`。
-  这样做是为了防止当用户通过[此处](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-init-phase/#cmd-phase-addon)描述的
-  `--config` 方法将集群 DNS 从 kube-dns 切换到 CoreDNS 时出现服务中断。
+- 出于与旧版 `kube-dns` 插件的兼容性考虑，CoreDNS 服务被命名为 `kube-dns`。
 
 - 在 `kube-system` 名字空间中创建 CoreDNS 的 ServiceAccount
 
@@ -1146,11 +1181,11 @@ atomic work tasks to perform.
 与 `kubeadm init` 类似，`kubeadm join` 内部工作流由一系列待执行的原子工作任务组成。
 
 <!-- 
-This is split into discovery (having the Node trust the Kubernetes Master) and TLS bootstrap
-(having the Kubernetes Master trust the Node).
+This is split into discovery (having the Node trust the Kubernetes API Server) and TLS bootstrap
+(having the Kubernetes API Server trust the Node).
 -->
-这分为发现（让该节点信任 Kubernetes 的主控节点）和 TLS 引导
-（让 Kubernetes 的主控节点信任该节点）。
+工作流分为发现（让该节点信任 Kubernetes 的 API 服务器）和 TLS 引导
+（让 Kubernetes 的 API 服务器信任该节点）等步骤。
 
 <!-- 
 see [Authenticating with Bootstrap Tokens](/docs/reference/access-authn-authz/bootstrap-tokens/)
@@ -1171,23 +1206,18 @@ preconditions and avoid common cluster startup problems.
 `kubeadm` 在开始执行之前执行一组预检，目的是验证先决条件，避免常见的集群启动问题。
 
 <!--
-Please note that:
+Also note that:
 -->
-请注意：
+另外请注意：
 
 <!--  
 1. `kubeadm join` preflight checks are basically a subset of `kubeadm init` preflight checks
-1. Starting from 1.24, kubeadm uses crictl to communicate to all known CRI endpoints.
-1. Starting from 1.9, kubeadm provides support for joining nodes running on Windows; in that case,
-   linux specific controls are skipped.
+1. If you are joining a Windows node, Linux specific controls are skipped.
 1. In any case the user can skip specific preflight checks (or eventually all preflight checks)
    with the `--ignore-preflight-errors` option.
 -->
-1. `kubeadm join` 预检基本上是 `kubeadm init` 预检的一个子集。
-2. 从 1.24 开始，kubeadm 使用 crictl 与所有已知的 CRI 端点进行通信。
-3. 从 1.9 开始，kubeadm 支持加入在 Windows 上运行的节点；在这种情况下，
-   将跳过 Linux 特定的控制参数。
-4. 在任何情况下，用户都可以通过 `--ignore-preflight-errors`
+1. 如果你要加入一个 Windows 节点，工作流将跳过特定于 Linux 的一些控制设置。
+2. 在任何情况下，用户都可以通过 `--ignore-preflight-errors`
    选项跳过特定的预检（或者进而跳过所有预检）。
 
 <!--
@@ -1250,11 +1280,11 @@ In order to prevent "man in the middle" attacks, several steps are taken:
 
 {{< note >}}
 <!--
-Pub key validation can be skipped passing `--discovery-token-unsafe-skip-ca-verification` flag;
-This weakens the kubeadm security model since others can potentially impersonate the Kubernetes Master.
+You can skip CA validation by passing the `--discovery-token-unsafe-skip-ca-verification` flag on the command line.
+This weakens the kubeadm security model since others can potentially impersonate the Kubernetes API server.
 -->
-通过设置 `--discovery-token-unsafe-skip-ca-verification` 标志可以跳过公钥验证；
-这样做会削弱 kubeadm 安全模型，因为其他人可能冒充 Kubernetes 主控节点。
+你可以通过在命令行上指定 `--discovery-token-unsafe-skip-ca-verification`
+标志来跳过 CA 验证。这会削弱 kubeadm 的安全模型，因为其他人可能冒充 Kubernetes API 服务器。
 {{< /note >}}
 
 <!--
@@ -1325,3 +1355,188 @@ kubelet 加入集群，同时删除 `bootstrap-kubelet.conf`。
   该成员在 `kubeadm init` 过程中被授予对 CSR API 的访问权
 - 自动的 CSR 审批由 csrapprover 控制器基于 `kubeadm init` 过程中给出的配置来管理
 {{< /note >}}
+
+<!--
+## kubeadm upgrade workflow internal design
+
+`kubeadm upgrade` has sub-commands for handling the upgrade of the Kubernetes cluster created by kubeadm.
+You must run `kubeadm upgrade apply` on a control plane node (you can choose which one);
+this starts the upgrade process. You then run `kubeadm upgrade node` on all remaining
+nodes (both worker nodes and control plane nodes).
+-->
+## kubeadm 升级工作流的内部设计
+
+`kubeadm upgrade` 包含若干子命令，用来处理由 kubeadm 创建的 Kubernetes 集群的升级。
+你必须在控制平面节点上运行 `kubeadm upgrade apply`（你可以选择使用哪个节点），以启动升级过程。
+然后，在所有剩余节点（包括工作节点和控制平面节点）上运行 `kubeadm upgrade node`。
+
+<!--
+Both `kubeadm upgrade apply` and `kubeadm upgrade node` have a `phase` subcommand which provides access
+to the internal phases of the upgrade process.
+See [`kubeadm upgrade phase`](/docs/reference/setup-tools/kubeadm/kubeadm-upgrade-phase/) for more details.
+
+Additional utility upgrade commands are `kubeadm upgrade plan` and `kubeadm upgrade diff`.
+
+All upgrade sub-commands support passing a configuration file.
+-->
+`kubeadm upgrade apply` 和 `kubeadm upgrade node` 都有一个 `phase` 子命令，
+用于提供对升级过程内部阶段的访问。更多详情，请参阅
+[`kubeadm upgrade phase`](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-upgrade-phase/)。
+
+额外的实用升级命令包括 `kubeadm upgrade plan` 和 `kubeadm upgrade diff`。
+
+所有升级子命令都支持传递配置文件。
+
+<!--
+### kubeadm upgrade plan
+
+You can optionally run `kubeadm upgrade plan` before you run `kubeadm upgrade apply`.
+The `plan` subcommand checks which versions are available to upgrade
+to and validates whether your current cluster is upgradeable.
+-->
+### kubeadm upgrade plan
+
+你可以选择在运行 `kubeadm upgrade apply` 之前运行 `kubeadm upgrade plan`。
+`plan` 子命令会检查有哪些版本可以用来升级，并验证你当前的集群是否可升级。
+
+<!--
+### kubeadm upgrade diff
+
+This shows what differences would be applied to existing static pod manifests for control plane nodes.
+A more verbose way to do the same thing is running `kubeadm upgrade apply --dry-run` or
+`kubeadm upgrade node --dry-run`.
+-->
+### kubeadm upgrade diff
+
+这条命令会显示将对控制平面节点的现有静态 Pod 清单作哪些修改。
+获得更详细信息的一种做法是运行 `kubeadm upgrade apply --dry-run`
+或 `kubeadm upgrade node --dry-run`。
+
+<!--
+### kubeadm upgrade apply
+
+`kubeadm upgrade apply` prepares the cluster for the upgrade of all nodes, and also
+upgrades the control plane node where it's run. The steps it performs are:
+-->
+### kubeadm upgrade apply
+
+`kubeadm upgrade apply` 为所有节点的升级做准备，同时也会升级运行此命令时所在的控制平面节点。
+它所执行的步骤包括：
+
+<!--
+- Runs preflight checks similarly to `kubeadm init` and `kubeadm join`, ensuring container images are downloaded
+  and the cluster is in a good state to be upgraded.
+- Upgrades the control plane manifest files on disk in `/etc/kubernetes/manifests` and waits
+  for the kubelet to restart the components if the files have changed.
+- Uploads the updated kubeadm and kubelet configurations to the cluster in the `kubeadm-config`
+  and the `kubelet-config` ConfigMaps (both in the `kube-system` namespace).
+- Writes updated kubelet configuration for this node in `/var/lib/kubelet/config.yaml`,
+  and read the node's `/var/lib/kubelet/instance-config.yaml` file
+  and patch fields like `containerRuntimeEndpoint`
+  from this instance configuration into `/var/lib/kubelet/config.yaml`. 
+- Configures bootstrap token and the `cluster-info` ConfigMap for RBAC rules. This is the same as
+  in the `kubeadm init` stage and ensures that the cluster continues to support nodes joining with bootstrap tokens.
+- Upgrades the kube-proxy and CoreDNS addons conditionally if all existing kube-apiservers in the cluster
+  have already been upgraded to the target version.
+- Performs any post-upgrade tasks, such as, cleaning up deprecated features which are release specific.
+-->
+- 类似于 `kubeadm init` 和 `kubeadm join`，运行预检操作，确保容器镜像已被下载且集群处于可升级的良好状态。
+- 升级位于磁盘上 `/etc/kubernetes/manifests` 的控制平面清单文件，并在文件发生更改时等待 kubelet 重启组件。
+- 将更新的 kubeadm 和 kubelet 配置上传到 `kubeadm-config` 和 `kubelet-config` ConfigMap
+  中（都在 `kube-system` 命名空间内）。
+- 在 `/var/lib/kubelet/config.yaml` 中为此节点写入更新的 kubelet 配置，
+  并读取节点的 `/var/lib/kubelet/instance-config.yaml` 文件以及将此实例配置中的
+  `containerRuntimeEndpoint` 等补丁字段写入 `/var/lib/kubelet/config.yaml`。
+- 配置引导令牌和 `cluster-info` ConfigMap 以用于 RBAC 规则。这一操作与 `kubeadm init`
+  阶段相同，确保集群继续支持使用引导令牌加入的节点。
+- 如果集群中所有现有的 kube-apiserver 已经升级到目标版本，则根据情况升级 kube-proxy 和 CoreDNS 插件。
+- 执行所有剩下的升级后任务，例如清理特定发布版本中废弃的功能。
+
+<!--
+### kubeadm upgrade node
+
+`kubeadm upgrade node` upgrades a single control plane or worker node after the cluster upgrade has
+started (by running `kubeadm upgrade apply`). The command detects if the node is a control plane node by checking
+if the file `/etc/kubernetes/manifests/kube-apiserver.yaml` exists. On finding that file, the kubeadm tool
+infers that there is a running kube-apiserver Pod on this node.
+-->
+### kubeadm upgrade node
+
+`kubeadm upgrade node` 在集群升级启动后（通过运行 `kubeadm upgrade apply`）升级单个控制平面或工作节点。
+此命令通过检查文件 `/etc/kubernetes/manifests/kube-apiserver.yaml` 是否存在来检测节点是否为控制平面节点。
+如果找到该文件，kubeadm 工具会推断此节点上正在运行 kube-apiserver Pod。
+
+<!--
+- Runs preflight checks similarly to `kubeadm upgrade apply`.
+- For control plane nodes, upgrades the control plane manifest files on disk in `/etc/kubernetes/manifests`
+  and waits for the kubelet to restart the components if the files have changed.
+- Writes updated kubelet configuration for this node in `/var/lib/kubelet/config.yaml`,
+  and read the node's `/var/lib/kubelet/instance-config.yaml` file and
+  patch fields like `containerRuntimeEndpoint`
+  from this instance configuration into `/var/lib/kubelet/config.yaml`.
+- (For control plane nodes) upgrades the kube-proxy and CoreDNS
+  {{< glossary_tooltip text="addons" term_id="addons" >}} conditionally, provided that all existing
+  API servers in the cluster have already been upgraded to the target version.
+- Performs any post-upgrade tasks, such as cleaning up deprecated features which are release specific.
+-->
+- 类似于 `kubeadm upgrade apply`，运行预检操作。
+- 对于控制平面节点，升级位于磁盘上 `/etc/kubernetes/manifests` 的控制平面清单文件，
+  并在文件发生更改时等待 kubelet 重启组件。
+- 在 `/var/lib/kubelet/config.yaml` 中为此节点写入更新的 kubelet 配置，
+  并读取节点的 `/var/lib/kubelet/instance-config.yaml` 文件以及将此实例配置中的
+  `containerRuntimeEndpoint` 等补丁字段写入 `/var/lib/kubelet/config.yaml`。
+- （针对控制平面节点）如果集群中所有现有的 API 服务器已经升级到目标版本，则根据情况升级
+  kube-proxy 和 CoreDNS {{< glossary_tooltip text="插件" term_id="addons" >}}。
+- 执行剩下的所有升级后任务，例如清理特定发布版本中废弃的特性。
+
+<!--
+## kubeadm reset workflow internal design
+
+You can use the `kubeadm reset` subcommand on a node where kubeadm commands previously executed.
+This subcommand performs a **best-effort** cleanup of the node.
+If certain actions fail you must intervene and perform manual cleanup.
+-->
+## kubeadm reset 工作流的内部设计
+
+你可以在之前执行过 kubeadm 命令的节点上使用 `kubeadm reset` 子命令。
+此子命令对节点执行**尽力而为**的清理。如果某些操作失败，你必须介入并执行手动清理。
+
+<!--
+The command supports phases.
+See [`kubeadm reset phase`](/docs/reference/setup-tools/kubeadm/kubeadm-reset-phase/) for more details.
+
+The command supports a configuration file.
+
+Additionally:
+- IPVS, iptables and nftables rules are **not** cleaned up.
+- CNI (network plugin) configuration is **not** cleaned up.
+- `.kube/` in the user's home directory is **not** cleaned up.
+-->
+此命令支持多个阶段。更多详情，请参阅
+[`kubeadm reset phase`](/zh-cn/docs/reference/setup-tools/kubeadm/kubeadm-reset-phase/)。
+
+此命令支持配置文件。
+
+另外：
+
+- IPVS、iptables 和 nftables 规则**不会**被清理。
+- CNI（网络插件）配置**不会**被清理。
+- 用户主目录下的 `.kube/` 文件夹**不会**被清理。
+
+<!--
+The command has the following stages:
+- Runs preflight checks on the node to determine if its healthy.
+- For control plane nodes, removes any local etcd member data.
+- Stops the kubelet.
+- Stops running containers.
+- Unmounts any mounted directories in `/var/lib/kubelet`.
+- Deletes any files and directories managed by kubeadm in `/var/lib/kubelet` and `/etc/kubernetes`.
+-->
+此命令包含以下阶段：
+
+- 在节点上运行预检操作，以确定其是否健康。
+- 对于控制平面节点，移除本地 etcd 成员的所有数据。
+- 停止 kubelet。
+- 停止运行中的容器。
+- 卸载 `/var/lib/kubelet` 中挂载的任何目录。
+- 删除 `/var/lib/kubelet` 和 `/etc/kubernetes` 中由 kubeadm 管理的所有文件和目录。

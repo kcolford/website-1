@@ -29,7 +29,7 @@ A _Pod_ (as in a pod of whales or pea pod) is a group of one or more
 and a specification for how to run the containers. A Pod's contents are always co-located and
 co-scheduled, and run in a shared context. A Pod models an
 application-specific "logical host": it contains one or more application
-containers which are relatively tightly coupled. 
+containers which are relatively tightly coupled.
 In non-cloud contexts, applications executed on the same physical or virtual machine are
 analogous to cloud applications executed on the same logical host.
 -->
@@ -37,9 +37,9 @@ analogous to cloud applications executed on the same logical host.
 
 **Pod**（就像在鲸鱼荚或者豌豆荚中）是一组（一个或多个）
 {{< glossary_tooltip text="容器" term_id="container" >}}；
-这些容器共享存储、网络、以及怎样运行这些容器的声明。
+这些容器共享存储、网络、以及怎样运行这些容器的规约。
 Pod 中的内容总是并置（colocated）的并且一同调度，在共享的上下文中运行。
-Pod 所建模的是特定于应用的 “逻辑主机”，其中包含一个或多个应用容器，
+Pod 所建模的是特定于应用的“逻辑主机”，其中包含一个或多个应用容器，
 这些容器相对紧密地耦合在一起。
 在非云环境中，在相同的物理机或虚拟机上运行的应用类似于在同一逻辑主机上运行的云应用。
 
@@ -77,7 +77,7 @@ further sub-isolations applied.
 
 A Pod is similar to a set of containers with shared namespaces and shared filesystem volumes.
 -->
-Pod 的共享上下文包括一组 Linux 名字空间、控制组（cgroup）和可能一些其他的隔离方面，
+Pod 的共享上下文包括一组 Linux 名字空间、控制组（CGroup）和可能一些其他的隔离方面，
 即用来隔离{{< glossary_tooltip text="容器" term_id="container" >}}的技术。
 在 Pod 的上下文中，每个独立的应用可能会进一步实施隔离。
 
@@ -108,7 +108,7 @@ Kubernetes 集群中的 Pod 主要有两种用法：
   Grouping multiple co-located and co-managed containers in a single Pod is a
   relatively advanced use case. You should use this pattern only in specific
   instances in which your containers are tightly coupled.
-  
+
   You don't need to run multiple containers to provide replication (for resilience
   or capacity); if you need multiple replicas, see
   [Workload management](/docs/concepts/workloads/controllers/).
@@ -143,21 +143,21 @@ kubectl apply -f https://k8s.io/examples/pods/simple-pod.yaml
 Pods are generally not created directly and are created using workload resources.
 See [Working with Pods](#working-with-pods) for more information on how Pods are used
 with workload resources.
-
-### Workload resources for managing pods
 -->
 Pod 通常不是直接创建的，而是使用工作负载资源创建的。
 有关如何将 Pod 用于工作负载资源的更多信息，请参阅[使用 Pod](#working-with-pods)。
 
-### 用于管理 Pod 的工作负载资源   {#workload-resources-for-managing-pods}
-
 <!--
+### Workload resources for managing pods
+
 Usually you don't need to create Pods directly, even singleton Pods. Instead,
 create them using workload resources such as {{< glossary_tooltip text="Deployment"
 term_id="deployment" >}} or {{< glossary_tooltip text="Job" term_id="job" >}}.
 If your Pods need to track state, consider the
 {{< glossary_tooltip text="StatefulSet" term_id="statefulset" >}} resource.
 -->
+### 用于管理 Pod 的工作负载资源   {#workload-resources-for-managing-pods}
+
 通常你不需要直接创建 Pod，甚至单实例 Pod。相反，你会使用诸如
 {{< glossary_tooltip text="Deployment" term_id="deployment" >}} 或
 {{< glossary_tooltip text="Job" term_id="job" >}} 这类工作负载资源来创建 Pod。
@@ -205,8 +205,8 @@ the Pod is *evicted* for lack of resources, or the node fails.
 
 你很少在 Kubernetes 中直接创建一个个的 Pod，甚至是单实例（Singleton）的 Pod。
 这是因为 Pod 被设计成了相对临时性的、用后即抛的一次性实体。
-当 Pod 由你或者间接地由{{< glossary_tooltip text="控制器" term_id="controller" >}}
-创建时，它被调度在集群中的{{< glossary_tooltip text="节点" term_id="node" >}}上运行。
+当 Pod 由你或者间接地由{{< glossary_tooltip text="控制器" term_id="controller" >}}创建时，
+它被调度在集群中的{{< glossary_tooltip text="节点" term_id="node" >}}上运行。
 Pod 会保持在该节点上运行，直到 Pod 结束执行、Pod 对象被删除、Pod 因资源不足而被**驱逐**或者节点失效为止。
 
 {{< note >}}
@@ -223,7 +223,7 @@ Pod 不是进程，而是容器运行的环境。
 <!--
 The name of a Pod must be a valid
 [DNS subdomain](/docs/concepts/overview/working-with-objects/names#dns-subdomain-names)
-value, but this can produce unexpected results for the Pod hostname.  For best compatibility,
+value, but this can produce unexpected results for the Pod hostname. For best compatibility,
 the name should follow the more restrictive rules for a
 [DNS label](/docs/concepts/overview/working-with-objects/names#dns-label-names).
 -->
@@ -232,7 +232,7 @@ Pod 的名称必须是一个合法的
 但这可能对 Pod 的主机名产生意外的结果。为获得最佳兼容性，名称应遵循更严格的
 [DNS 标签](/zh-cn/docs/concepts/overview/working-with-objects/names#dns-label-names)规则。
 
-<!-- 
+<!--
 ### Pod OS
 -->
 ### Pod 操作系统   {#pod-os}
@@ -240,27 +240,32 @@ Pod 的名称必须是一个合法的
 {{< feature-state state="stable" for_k8s_version="v1.25" >}}
 
 <!--
-You should set the `.spec.os.name` field to either `windows` or `linux` to indicate the OS on
-which you want the pod to run. These two are the only operating systems supported for now by
-Kubernetes. In the future, this list may be expanded.
+You should set the `.spec.os.name` field to either `windows` or `linux` to indicate the
+operating system that the containers in that Pod require. These two are the only operating
+systems supported for now by Kubernetes. In the future, this list may be expanded.
+-->
+你应当将 `.spec.os.name` 字段设置为 `windows` 或 `linux`，
+以表明该 Pod 中容器所需的操作系统。目前 Kubernetes
+仅支持这两种操作系统。未来，这一列表可能会扩展。
 
-In Kubernetes v{{< skew currentVersion >}}, the value of `.spec.os.name` does not affect
+<!--
+The kubelet refuses to run a Pod if the value of `.spec.os.name` does not match the
+operating system of the node. However, in Kubernetes
+v{{< skew currentVersion >}}, the value of `.spec.os.name` does not affect
 how the {{< glossary_tooltip text="kube-scheduler" term_id="kube-scheduler" >}}
-picks a Pod to run a node. In any cluster where there is more than one operating system for
+picks a node for the Pod to run on. In any cluster where there is more than one operating system for
 running nodes, you should set the
 [kubernetes.io/os](/docs/reference/labels-annotations-taints/#kubernetes-io-os)
 label correctly on each node, and define pods with a `nodeSelector` based on the operating system
-label, the kube-scheduler assigns your pod to a node based on other criteria and may or may not
+label. The kube-scheduler assigns your pod to a node based on other criteria and may or may not
 succeed in picking a suitable node placement where the node OS is right for the containers in that Pod.
 The [Pod security standards](/docs/concepts/security/pod-security-standards/) also use this
 field to avoid enforcing policies that aren't relevant to the operating system.
 -->
-你应该将 `.spec.os.name` 字段设置为 `windows` 或 `linux` 以表示你希望 Pod 运行在哪个操作系统之上。
-这两个是 Kubernetes 目前支持的操作系统。将来，这个列表可能会被扩充。
-
+如果 `.spec.os.name` 的值与节点的操作系统不匹配，kubelet 将拒绝运行该 Pod。
 在 Kubernetes v{{< skew currentVersion >}} 中，`.spec.os.name` 的值对
-{{< glossary_tooltip text="kube-scheduler" term_id="kube-scheduler" >}} 如何调度 Pod 到节点上没有影响。
-在任何有多种操作系统运行节点的集群中，你应该在每个节点上正确设置
+{{< glossary_tooltip text="kube-scheduler" term_id="kube-scheduler" >}}
+如何选择要运行 Pod 的节点没有影响。在任何有多种操作系统运行节点的集群中，你应该在每个节点上正确设置
 [kubernetes.io/os](/zh-cn/docs/reference/labels-annotations-taints/#kubernetes-io-os)
 标签，并根据操作系统标签为 Pod 设置 `nodeSelector` 字段。
 kube-scheduler 将根据其他标准将你的 Pod 分配到节点，
@@ -292,6 +297,30 @@ Here are some examples of workload resources that manage one or more Pods:
 * {{< glossary_tooltip text="DaemonSet" term_id="daemonset" >}}
 
 <!--
+### Specifying a scheduling group
+-->
+### 指定调度组
+
+{{< feature-state feature_gate_name="GenericWorkload" >}}
+
+<!--
+By default, Kubernetes schedules every Pod individually. However, some tightly-coupled applications
+need a group of Pods to be scheduled simultaneously to function correctly.
+
+You can link a Pod to a [PodGroup](/docs/concepts/workloads/podgroup-api/) using the
+[scheduling group](/docs/concepts/workloads/pods/scheduling-group/) field
+(`spec.schedulingGroup`). This tells the `kube-scheduler` that the `Pod` belongs to a specific
+group, enabling it to apply group-level coordinated placement decisions for the entire group at once.
+-->
+默认情况下，Kubernetes 会单独调度每一个 Pod。
+然而，一些紧密耦合的应用程序需要一组 Pod 能够同时被调度，才能正确运行。
+
+你可以使用[调度组](/zh-cn/docs/concepts/workloads/pods/scheduling-group/)字段
+（`spec.schedulingGroup`）将 Pod 链接到 [PodGroup](/zh-cn/docs/concepts/workloads/podgroup-api/)。
+这会告诉 `kube-scheduler` 该 `Pod` 属于特定组，
+使其能够为整个组应用组级协调放置决策。
+
+<!--
 ### Pod templates
 
 Controllers for {{< glossary_tooltip text="workload" term_id="workload" >}} resources create Pods
@@ -305,7 +334,7 @@ PodTemplates are specifications for creating Pods, and are included in workload 
 ### Pod 模板    {#pod-templates}
 
 {{< glossary_tooltip text="工作负载" term_id="workload" >}}资源的控制器通常使用
-**Pod 模板（Pod Template）**来替你创建 Pod 并管理它们。
+**Pod 模板（Pod Template）** 来替你创建 Pod 并管理它们。
 
 Pod 模板是包含在工作负载对象中的规范，用来创建 Pod。这类负载资源包括
 [Deployment](/zh-cn/docs/concepts/workloads/controllers/deployment/)、
@@ -334,8 +363,22 @@ container. The container in that Pod prints a message then pauses.
 该 Pod 中的容器会打印一条消息之后暂停。
 
 <!--
-# This is the pod template
-# The pod template ends here
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello
+spec:
+  template:
+    # This is the pod template
+    spec:
+      containers:
+      - name: hello
+        image: busybox:1.28
+        command: ['sh', '-c', 'echo "Hello, Kubernetes!" && sleep 3600']
+      restartPolicy: OnFailure
+    # The pod template ends here
+```
 -->
 ```yaml
 apiVersion: batch/v1
@@ -363,10 +406,6 @@ For example, the StatefulSet controller ensures that the running Pods match the 
 pod template for each StatefulSet object. If you edit the StatefulSet to change its pod
 template, the StatefulSet starts to create new Pods based on the updated template.
 Eventually, all of the old Pods are replaced with new Pods, and the update is complete.
-
-Each workload resource implements its own rules for handling changes to the Pod template.
-If you want to read more about StatefulSet specifically, read
-[Update strategy](/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets) in the StatefulSet Basics tutorial.
 -->
 修改 Pod 模板或者切换到新的 Pod 模板都不会对已经存在的 Pod 直接起作用。
 如果改变工作负载资源的 Pod 模板，工作负载资源需要使用更新后的模板来创建 Pod，
@@ -376,6 +415,11 @@ If you want to read more about StatefulSet specifically, read
 模板匹配。如果编辑 StatefulSet 以更改其 Pod 模板，
 StatefulSet 将开始基于更新后的模板创建新的 Pod。
 
+<!--
+Each workload resource implements its own rules for handling changes to the Pod template.
+If you want to read more about StatefulSet specifically, read
+[Update strategy](/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets) in the StatefulSet Basics tutorial.
+-->
 每个工作负载资源都实现了自己的规则，用来处理对 Pod 模板的更新。
 如果你想了解更多关于 StatefulSet 的具体信息，
 请阅读 StatefulSet 基础教程中的[更新策略](/zh-cn/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets)。
@@ -407,7 +451,7 @@ template instead of updating or patching the existing Pods.
 <!--
 Kubernetes doesn't prevent you from managing Pods directly. It is possible to
 update some fields of a running Pod, in place. However, Pod update operations
-like 
+like
 [`patch`](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#patch-pod-v1-core), and
 [`replace`](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#replace-pod-v1-core)
 have some limitations:
@@ -419,28 +463,25 @@ Kubernetes 并不禁止你直接管理 Pod。对运行中的 Pod 的某些字段
 
 <!--
 - Most of the metadata about a Pod is immutable. For example, you cannot
-  change the `namespace`, `name`, `uid`, or `creationTimestamp` fields;
-  the `generation` field is unique. It only accepts updates that increment the
-  field's current value.
+  change the `namespace`, `name`, `uid`, or `creationTimestamp` fields.
 - If the `metadata.deletionTimestamp` is set, no new entry can be added to the
   `metadata.finalizers` list.
 - Pod updates may not change fields other than `spec.containers[*].image`,
-  `spec.initContainers[*].image`, `spec.activeDeadlineSeconds` or
-  `spec.tolerations`. For `spec.tolerations`, you can only add new entries.
+  `spec.initContainers[*].image`, `spec.activeDeadlineSeconds`, `spec.terminationGracePeriodSeconds`,
+   `spec.tolerations` or `spec.schedulingGates`. For `spec.tolerations`, you can only add new entries.
 - When updating the `spec.activeDeadlineSeconds` field, two types of updates
   are allowed:
 
-  1. setting the unassigned field to a positive number; 
+  1. setting the unassigned field to a positive number;
   1. updating the field from a positive number to a smaller, non-negative
      number.
 -->
 - Pod 的绝大多数元数据都是不可变的。例如，你不可以改变其 `namespace`、`name`、
-  `uid` 或者 `creationTimestamp` 字段；`generation` 字段是比较特别的，
-  如果更新该字段，只能增加字段取值而不能减少。
+  `uid` 或者 `creationTimestamp` 字段。
 - 如果 `metadata.deletionTimestamp` 已经被设置，则不可以向 `metadata.finalizers`
   列表中添加新的条目。
-- Pod 更新不可以改变除 `spec.containers[*].image`、`spec.initContainers[*].image`、
-  `spec.activeDeadlineSeconds` 或 `spec.tolerations` 之外的字段。
+- Pod 更新不可以改变除 `spec.initContainers[*].image`、`spec.activeDeadlineSeconds`、
+  `spec.terminationGracePeriodSeconds`、`spec.tolerations` 或 `spec.schedulingGates` 之外的字段。
   对于 `spec.tolerations`，你只被允许添加新的条目到其中。
 - 在更新 `spec.activeDeadlineSeconds` 字段时，以下两种更新操作是被允许的：
 
@@ -448,12 +489,139 @@ Kubernetes 并不禁止你直接管理 Pod。对运行中的 Pod 的某些字段
   1. 如果该字段已经设置为一个正数，可以将其设置为一个更小的、非负的整数。
 
 <!--
+### Pod subresources
+
+The above update rules apply to regular pod updates, but other pod fields can be updated through _subresources_.
+-->
+### Pod 子资源
+
+上述更新规则适用于常规的 Pod 更新，但其他 Pod 字段可以通过**子资源**进行更新。
+
+<!--
+- **Resize:** The `resize` subresource allows container resources (`spec.containers[*].resources`) to be updated.
+  See [Resize Container Resources](/docs/tasks/configure-pod-container/resize-container-resources/) for more details.
+- **Ephemeral Containers:** The `ephemeralContainers` subresource allows
+  {{< glossary_tooltip text="ephemeral containers" term_id="ephemeral-container" >}}
+  to be added to a Pod.
+  See [Ephemeral Containers](/docs/concepts/workloads/pods/ephemeral-containers/) for more details.
+- **Status:** The `status` subresource allows the pod status to be updated.
+  This is typically only used by the Kubelet and other system controllers.
+- **Binding:** The `binding` subresource allows setting the pod's `spec.nodeName` via a `Binding` request.
+  This is typically only used by the {{< glossary_tooltip text="scheduler" term_id="kube-scheduler" >}}.
+-->
+- **调整大小：** `resize` 子资源允许更新容器资源（`spec.containers[*].resources`）。
+  更多详情参见[调整容器资源大小](/zh-cn/docs/tasks/configure-pod-container/resize-container-resources/)。
+- **临时容器：** `ephemeralContainers` 子资源允许
+  {{< glossary_tooltip text="临时容器" term_id="ephemeral-container" >}}
+  被添加到一个 Pod 中。
+  更多详情参见[临时容器](/zh-cn/docs/concepts/workloads/pods/ephemeral-containers/)。
+- **状态：** `status` 子资源允许更新 Pod 状态。
+  这通常仅由 kubelet 和其他系统控制器使用。
+- **绑定：** `binding` 子资源允许通过 `Binding` 请求设置 Pod 的 `spec.nodeName`。
+  这通常仅由{{< glossary_tooltip text="调度器" term_id="kube-scheduler" >}}使用。
+
+<!--
+### Pod generation
+
+- The `metadata.generation` field is unique. It will be automatically set by the
+  system such that new pods have a `metadata.generation` of 1, and every update to
+  mutable fields in the pod's spec will increment the `metadata.generation` by 1.
+-->
+### Pod 生成
+
+- `metadata.generation` 字段是唯一的。它将由系统自动设置，使得新 Pod 的 `metadata.generation` 为 1，
+  并且对 Pod 规约中可变字段的每次更新都会使 `metadata.generation` 增加 1。
+
+{{< feature-state feature_gate_name="PodObservedGenerationTracking" >}}
+
+<!--
+- `observedGeneration` is a field that is captured in the `status` section of the Pod
+  object. The Kubelet will set `status.observedGeneration`
+  to track the pod state to the current pod status. The pod's `status.observedGeneration` will reflect the
+  `metadata.generation` of the pod at the point that the pod status is being reported.
+-->
+- `observedGeneration` 是在 Pod 对象的 `status` 部分中捕获的一个字段。
+  kubelet 将设置 `status.observedGeneration` 来追踪当前 Pod 的状态。
+  Pod 的 `status.observedGeneration` 将展示报告 Pod 状态时的 Pod 的 `metadata.generation`。
+
+{{< note >}}
+<!--
+The `status.observedGeneration` field is managed by the kubelet and external controllers should **not** modify this field.
+-->
+`status.observedGeneration` 字段由 kubelet 管理，外部控制器**不**应修改此字段。
+{{< /note >}}
+
+<!--
+Different status fields may either be associated with the `metadata.generation` of the current sync loop, or with the
+`metadata.generation` of the previous sync loop. The key distinction is whether a change in the `spec` is reflected
+directly in the `status` or is an indirect result of a running process.
+-->
+不同的状态字段可能与当前同步循环的 `metadata.generation` 相关联，
+或者与前一个同步循环的 `metadata.generation` 相关联。
+关键区别在于，`spec` 中的变化是直接体现在 `status` 中，还是作为运行过程的间接结果展示。
+
+<!--
+#### Direct Status Updates
+
+For status fields where the allocated spec is directly reflected, the `observedGeneration` will
+be associated with the current `metadata.generation` (Generation N).
+-->
+#### 直接状态更新
+
+对于那些直接反映分配的 spec 的状态字段，`observedGeneration`
+将与当前的 `metadata.generation`（第 N 代）相关联。
+
+<!--
+This behavior applies to:
+
+- **Resize Status**: The status of a resource resize operation.
+- **Allocated Resources**: The resources allocated to the Pod after a resize.
+- **Ephemeral Containers**: When a new ephemeral container is added, and it is in `Waiting` state.
+-->
+此行为适用于：
+
+- **扩缩状态**：资源扩缩操作的状态。
+- **分配的资源**：扩缩后分配给 Pod 的资源。
+- **临时容器**：当添加一个新的临时容器，并且它处于 `Waiting` 状态时。
+
+<!--
+#### Indirect Status Updates
+
+For status fields that are an indirect result of running the spec, the `observedGeneration` will be associated
+with the `metadata.generation` of the previous sync loop (Generation N-1).
+
+This behavior applies to:
+-->
+#### 间接状态更新
+
+对于那些运行规约的间接结果的状态字段，`observedGeneration`
+将与上一个同步循环的 `metadata.generation`（第 N-1 代）相关联。
+
+此行为适用于：
+
+<!--
+- **Container Image**: The `ContainerStatus.ImageID` reflects the image from the previous generation until the new image
+  is pulled and the container is updated.
+- **Actual Resources**: During an in-progress resize, the actual resources in use still belong to the previous generation's
+  request.
+- **Container state**: During an in-progress resize, with require restart policy reflects the previous generation's
+  request.
+- **activeDeadlineSeconds** & **terminationGracePeriodSeconds** & **deletionTimestamp**: The effects of these fields on the
+  Pod's status are a result of the previously observed specification.
+-->
+- **容器镜像**：`ContainerStatus.ImageID` 反映的是上一代的镜像，直到新的镜像被拉取并且容器被更新。
+- **实际资源**：在扩缩进行中，实际使用的资源仍然属于上一代请求的资源。
+- **容器状态**：在扩缩进行中，需要重启策略反映的是上一代的请求。
+- **activeDeadlineSeconds** & **terminationGracePeriodSeconds** & **deletionTimestamp**：这些字段对
+  Pod 状态的影响是之前观察到的规约的结果。
+
+<!--
 ## Resource sharing and communication
 
 Pods enable data sharing and communication among their constituent
 containers.
 -->
-### 资源共享和通信 {#resource-sharing-and-communication}
+## 资源共享和通信 {#resource-sharing-and-communication}
 
 Pod 使它的成员容器间能够进行数据共享和通信。
 
@@ -497,7 +665,7 @@ Pod 中的每个容器共享网络名字空间，包括 IP 地址和网络端口
 Within a Pod, containers share an IP address and port space, and
 can find each other via `localhost`. The containers in a Pod can also communicate
 with each other using standard inter-process communications like SystemV semaphores
-or POSIX shared memory.  Containers in different Pods have distinct IP addresses
+or POSIX shared memory. Containers in different Pods have distinct IP addresses
 and can not communicate by OS-level IPC without special configuration.
 Containers that want to interact with a container running in a different Pod can
 use IP networking to communicate.
@@ -523,42 +691,39 @@ Pod 中的容器所看到的系统主机名与为 Pod 配置的 `name` 属性值
 <!--
 To set security constraints on Pods and containers, you use the
 `securityContext` field in the Pod specification. This field gives you
-granular control over what a Pod or individual containers can do. For example:
+granular control over what a Pod or individual containers can do. See [Advanced Pod Configuration](/docs/concepts/workloads/pods/advanced-pod-config/) for more details.
 -->
 要对 Pod 和容器设置安全约束，请使用 Pod 规约中的 `securityContext` 字段。
-该字段使你可以精细控制 Pod 或单个容器可以执行的操作。例如：
+该字段使你可以精细控制 Pod 或单个容器可以执行的操作。
+有关更多详细信息，请参阅 [Pod 高级配置](/zh-cn/docs/concepts/workloads/pods/advanced-pod-config/)。
 
 <!--
-* Drop specific Linux capabilities to avoid the impact of a CVE.
-* Force all processes in the Pod to run as a non-root user or as a specific
-  user or group ID.
-* Set a specific seccomp profile.
-* Set Windows security options, such as whether containers run as HostProcess.
+For basic security configuration, you should meet the Baseline Pod security standard and run containers as non-root. You can set simple security contexts:
 -->
-* 放弃特定的 Linux 权能（Capability）以避免受到某 CVE 的影响。
-* 强制 Pod 中的所有进程以非 root 用户或特定用户或组 ID 的身份运行。
-* 设置特定的 seccomp 配置文件。
-* 设置 Windows 安全选项，例如容器是否作为 HostProcess 运行。
+对于基本安全配置，你应该满足 Baseline Pod 安全标准，并以非 root
+用户身份运行容器。你可以设置简单的安全上下文：
 
-{{< caution >}}
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-demo
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+  - name: sec-ctx-demo
+    image: busybox
+    command: ["sh", "-c", "sleep 1h"]
+```
+
 <!--
-You can also use the Pod securityContext to enable
-[_privileged mode_](/docs/concepts/security/linux-kernel-security-constraints/#privileged-containers)
-in Linux containers. Privileged mode overrides many of the other security
-settings in the securityContext. Avoid using this setting unless you can't grant
-the equivalent permissions by using other fields in the securityContext.
-In Kubernetes 1.26 and later, you can run Windows containers in a similarly
-privileged mode by setting the `windowsOptions.hostProcess` flag on the
-security context of the Pod spec. For details and instructions, see
-[Create a Windows HostProcess Pod](/docs/tasks/configure-pod-container/create-hostprocess-pod/).
+For advanced security context configuration including capabilities, seccomp profiles, and detailed security options, see the [security concepts](/docs/concepts/security/) section.
 -->
-你还可以使用 Pod securityContext 在 Linux 容器中启用[**特权模式**](/zh-cn/docs/concepts/security/linux-kernel-security-constraints/#privileged-containers)。
-特权模式会覆盖 securityContext 中的许多其他安全设置。
-请避免使用此设置，除非你无法通过使用 securityContext 中的其他字段授予等效权限。
-在 Kubernetes 1.26 及更高版本中，你可以通过在 Pod 规约的安全上下文中设置
-`windowsOptions.hostProcess` 标志，以类似的特权模式运行 Windows 容器。
-有关详细信息和说明，请参阅[创建 Windows HostProcess Pod](/zh-cn/docs/tasks/configure-pod-container/create-hostprocess-pod/)。
-{{< /caution >}}
+有关高级安全上下文配置（包括 capabilities、seccomp 配置文件和详细安全选项）的信息，
+请参阅[安全概念](/zh-cn/docs/concepts/security/)部分。
 
 <!--
 * To learn about kernel-level security constraints that you can use,
@@ -566,8 +731,68 @@ security context of the Pod spec. For details and instructions, see
 * To learn more about the Pod security context, see
   [Configure a Security Context for a Pod or Container](/docs/tasks/configure-pod-container/security-context/).
 -->
-* 要了解可以使用的内核级安全约束，请参阅 [Pod 和容器的 Linux 内核安全约束](/zh-cn/docs/concepts/security/linux-kernel-security-constraints)。
-* 要了解有关 Pod 安全上下文的更多信息，请参阅[为 Pod 或容器配置安全上下文](/zh-cn/docs/tasks/configure-pod-container/security-context/)。
+* 要了解可以使用的内核级安全约束，请参阅
+  [Pod 和容器的 Linux 内核安全约束](/zh-cn/docs/concepts/security/linux-kernel-security-constraints)。
+* 要了解有关 Pod 安全上下文的更多信息，
+  请参阅[为 Pod 或容器配置安全上下文](/zh-cn/docs/tasks/configure-pod-container/security-context/)。
+
+<!--
+## Resource requests and limits
+
+When you specify a Pod, you can optionally specify how much of each resource
+a container needs. The most common resources to specify are CPU and memory (RAM).
+-->
+## 资源请求和限制
+
+配置 Pod 时，你可以选择性地指定容器所需的每种资源的数量。
+最常指定的资源是 CPU 和内存（RAM）。
+
+<!--
+When you specify the resource _request_ for containers in a Pod, the
+kube-scheduler uses this information to decide which node to place the Pod on.
+When you specify a resource _limit_ for a container, the kubelet enforces
+those limits so that the running container is not allowed to use more of that
+resource than the limit you set.
+-->
+当你为 Pod 中的容器指定资源请求（requests）时，kube-scheduler
+会使用此信息来决定将 Pod 部署在哪个节点上。
+
+当你为容器指定资源限制（limits）时，kubelet
+会强制执行这些限制，以确保正在运行的容器使用的资源量不会超过你设置的限制。
+
+<!--
+CPU limits are enforced by CPU throttling. When a container approaches its
+CPU limit, the kernel restricts its access to CPU. Memory limits are enforced
+by the kernel with out-of-memory (OOM) kills when a container exceeds its limit.
+-->
+CPU 限制通过 CPU 节流机制来强制执行。
+当容器接近其 CPU 限制时，内核会限制其对 CPU 的访问。
+内存限制也通过内核强制执行，当容器超出其内存限制时，
+内核会通过内存不足（OOM）机制终止进程。
+
+{{< note >}}
+<!--
+Setting CPU limits involves a trade-off. CPU limits help prevent noisy neighbor
+problems where a single workload starves others on the same node. This is
+especially important in multi-tenant environments. However, CPU limits can cause
+throttling even when the node has spare CPU capacity, potentially degrading
+latency-sensitive workload performance. Whether to set CPU limits depends on
+your environment, workload characteristics, and isolation requirements.
+-->
+设置 CPU 限制需要权衡利弊。
+CPU 限制有助于防止“嘈杂邻居”问题，即同一节点上的单个工作负载会占用过多资源，
+导致其他工作负载无法获得足够的资源的问题。这在多租户环境中尤为重要。
+然而，即使节点有剩余的 CPU 资源，CPU 限制也可能导致性能下降，
+从而降低对延迟敏感的工作负载的性能。
+是否设置 CPU 限制取决于你的环境、工作负载特性和隔离要求。
+{{< /note >}}
+
+<!--
+For details on resource units, enforcement behavior, and configuration examples,
+see [Resource Management for Pods and Containers](/docs/concepts/configuration/manage-resources-containers/).
+-->
+有关资源单位、强制执行行为和配置示例的详细信息，请参阅
+[Pod 和容器的资源管理](/zh-cn/docs/concepts/configuration/manage-resources-containers/)。
 
 <!--
 ## Static Pods
@@ -581,7 +806,7 @@ Pods, the kubelet directly supervises each static Pod (and restarts it if it fai
 -->
 ## 静态 Pod    {#static-pods}
 
-**静态 Pod（Static Pod）**直接由特定节点上的 `kubelet` 守护进程管理，
+**静态 Pod（Static Pod）** 直接由特定节点上的 `kubelet` 守护进程管理，
 不需要 {{< glossary_tooltip text="API 服务器" term_id="kube-apiserver" >}}看到它们。
 尽管大多数 Pod 都是通过控制面（例如，{{< glossary_tooltip text="Deployment" term_id="deployment" >}}）
 来管理的，对于静态 Pod 而言，`kubelet` 直接监控每个 Pod，并在其失效时重启之。
@@ -589,38 +814,19 @@ Pods, the kubelet directly supervises each static Pod (and restarts it if it fai
 <!--
 Static Pods are always bound to one {{< glossary_tooltip term_id="kubelet" >}} on a specific node.
 The main use for static Pods is to run a self-hosted control plane: in other words,
-using the kubelet to supervise the individual [control plane components](/docs/concepts/overview/components/#control-plane-components).
-
-The kubelet automatically tries to create a {{< glossary_tooltip text="mirror Pod" term_id="mirror-pod" >}}
-on the Kubernetes API server for each static Pod.
-This means that the Pods running on a node are visible on the API server,
-but cannot be controlled from there. See the guide [Create static Pods](/docs/tasks/configure-pod-container/static-pod) for more information.
+using the kubelet to supervise the individual [control plane components](/docs/concepts/architecture/#control-plane-components).
 -->
 静态 Pod 通常绑定到某个节点上的 {{< glossary_tooltip text="kubelet" term_id="kubelet" >}}。
-其主要用途是运行自托管的控制面。
-在自托管场景中，使用 `kubelet`
-来管理各个独立的[控制面组件](/zh-cn/docs/concepts/overview/components/#control-plane-components)。
+其主要用途是运行自托管的控制面。在自托管场景中，使用 `kubelet`
+来管理各个独立的[控制面组件](/zh-cn/docs/concepts/architecture/#control-plane-components)。
 
-`kubelet` 自动尝试为每个静态 Pod 在 Kubernetes API
-服务器上创建一个{{< glossary_tooltip text="镜像 Pod" term_id="mirror-pod" >}}。
-这意味着在节点上运行的 Pod 在 API 服务器上是可见的，但不可以通过 API 服务器来控制。
-有关更多信息，请参阅[创建静态 Pod](/zh-cn/docs/tasks/configure-pod-container/static-pod) 的指南。
-
-{{< note >}}
 <!--
-The `spec` of a static Pod cannot refer to other API objects
-(e.g., {{< glossary_tooltip text="ServiceAccount" term_id="service-account" >}},
-{{< glossary_tooltip text="ConfigMap" term_id="configmap" >}},
-{{< glossary_tooltip text="Secret" term_id="secret" >}}, etc).
+For details, see [Static Pods](/docs/concepts/workloads/pods/static-pods/).
 -->
-静态 Pod 的 `spec` 不能引用其他的 API 对象（例如：
-{{< glossary_tooltip text="ServiceAccount" term_id="service-account" >}}、
-{{< glossary_tooltip text="ConfigMap" term_id="configmap" >}}、
-{{< glossary_tooltip text="Secret" term_id="secret" >}} 等）。
-{{< /note >}}
+详情见[静态 Pod](/zh-cn/docs/concepts/workloads/pods/static-pods/)。
 
 <!--
-### Pods manage multiple containers  {#how-pods-manage-multiple-containers}
+## Pods with multiple containers {#how-pods-manage-multiple-containers}
 
 Pods are designed to support multiple cooperating processes (as containers) that form
 a cohesive unit of service. The containers in a Pod are automatically co-located and
@@ -628,7 +834,7 @@ co-scheduled on the same physical or virtual machine in the cluster. The contain
 can share resources and dependencies, communicate with one another, and coordinate
 when and how they are terminated.
 -->
-### Pod 管理多个容器   {#how-pods-manage-multiple-containers}
+## 包含多个容器的 Pod   {#how-pods-manage-multiple-containers}
 
 Pod 被设计成支持构造内聚的服务单元的多个协作进程（形式为容器）。
 Pod 中的容器被自动并置到集群中的同一物理机或虚拟机上，并可以一起进行调度。
@@ -656,7 +862,7 @@ Pods in a Kubernetes cluster are used in two main ways:
 -->
 Kubernetes 集群中的 Pod 主要有两种用法：
 
-* **运行单个容器的 Pod**。"每个 Pod 一个容器" 模型是最常见的 Kubernetes 用例；
+* **运行单个容器的 Pod**。"每个 Pod 一个容器"模型是最常见的 Kubernetes 用例；
   在这种情况下，可以将 Pod 看作单个容器的包装器。Kubernetes 直接管理 Pod，而不是容器。
 * **运行多个需要协同工作的容器的 Pod**。
   Pod 可以封装由多个紧密耦合且需要共享资源的并置容器组成的应用。
@@ -671,7 +877,7 @@ acts as a web server for files in a shared volume, and a separate
 that updates those files from a remote source, as in the following diagram:
 -->
 例如，你可能有一个容器，为共享卷中的文件提供 Web 服务器支持，以及一个单独的
-[边车（Sidercar）](/zh-cn/docs/concepts/workloads/pods/sidecar-containers/)
+[边车（Sidecar）](/zh-cn/docs/concepts/workloads/pods/sidecar-containers/)
 容器负责从远端更新这些文件，如下图所示：
 
 {{< figure src="/zh-cn/docs/images/pod.svg" alt="Pod 创建示意图" class="diagram-medium" >}}
@@ -689,41 +895,44 @@ Init 容器默认会在启动应用容器之前运行并完成。
 You can also have [sidecar containers](/docs/concepts/workloads/pods/sidecar-containers/)
 that provide auxiliary services to the main application Pod (for example: a service mesh).
 -->
-你还可以拥有为主应用 Pod 提供辅助服务的
-[边车容器](/zh-cn/docs/concepts/workloads/pods/sidecar-containers/)（例如：服务网格）。
+你还可以拥有为主应用 Pod
+提供辅助服务的[边车容器](/zh-cn/docs/concepts/workloads/pods/sidecar-containers/)（例如：服务网格）。
 
-
-{{< feature-state for_k8s_version="v1.29" state="beta" >}}
+{{< feature-state feature_gate_name="SidecarContainers" >}}
 
 <!--
 Enabled by default, the `SidecarContainers` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
 allows you to specify `restartPolicy: Always` for init containers.
-Setting the `Always` restart policy ensures that the init containers where you set it are
+Setting the `Always` restart policy ensures that the containers where you set it are
 treated as _sidecars_ that are kept running during the entire lifetime of the Pod.
-See [Sidecar containers and restartPolicy](/docs/concepts/workloads/pods/init-containers/#sidecar-containers-and-restartpolicy)
-for more details.
+Containers that you explicitly define as sidecar containers
+start up before the main application Pod and remain running until the Pod is
+shut down.
 -->
-启用 `SidecarContainers` [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)（默认启用）允许你为
-Init 容器指定 `restartPolicy: Always`。设置重启策略为 `Always` 会确保设置的 Init 容器被视为**边车**，
+启用 `SidecarContainers`
+[特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)（默认启用）允许你为
+Init 容器指定 `restartPolicy: Always`。
+设置重启策略为 `Always` 会确保设置的容器被视为**边车**，
 并在 Pod 的整个生命周期内保持运行。
-更多细节参阅[边车容器和重启策略](/zh-cn/docs/concepts/workloads/pods/init-containers/#sidecar-containers-and-restartpolicy)
+你显式定义为边车容器的容器会在主应用 Pod 之前启动，并保持运行直至 Pod 关闭。
 
 <!--
 ## Container probes
 
-A _probe_ is a diagnostic performed periodically by the kubelet on a container. To perform a diagnostic, the kubelet can invoke different actions:
+A _probe_ is a diagnostic performed periodically by the kubelet on a container.
+To perform a diagnostic, the kubelet can invoke different actions:
 
 - `ExecAction` (performed with the help of the container runtime)
 - `TCPSocketAction` (checked directly by the kubelet)
 - `HTTPGetAction` (checked directly by the kubelet)
 
-You can read more about [probes](/docs/concepts/workloads/pods/pod-lifecycle/#container-probes) 
+You can read more about [probes](/docs/concepts/workloads/pods/pod-lifecycle/#container-probes)
 in the Pod Lifecycle documentation.
 -->
 ## 容器探针   {#container-probes}
 
 **Probe** 是由 kubelet 对容器执行的定期诊断。要执行诊断，kubelet 可以执行三种动作：
-    
+
 - `ExecAction`（借助容器运行时执行）
 - `TCPSocketAction`（由 kubelet 直接检测）
 - `HTTPGetAction`（由 kubelet 直接检测）
@@ -734,29 +943,39 @@ in the Pod Lifecycle documentation.
 
 <!--
 * Learn about the [lifecycle of a Pod](/docs/concepts/workloads/pods/pod-lifecycle/).
-* Learn about [RuntimeClass](/docs/concepts/containers/runtime-class/) and how you can use it to
-  configure different Pods with different container runtime configurations.
-* Read about [PodDisruptionBudget](/docs/concepts/workloads/pods/disruptions/) and how you can use it to manage application availability during disruptions.
+* Read about [PodDisruptionBudget](/docs/concepts/workloads/pods/disruptions/)
+  and how you can use it to manage application availability during disruptions.
 * Pod is a top-level resource in the Kubernetes REST API.
-  The {{< api-reference page="workload-resources/pod-v1" >}}
+  The {{< api-reference page="core/pod-v1" >}}
   object definition describes the object in detail.
 * [The Distributed System Toolkit: Patterns for Composite Containers](/blog/2015/06/the-distributed-system-toolkit-patterns/) explains common layouts for Pods with more than one container.
 * Read about [Pod topology spread constraints](/docs/concepts/scheduling-eviction/topology-spread-constraints/)
+* Read [Advanced Pod Configuration](/docs/concepts/workloads/pods/advanced-pod-config/) to learn the topic in detail.
+  That page covers aspects of Pod configuration beyond the essentials, including:
+  * PriorityClasses
+  * RuntimeClasses
+  * advanced ways to configure _scheduling_: the way that Kubernetes decides which node a Pod should run on.
 -->
 * 了解 [Pod 生命周期](/zh-cn/docs/concepts/workloads/pods/pod-lifecycle/)。
-* 了解 [RuntimeClass](/zh-cn/docs/concepts/containers/runtime-class/)，
-  以及如何使用它来配置不同的 Pod 使用不同的容器运行时配置。
 * 了解 [PodDisruptionBudget](/zh-cn/docs/concepts/workloads/pods/disruptions/)，
   以及你可以如何利用它在出现干扰因素时管理应用的可用性。
 * Pod 在 Kubernetes REST API 中是一个顶层资源。
-  {{< api-reference page="workload-resources/pod-v1" >}}
+  {{< api-reference page="core/pod-v1" >}}
   对象的定义中包含了更多的细节信息。
 * 博客[分布式系统工具箱：复合容器模式](/blog/2015/06/the-distributed-system-toolkit-patterns/)中解释了在同一
   Pod 中包含多个容器时的几种常见布局。
 * 了解 [Pod 拓扑分布约束](/zh-cn/docs/concepts/scheduling-eviction/topology-spread-constraints/)。
+* 阅读 [Pod 高级配置](/zh-cn/docs/concepts/workloads/pods/advanced-pod-config/)以详细了解该主题。
+  此页面涵盖了 Pod 配置的更多方面，包括：
+  * PriorityClasses（优先级类）
+  * RuntimeClasses（运行时类）
+  * 配置**调度**的高级方法：Kubernetes 决定 Pod 应在哪个节点上运行的方式。
 
 <!--
-To understand the context for why Kubernetes wraps a common Pod API in other resources (such as {{< glossary_tooltip text="StatefulSets" term_id="statefulset" >}} or {{< glossary_tooltip text="Deployments" term_id="deployment" >}}), you can read about the prior art, including:
+To understand the context for why Kubernetes wraps a common Pod API in other resources
+(such as {{< glossary_tooltip text="StatefulSets" term_id="statefulset" >}} or
+{{< glossary_tooltip text="Deployments" term_id="deployment" >}}),
+you can read about the prior art, including:
 -->
 要了解为什么 Kubernetes 会在其他资源
 （如 {{< glossary_tooltip text="StatefulSet" term_id="statefulset" >}}
@@ -765,13 +984,13 @@ To understand the context for why Kubernetes wraps a common Pod API in other res
 
 <!--
 * [Aurora](https://aurora.apache.org/documentation/latest/reference/configuration/#job-schema)
-* [Borg](https://research.google.com/pubs/pub43438.html)
-* [Marathon](https://mesosphere.github.io/marathon/docs/rest-api.html)
+* [Borg](https://research.google/pubs/large-scale-cluster-management-at-google-with-borg/)
+* [Marathon](https://github.com/d2iq-archive/marathon)
 * [Omega](https://research.google/pubs/pub41684/)
 * [Tupperware](https://engineering.fb.com/data-center-engineering/tupperware/).
 -->
 * [Aurora](https://aurora.apache.org/documentation/latest/reference/configuration/#job-schema)
-* [Borg](https://research.google.com/pubs/pub43438.html)
-* [Marathon](https://mesosphere.github.io/marathon/docs/rest-api.html)
+* [Borg](https://research.google/pubs/large-scale-cluster-management-at-google-with-borg/)
+* [Marathon](https://github.com/d2iq-archive/marathon)
 * [Omega](https://research.google/pubs/pub41684/)
 * [Tupperware](https://engineering.fb.com/data-center-engineering/tupperware/)。

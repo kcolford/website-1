@@ -55,10 +55,16 @@ installation instructions. The list does not try to be exhaustive.
 * [Flannel](https://github.com/flannel-io/flannel#deploying-flannel-manually) is
   an overlay network provider that can be used with Kubernetes.
 * [Gateway API](/docs/concepts/services-networking/gateway/) is an open source project managed by
-  the [SIG Network](https://github.com/kubernetes/community/tree/master/sig-network) community and
+  the [SIG Network](https://github.com/kubernetes/community/tree/main/sig-network) community and
   provides an expressive, extensible, and role-oriented API for modeling service networking.
 * [Knitter](https://github.com/ZTE/Knitter/) is a plugin to support multiple network
   interfaces in a Kubernetes pod.
+* [kube-router](https://github.com/cloudnativelabs/kube-router) is an open
+  source turnkey solution for Kubernetes networking with the aim to provide
+  operational simplicity and high performance. It leverages the Kubernetes API,
+  BGP, and Golang for the control path and Linux networking primitives (IPVS,
+  nftables, etc.) for the data path. It provides a low overhead alternative and
+  is used in both k0s and k3s.
 * [Multus](https://github.com/k8snetworkplumbingwg/multus-cni) is a Multi plugin for
   multiple network support in Kubernetes to support all CNI plugins
   (e.g. Calico, Cilium, Contiv, Flannel), in addition to SRIOV, DPDK, OVS-DPDK and
@@ -82,6 +88,9 @@ installation instructions. The list does not try to be exhaustive.
 * [Spiderpool](https://github.com/spidernet-io/spiderpool) is an underlay and RDMA
   networking solution for Kubernetes. Spiderpool is supported on bare metal, virtual machines,
   and public cloud environments.
+* [Terway](https://github.com/AliyunContainerService/terway/) is a suite of CNI plugins
+  based on AlibabaCloud's VPC and ECS network products. It provides native VPC networking
+  and network policies in AlibabaCloud environments.
 * [Weave Net](https://github.com/rajch/weave#using-weave-on-kubernetes)
   provides networking and network policy, will carry on working on both sides
   of a network partition, and does not require an external database.
@@ -89,15 +98,15 @@ installation instructions. The list does not try to be exhaustive.
 ## Service Discovery
 
 * [CoreDNS](https://coredns.io) is a flexible, extensible DNS server which can
-  be [installed](https://github.com/coredns/deployment/tree/master/kubernetes)
+  be [installed](https://github.com/coredns/helm)
   as the in-cluster DNS for pods.
 
 ## Visualization &amp; Control
 
 * [Dashboard](https://github.com/kubernetes/dashboard#kubernetes-dashboard)
   is a dashboard web interface for Kubernetes.
-* [Weave Scope](https://www.weave.works/documentation/scope-latest-installing/#k8s) is a
-  tool for visualizing your containers, Pods, Services and more.
+* [Headlamp](https://headlamp.dev/) is an extensible Kubernetes UI that can be
+  deployed in-cluster or used as a desktop application.
 
 ## Infrastructure
 

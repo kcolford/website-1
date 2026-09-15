@@ -14,6 +14,7 @@ weight: 20
 -->
 
 <!-- overview -->
+
 <!--
 SIG Docs [Reviewers](/docs/contribute/participate/#reviewers) and
 [Approvers](/docs/contribute/participate/#approvers) do a few extra things
@@ -35,7 +36,7 @@ SIG Docs
 在对变更进行评审时需要做一些额外的事情。
 
 每周都有一个特定的文档批准人自愿负责对 PR 进行分类和评阅。
-此角色称作该周的“PR 管理者（PR Wrangler）”。
+此角色称作该周的 “PR 管理者（PR Wrangler）”。
 相关信息可参考 [PR Wrangler 排班表](https://github.com/kubernetes/website/wiki/PR-Wranglers)。
 要成为 PR Wangler，需要参加每周的 SIG Docs 例会，并自愿报名。
 即使当前这周排班没有轮到你，你仍可以评阅那些尚未被积极评阅的 PRs。
@@ -44,18 +45,20 @@ SIG Docs
 指派评阅人和批准人。
 
 <!-- body -->
+
 <!--
 ## Reviewing a PR
 
 Kubernetes documentation follows the
-[Kubernetes code review process](https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process).
+[Kubernetes code review process](https://github.com/kubernetes/community/blob/main/contributors/guide/owners.md#the-code-review-process).
 
 Everything described in [Reviewing a pull request](/docs/contribute/review/reviewing-prs)
 applies, but Reviewers and Approvers should also do the following:
 -->
 ## 评阅 PR
 
-Kubernetes 文档遵循 [Kubernetes 代码评阅流程](https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process)。
+Kubernetes 文档遵循
+[Kubernetes 代码评阅流程](https://github.com/kubernetes/community/blob/main/contributors/guide/owners.md#the-code-review-process)。
 
 [评阅 PR](/zh-cn/docs/contribute/review/reviewing-prs/) 文档中所描述的所有规程都适用，
 不过评阅人和批准人还要做以下工作：
@@ -63,12 +66,20 @@ Kubernetes 文档遵循 [Kubernetes 代码评阅流程](https://github.com/kuber
 <!--
 - Using the `/assign` Prow command to assign a specific reviewer to a PR as needed.
   This is extra important when it comes to requesting technical review from code contributors.
+-->
+- 根据需要使用 Prow 命令 `/assign` 指派特定的评阅人。如果某个 PR
+  需要来自代码贡献者的技术审核时，这一点非常重要。
 
   {{< note >}}
+  <!--
   Look at the `reviewers` field in the front-matter at the top of a Markdown file to see who can
   provide technical review.
+  -->
+  你可以查看 Markdown 文件的文件头，其中的 `reviewers`
+  字段给出了哪些人可以为文档提供技术审核。
   {{< /note >}}
 
+<!--
 - Making sure the PR follows the [Content](/docs/contribute/style/content-guide/)
   and [Style](/docs/contribute/style/style-guide/) guides; link the author to the
   relevant part of the guide(s) if it doesn't.
@@ -76,13 +87,6 @@ Kubernetes 文档遵循 [Kubernetes 代码评阅流程](https://github.com/kuber
 - Changing your review status in GitHub using the `/approve` or `/lgtm` Prow commands,
   if your suggestions are implemented.
 -->
-- 根据需要使用 Prow 命令 `/assign` 指派特定的评阅人。如果某个 PR
-  需要来自代码贡献者的技术审核时，这一点非常重要。
-
-  {{< note >}}
-  你可以查看 Markdown 文件的文件头，其中的 `reviewers` 字段给出了哪些人可以为文档提供技术审核。
-  {{< /note >}}
-
 - 确保 PR 遵从[内容指南](/zh-cn/docs/contribute/style/content-guide/)和[样式指南](/zh-cn/docs/contribute/style/style-guide/)；
   如果 PR 没有达到要求，指引作者阅读指南中的相关部分。
 - 适当的时候使用 GitHub **Request Changes** 选项，建议 PR 作者实施所建议的修改。
@@ -93,7 +97,12 @@ Kubernetes 文档遵循 [Kubernetes 代码评阅流程](https://github.com/kuber
 
 Leaving PR comments is helpful, but there might be times when you need to commit
 into another person's PR instead.
+-->
+## 提交到他人的 PR
 
+为 PR 留下评语是很有用的，不过有时候你需要向他人的 PR 提交内容。
+
+<!--
 Do not "take over" for another person unless they explicitly ask
 you to, or you want to resurrect a long-abandoned PR. While it may be faster
 in the short term, it deprives the person of the chance to contribute.
@@ -101,10 +110,6 @@ in the short term, it deprives the person of the chance to contribute.
 The process you use depends on whether you need to edit a file that is already
 in the scope of the PR, or a file that the PR has not yet touched.
 -->
-## 提交到他人的 PR
-
-为 PR 留下评语是很有用的，不过有时候你需要向他人的 PR 提交内容。
-
 除非他人明确请求你的帮助或者你希望重启一个被放弃很久的 PR，不要“接手”他人的工作。
 尽管短期看来这样做可以提高效率，但是也剥夺了他人提交贡献的机会。
 
@@ -154,7 +159,7 @@ The most common prow commands reviewers and approvers use are:
 [Prow](https://github.com/kubernetes/test-infra/blob/master/prow/README.md)
 是基于 Kubernetes 的 CI/CD 系统，基于拉取请求（PR）的触发运行不同任务。
 Prow 使得我们可以使用会话机器人一样的命令跨整个 Kubernetes 组织处理 GitHub
-动作，例如[添加和删除标签](#adding-and-removing-issue-labels)、关闭 Issues
+动作，例如[添加和删除标签](#adding-and-removing-issue-labels)、关闭 Issue
 以及指派批准人等等。你可以使用 `/<命令名称>` 的形式以 GitHub 评论的方式输入
 Prow 命令。
 
@@ -193,7 +198,7 @@ Prow 命令 | 角色限制 | 描述
 ## Triage and categorize issues
 
 In general, SIG Docs follows the
-[Kubernetes issue triage](https://github.com/kubernetes/community/blob/master/contributors/guide/issue-triage.md)
+[Kubernetes issue triage](https://github.com/kubernetes/community/blob/main/contributors/guide/issue-triage.md)
 process and uses the same labels.
 
 This GitHub Issue [filter](https://github.com/kubernetes/website/issues?q=is%3Aissue+is%3Aopen+-label%3Apriority%2Fbacklog+-label%3Apriority%2Fimportant-longterm+-label%3Apriority%2Fimportant-soon+-label%3Atriage%2Fneeds-information+-label%3Atriage%2Fsupport+sort%3Acreated-asc)
@@ -201,11 +206,13 @@ finds issues that might need triage.
 -->
 ## 对 Issue 进行诊断和分类
 
-一般而言，SIG Docs 遵从 [Kubernetes issue 判定](https://github.com/kubernetes/community/blob/master/contributors/guide/issue-triage.md) 流程并使用相同的标签。
+一般而言，SIG Docs 遵从
+[Kubernetes Issue 判定](https://github.com/kubernetes/community/blob/main/contributors/guide/issue-triage.md)
+流程并使用相同的标签。
 
 此 GitHub Issue
 [过滤器](https://github.com/kubernetes/website/issues?q=is%3Aissue+is%3Aopen+-label%3Apriority%2Fbacklog+-label%3Apriority%2Fimportant-longterm+-label%3Apriority%2Fimportant-soon+-label%3Atriage%2Fneeds-information+-label%3Atriage%2Fsupport+sort%3Acreated-asc)
-可以用来查找需要评判的 Issues。
+可以用来查找需要评判的 Issue。
 
 <!--
 ### Triaging an issue
@@ -225,19 +232,18 @@ finds issues that might need triage.
 
 1. 验证 Issue 的合法性
 
-  - 确保 Issue 是关于网站文档的。某些 Issue 可以通过回答问题或者为报告者提供
-    资源链接来快速关闭。
-    参考[请求支持或代码缺陷报告](#support-requests-or-code-bug-reports)
-    节以了解详细信息。
+  - 确保 Issue 是关于网站文档的。
+    某些 Issue 可以通过回答问题或者为报告者提供资源链接来快速关闭。
+    参考[请求支持或代码缺陷报告](#support-requests-or-code-bug-reports)节以了解详细信息。
   - 评估该 Issue 是否有价值。
-  - 如果 Issue 缺少足够的细节以至于无法采取行动，或者报告者没有通过模版提供
-    足够信息，可以添加 `triage/needs-information` 标签。
+  - 如果 Issue 缺少足够的细节以至于无法采取行动，或者报告者没有通过模版提供足够信息，
+    可以添加 `triage/needs-information` 标签。
   - 如果 Issue 同时标注了 `lifecycle/stale` 和 `triage/needs-information`
     标签，可以直接关闭。
 
 <!--
 2. Add a priority label (the
-   [Issue Triage Guidelines](https://github.com/kubernetes/community/blob/master/contributors/guide/issue-triage.md#define-priority)
+   [Issue Triage Guidelines](https://github.com/kubernetes/community/blob/main/contributors/guide/issue-triage.md#define-priority)
    define priority labels in detail)
 
   {{< table caption="Issue labels" >}}
@@ -254,12 +260,9 @@ finds issues that might need triage.
 
   At your discretion, take ownership of an issue and submit a PR for it
   (especially if it's quick or relates to work you're already doing).
-
-If you have questions about triaging an issue, ask in `#sig-docs` on Slack or
-the [kubernetes-sig-docs mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-docs).
 -->
 2. 添加优先级标签（
-  [Issue 判定指南](https://github.com/kubernetes/community/blob/master/contributors/guide/issue-triage.md#define-priority)中有优先级标签的详细定义)
+  [Issue 判定指南](https://github.com/kubernetes/community/blob/main/contributors/guide/issue-triage.md#define-priority)中有优先级标签的详细定义)
 
   {{< table caption="Issue 标签" >}}
   标签         | 描述
@@ -275,6 +278,10 @@ the [kubernetes-sig-docs mailing list](https://groups.google.com/forum/#!forum/k
    基于你自己的判断，你可以选择某 Issue 来处理，为之发起 PR
    （尤其是那些可以很快处理或与你已经在做的工作相关的 Issue）。
 
+<!--
+If you have questions about triaging an issue, ask in `#sig-docs` on Slack or
+the [kubernetes-sig-docs mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-docs).
+-->
 如果你对 Issue 评判有任何问题，可以在 `#sig-docs` Slack 频道或者
 [kubernetes-sig-docs 邮件列表](https://groups.google.com/forum/#!forum/kubernetes-sig-docs)
 中提问。
@@ -334,7 +341,7 @@ Label | Description
 -->
 ### Issue 生命周期标签
 
-Issues 通常都可以快速创建并关闭。
+Issue 通常都可以快速创建并关闭。
 不过也有些时候，某个 Issue 被创建之后会长期处于非活跃状态。
 也有一些时候，即使超过 90 天，某个 Issue 仍应保持打开状态。
 
@@ -368,7 +375,7 @@ SIG Docs 常常会遇到以下类型的 Issue，因此对其处理方式描述�
 
 如果针对同一个问题有不止一个打开的 Issue，可以将其合并为一个 Issue。
 你需要决定保留哪个 Issue 为打开状态（或者重新登记一个新的 Issue），
-然后将所有相关的信息复制过去并提供对关联 Issues 的链接。
+然后将所有相关的信息复制过去并提供对关联 Issue 的链接。
 最后，将所有其他描述同一问题的 Issue 标记为 `triage/duplicate` 并关闭之。
 保持只有一个 Issue 待处理有助于减少困惑，避免在同一问题上发生重复劳动。
 
@@ -378,27 +385,38 @@ SIG Docs 常常会遇到以下类型的 Issue，因此对其处理方式描述�
 If the dead link issue is in the API or `kubectl` documentation, assign them
 `/priority critical-urgent` until the problem is fully understood. Assign all
 other dead link issues `/priority important-longterm`, as they must be manually fixed.
-
-### Blog issues
-
-We expect [Kubernetes Blog](/blog/) entries to become
-outdated over time. Therefore, we only maintain blog entries less than a year old.
-If an issue is related to a blog entry that is more than one year old,
-close the issue without fixing.
 -->
-### 失效链接 Issues {#dead-link-issues}
+### 失效链接 Issue {#dead-link-issues}
 
 如果失效链接是关于 API 或者 `kubectl` 文档的，可以将其标记为
 `/priority critical-urgent`，直到问题原因被弄清楚为止。
 对于其他的链接失效问题，可以标记 `/priority important-longterm`，
 因为这些问题都需要手动处理。
 
+<!--
+### Blog issues
+
+We expect [Kubernetes Blog](/blog/) entries to become
+outdated over time. Therefore, we only maintain blog entries less than a year old.
+If an issue is related to a blog entry that is more than one year old,
+you should typically close the issue without fixing.
+
+You can send a link to [article updates and maintenance](/docs/contribute/blog/#maintenance)
+as part of the message you send when you close the PR.
+
+It is OK to make an exception where a relevant justification applies.
+-->
 ### 博客问题  {#blog-issues}
 
-我们预期 [Kubernetes 博客](/zh-cn/blog/)条目随着时间推移都会过期。
-因此，我们只维护一年内的博客条目。
-如果某个 Issue 是与某个超过一年的博客条目有关的，可以直接关闭
-Issue，不必修复。
+我们预期 [Kubernetes 博客](/zh-cn/blog/)中的文章随着时间推移都会过时。
+因此，我们只维护发布时间在一年内的博客文章。
+如果某个 Issue 是与发布时间超过一年的博客文章相关的，
+可以直接关闭此 Issue，不必修复。
+
+你可以在关闭 PR 时，附上[文章更新与维护](/zh-cn/docs/contribute/blog/#maintenance)链接，
+作为回复的一部分。
+
+如果有合理的解释或特殊情况，也可以作为例外酌情处理。
 
 <!--
 ### Support requests or code bug reports
@@ -414,11 +432,11 @@ Sample response to a request for support:
 -->
 ### 请求支持或代码缺陷报告  {#support-requests-or-code-bug-reports}
 
-某些文档 Issues 实际上是关于底层代码的 Issue 或者在某方面请求协助的问题，
+某些文档 Issue 实际上是关于底层代码的 Issue 或者在某方面请求协助的问题，
 例如某个教程无法正常工作。
-对于与文档无关的 Issues，关闭它并打上标签 `kind/support`，可以通过评论
+对于与文档无关的 Issue，关闭它并打上标签 `kind/support`，可以通过评论
 告知请求者其他支持渠道（Slack、Stack Overflow）。
-如果有相关的其他仓库，可以告诉请求者应该在哪个仓库登记与功能特性相关的 Issues
+如果有相关的其他仓库，可以告诉请求者应该在哪个仓库登记与功能特性相关的 Issue
 （通常会是 `kubernetes/kubernetes`）。
 
 下面是对支持请求的回复示例：

@@ -27,7 +27,7 @@ for the PR based on the owners for the affected files.
 ## Reviewing a PR
 
 Kubernetes documentation follows the
-[Kubernetes code review process](https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process).
+[Kubernetes code review process](https://github.com/kubernetes/community/blob/main/contributors/guide/owners.md#the-code-review-process).
 
 Everything described in [Reviewing a pull request](/docs/contribute/review/reviewing-prs)
 applies, but Reviewers and Approvers should also do the following:
@@ -101,7 +101,7 @@ To view the commands that you can use in a PR, see the
 ## Triage and categorize issues
 
 In general, SIG Docs follows the
-[Kubernetes issue triage](https://github.com/kubernetes/community/blob/master/contributors/guide/issue-triage.md)
+[Kubernetes issue triage](https://github.com/kubernetes/community/blob/main/contributors/guide/issue-triage.md)
 process and uses the same labels.
 
 This GitHub Issue [filter](https://github.com/kubernetes/website/issues?q=is%3Aissue+is%3Aopen+-label%3Apriority%2Fbacklog+-label%3Apriority%2Fimportant-longterm+-label%3Apriority%2Fimportant-soon+-label%3Atriage%2Fneeds-information+-label%3Atriage%2Fsupport+sort%3Acreated-asc)
@@ -120,7 +120,7 @@ finds issues that might need triage.
    - Close the issue if it has both the `lifecycle/stale` and `triage/needs-information` labels.
 
 2. Add a priority label (the
-   [Issue Triage Guidelines](https://github.com/kubernetes/community/blob/master/contributors/guide/issue-triage.md#define-priority)
+   [Issue Triage Guidelines](https://github.com/kubernetes/community/blob/main/contributors/guide/issue-triage.md#define-priority)
    define priority labels in detail)
 
   {{< table caption="Issue labels" >}}
@@ -197,7 +197,12 @@ other dead link issues `/priority important-longterm`, as they must be manually 
 We expect [Kubernetes Blog](/blog/) entries to become
 outdated over time. Therefore, we only maintain blog entries less than a year old.
 If an issue is related to a blog entry that is more than one year old,
-close the issue without fixing.
+you should typically close the issue without fixing.
+
+You can send a link to [article updates and maintenance](/docs/contribute/blog/#maintenance)
+as part of the message you send when you close the PR.
+
+It is OK to make an exception where a relevant justification applies.
 
 ### Support requests or code bug reports
 

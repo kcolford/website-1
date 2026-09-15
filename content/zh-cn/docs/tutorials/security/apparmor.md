@@ -46,7 +46,8 @@ AppArmor, see
 AppArmor is an optional kernel module and Kubernetes feature, so verify it is supported on your
 Nodes before proceeding:
 -->
-AppArmor 是一个可选的内核模块和 Kubernetes 特性，因此请在继续之前验证你的节点是否支持它：
+AppArmor 是一个可选的内核模块和 Kubernetes 特性，
+因此请在继续之前验证你的节点是否支持它：
 
 <!--
 1. AppArmor kernel module is enabled -- For the Linux kernel to enforce an AppArmor profile, the
@@ -68,6 +69,7 @@ AppArmor 是一个可选的内核模块和 Kubernetes 特性，因此请在继�
    The kubelet verifies that AppArmor is enabled on the host before admitting a pod with AppArmor
    explicitly configured.
    -->
+   
    kubelet 会先验证主机上是否已启用 AppArmor，然后再接纳显式配置了 AppArmor 的 Pod。
 
 <!--
@@ -107,7 +109,7 @@ AppArmor 是一个可选的内核模块和 Kubernetes 特性，因此请在继�
    For more details on loading profiles on nodes, see
    [Setting up nodes with profiles](#setting-up-nodes-with-profiles).
    -->
-   
+
    有关在节点上加载配置文件的详细信息，请参见[使用配置文件设置节点](#setting-up-nodes-with-profiles)。
 
 <!-- lessoncontent -->
@@ -117,14 +119,14 @@ AppArmor 是一个可选的内核模块和 Kubernetes 特性，因此请在继�
 -->
 ## 保护 Pod {#securing-a-pod}
 
-{{< note >}}
+{{< alert color="info" title="Note" >}}
 <!--
 Prior to Kubernetes v1.30, AppArmor was specified through annotations. Use the documentation version
 selector to view the documentation with this deprecated API.
 -->
 在 Kubernetes v1.30 之前，AppArmor 是通过注解指定的。
 使用文档版本选择器查看包含此已弃用 API 的文档。
-{{< /note >}}
+{{< /alert >}}
 
 <!--
 AppArmor profiles can be specified at the pod level or container level. The container AppArmor
@@ -193,12 +195,11 @@ k8s-apparmor-example-deny-write (enforce)
 
 <!--
 ## Example
--->
-## 举例 {#example}
 
-<!--
 *This example assumes you have already set up a cluster with AppArmor support.*
 -->
+## 示例 {#example}
+
 **本例假设你已经设置了一个集群使用 AppArmor 支持。**
 
 <!--
@@ -206,6 +207,20 @@ First, load the profile you want to use onto your Nodes. This profile blocks all
 -->
 首先，将要使用的配置文件加载到节点上，该配置文件阻止所有文件写入操作：
 
+<!--
+```
+#include <tunables/global>
+
+profile k8s-apparmor-example-deny-write flags=(attach_disconnected) {
+  #include <abstractions/base>
+
+  file,
+
+  # Deny all file writes.
+  deny /** w,
+}
+```
+-->
 ```
 #include <tunables/global>
 
@@ -220,20 +235,37 @@ profile k8s-apparmor-example-deny-write flags=(attach_disconnected) {
 ```
 
 <!--
-The profile needs to loaded onto all nodes, since you don't know where the pod will be scheduled.
-For this example we'll use SSH to install the profiles, but other approaches are
+The profile needs to be loaded onto all nodes, since you don't know where the pod will be scheduled.
+For this example you can use SSH to install the profiles, but other approaches are
 discussed in [Setting up nodes with profiles](#setting-up-nodes-with-profiles).
 -->
 由于不知道 Pod 将被调度到哪里，该配置文件需要加载到所有节点上。
-在本例中，我们将使用 SSH 来安装概要文件，
+在本例中，你可以使用 SSH 来安装配置文件，
 但是在[使用配置文件设置节点](#setting-up-nodes-with-profiles)中讨论了其他方法。
 
 <!--
+```shell
 # This example assumes that node names match host names, and are reachable via SSH.
+NODES=($( kubectl get node -o jsonpath='{.items[*].status.addresses[?(.type == "Hostname")].address}' ))
+
+for NODE in ${NODES[*]}; do ssh $NODE 'sudo apparmor_parser -q <<EOF
+#include <tunables/global>
+
+profile k8s-apparmor-example-deny-write flags=(attach_disconnected) {
+  #include <abstractions/base>
+
+  file,
+
+  # Deny all file writes.
+  deny /** w,
+}
+EOF'
+done
+```
 -->
 ```shell
 # 此示例假设节点名称与主机名称匹配，并且可通过 SSH 访问。
-NODES=($(kubectl get nodes -o name))
+NODES=($( kubectl get node -o jsonpath='{.items[*].status.addresses[?(.type == "Hostname")].address}' ))
 for NODE in ${NODES[*]}; do ssh $NODE 'sudo apparmor_parser -q <<EOF
 #include <tunables/global>
 
@@ -357,21 +389,21 @@ An Event provides the error message with the reason, the specific wording is run
 
 <!--
 ## Administration
--->
-## 管理 {#administration}
 
-<!--
 ### Setting up Nodes with profiles
--->
-### 使用配置文件设置节点 {#setting-up-nodes-with-profiles}
 
-<!--
 Kubernetes {{< skew currentVersion >}} does not currently provide any built-in mechanisms for loading AppArmor profiles onto
 Nodes. Profiles can be loaded through custom infrastructure or tools like the
 [Kubernetes Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator).
 -->
-Kubernetes {{< skew currentVersion >}} 目前不提供任何本地机制来将 AppArmor 配置文件加载到节点上。
-可以通过自定义基础设施或工具（例如 [Kubernetes Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator)）
+## 管理 {#administration}
+
+### 使用配置文件设置节点 {#setting-up-nodes-with-profiles}
+
+Kubernetes {{< skew currentVersion >}} 目前不提供任何本地机制来将
+AppArmor 配置文件加载到节点上。
+可以通过自定义基础设施或工具（例如
+[Kubernetes Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator)）
 加载配置文件。
 
 <!--
@@ -426,13 +458,14 @@ AppArmor 将详细消息记录到 `dmesg`，
 -->
 ## 指定 AppArmor 限制   {#specifying-apparmor-confinement}
 
-{{< caution >}}
+{{< alert color="caution" title="Caution" >}}
 <!--
 Prior to Kubernetes v1.30, AppArmor was specified through annotations. Use the documentation version
 selector to view the documentation with this deprecated API.
 -->
-在 Kubernetes v1.30 之前，AppArmor 是通过注解指定的。使用文档版本选择器查看包含此已弃用 API 的文档。
-{{< /caution >}}
+在 Kubernetes v1.30 之前，AppArmor 是通过注解指定的。
+使用文档版本选择器查看包含此已弃用 API 的文档。
+{{< /alert >}}
 
 <!--
 ### AppArmor profile within security context  {#appArmorProfile}

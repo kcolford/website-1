@@ -30,7 +30,7 @@ weight: 200
 プロセス名前空間の共有は、`v1.PodSpec`の`shareProcessNamespace`フィールドを使用して有効にします。
 例:
 
-{{% codenew file="pods/share-process-namespace.yaml" %}}
+{{% code_sample file="pods/share-process-namespace.yaml" %}}
 
 1. クラスターにPod `nginx`を作成します:
 
@@ -41,7 +41,7 @@ weight: 200
 1. `shell`コンテナにアタッチして`ps`を実行します:
 
     ```shell
-    kubectl attach -it nginx -c shell
+    kubectl exec -it nginx -c shell -- /bin/sh
     ```
 
     コマンドプロンプトが表示されない場合は、Enterキーを押してみてください。

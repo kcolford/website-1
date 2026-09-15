@@ -74,7 +74,7 @@ KUBECONFIG=~/.kube/config:~/.kube/kubconfig2
 kubectl config view
 
 # Show merged kubeconfig settings and raw certificate data and exposed secrets
-kubectl config view --raw 
+kubectl config view --raw
 
 # get the password for the e2e user
 kubectl config view -o jsonpath='{.users[?(@.name == "e2e")].user.password}'
@@ -373,7 +373,7 @@ kubectl port-forward my-pod 5000:6000               # Listen on port 5000 on the
 kubectl exec my-pod -- ls /                         # Run command in existing pod (1 container case)
 kubectl exec --stdin --tty my-pod -- /bin/sh        # Interactive shell access to a running pod (1 container case)
 kubectl exec my-pod -c my-container -- ls /         # Run command in existing pod (multi-container case)
-kubectl debug my-pod -it --image=busybox:1.28       # Create an interactive debugging session witin existing pod and immediately attach to it
+kubectl debug my-pod -it --image=busybox:1.28       # Create an interactive debugging session within existing pod and immediately attach to it
 kubectl debug node/my-node -it --image=busybox:1.28 # Create an interactive debugging session on a node and immediately attach to it
 kubectl top pod                                     # Show metrics for all pods in the default namespace
 kubectl top pod POD_NAME --containers               # Show metrics for a given pod and its containers
@@ -461,6 +461,7 @@ Output format | Description
 `-o=json`     | Output a JSON formatted API object
 `-o=jsonpath=<template>` | Print the fields defined in a [jsonpath](/docs/reference/kubectl/jsonpath) expression
 `-o=jsonpath-file=<filename>` | Print the fields defined by the [jsonpath](/docs/reference/kubectl/jsonpath) expression in the `<filename>` file
+`-o=kyaml`    | Output a [KYAML](/docs/reference/encodings/kyaml) formatted API object. KYAML is a Kubernetes-specific dialect of YAML, and can be parsed as YAML.
 `-o=name`     | Print only the resource name and nothing else
 `-o=wide`     | Output in the plain-text format with any additional information, and for pods, the node name is included
 `-o=yaml`     | Output a YAML formatted API object
@@ -485,7 +486,7 @@ More examples in the kubectl [reference documentation](/docs/reference/kubectl/#
 
 ### Kubectl output verbosity and debugging
 
-Kubectl verbosity is controlled with the `-v` or `--v` flags followed by an integer representing the log level. General Kubernetes logging conventions and the associated log levels are described [here](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md).
+Kubectl verbosity is controlled with the `-v` or `--v` flags followed by an integer representing the log level. General Kubernetes logging conventions and the associated log levels are described [here](https://github.com/kubernetes/community/blob/main/contributors/devel/sig-instrumentation/logging.md).
 
 Verbosity | Description
 --------------| -----------
@@ -502,9 +503,12 @@ Verbosity | Description
 
 ## {{% heading "whatsnext" %}}
 
-* Read the [kubectl overview](/docs/reference/kubectl/) and learn about [JsonPath](/docs/reference/kubectl/jsonpath).
+* Learn about [kubectl overview](/docs/concepts/overview/kubectl/) and its role in the Kubernetes ecosystem.
+* Read the [kubectl reference](/docs/reference/kubectl/) and learn about [JsonPath](/docs/reference/kubectl/jsonpath).
 
 * See [kubectl](/docs/reference/kubectl/kubectl/) options.
+
+* See [kuberc](/docs/reference/kubectl/kuberc) options.
 
 * Also read [kubectl Usage Conventions](/docs/reference/kubectl/conventions/) to understand how to use kubectl in reusable scripts.
 

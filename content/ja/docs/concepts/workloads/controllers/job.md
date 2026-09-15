@@ -1,5 +1,5 @@
 ---
-title: Jobs
+title: Job
 content_type: concept
 feature:
   title: バッチ実行
@@ -25,7 +25,7 @@ Jobで複数のPodを並列で実行することもできます。
 
 下記にJobの定義例を記載しています。πを2000桁まで計算して出力するJobで、完了するまで約10秒かかります。
 
-{{% codenew file="controllers/job.yaml" %}}
+{{% code_sample file="controllers/job.yaml" %}}
 
 このコマンドで実行できます:
 
@@ -249,7 +249,7 @@ Jobで実行するのに適したタスクは主に3種類あります:
 - `Indexed`: Jobに属するPodはそれぞれ、0から`.spec.completions-1`の範囲内の完了インデックスを取得できます。インデックスは下記の三つの方法で取得できます。
   - Podアノテーション`batch.kubernetes.io/job-completion-index`。
   - Podホスト名の一部として、`$(job-name)-$(index)`の形式になっています。
-    インデックス付きJob(Indexed Job)と{{< glossary_tooltip term_id="Service" >}}を一緒に使用すると、Jobに属するPodはお互いにDNSを介して確定的ホスト名で通信できます。この設定方法の詳細は[Pod間通信を使用したJob](https://kubernetes.io/docs/tasks/job/job-with-pod-to-pod-communication/)を参照してください。　
+    インデックス付きJob(Indexed Job)と{{< glossary_tooltip term_id="Service" >}}を一緒に使用すると、Jobに属するPodはお互いにDNSを介して確定的ホスト名で通信できます。この設定方法の詳細は[Pod間通信を使用したJob](https://kubernetes.io/docs/tasks/job/job-with-pod-to-pod-communication/)を参照してください。
   - コンテナ化されたタスクの環境変数`JOB_COMPLETION_INDEX`。
 
   各インデックスに1つずつ正常に完了したPodがあると、Jobは完了したとみなされます。このモードの使い方については、[静的な処理の割り当てを使用した並列処理のためのインデックス付きJob](/ja/docs/tasks/job/indexed-parallel-processing-static/)を参照してください。
@@ -311,7 +311,7 @@ Podがノードからキックされた(ノードがアップグレード、再�
 
 以下は、`podFailurePolicy`を定義するJobのマニフェストです:
 
-{{% codenew file="controllers/job-pod-failure-policy-example.yaml" %}}
+{{% code_sample file="controllers/job-pod-failure-policy-example.yaml" %}}
 
 上記の例では、Pod失敗ポリシーの最初のルールは、`main`コンテナが42の終了コードで失敗した場合、そのJobを失敗とマークすることを指定しています。以下は特に `main`コンテナに関するルールです:
 
@@ -433,11 +433,11 @@ Jobオブジェクトは、Podの確実な並列実行をサポートするた�
 並列計算にはいくつかのパターンがあり、それぞれに長所と短所があります。
 トレードオフの関係にあるのは:
 
-- 各作業項目に1つのJobオブジェクト vs. すべての作業項目に1つのJobオブジェクト。  
-　後者は大量の作業項目を処理する場合に適しています。  
-　前者は大量のJobオブジェクトを管理するため、ユーザーとシステムにオーバーヘッドをかけることになります。
+- 各作業項目に1つのJobオブジェクト vs. すべての作業項目に1つのJobオブジェクト。
+後者は大量の作業項目を処理する場合に適しています。
+前者は大量のJobオブジェクトを管理するため、ユーザーとシステムにオーバーヘッドをかけることになります。
 - 作成されるPod数が作業項目数と等しい、 vs. 各Podが複数の作業項目を処理する。
-　前者は通常、既存のコードやコンテナへの変更が少なくて済みます。
+前者は通常、既存のコードやコンテナへの変更が少なくて済みます。
   後者は上記と同じ理由で、大量の作業項目を処理する場合に適しています。
 - ワークキューを利用するアプローチもいくつかあります。それを使うためには、キューサービスを実行し、既存のプログラムやコンテナにワークキューを利用させるための改造を行う必要があります。
   他のアプローチは既存のコンテナ型アプリケーションに適用しやすいです。
@@ -634,7 +634,7 @@ spec:
 `JobTrackingWithFinalizers`機能が無効になっている時に作成されたJobについては、コントロールプレーンを1.26にアップグレードしても、ファイナライザーを使用してJobを追跡しません。
 {{< /note >}}
 
-コントロールプレーンは任意のJobに属するPodを追跡し、そのPodがAPIサーバーから削除されたかどうか認識します。そのためJobコントローラーはファイナライザー`batch.kubernetes.io/job-tracking`を持つPodを作成します。コントローラーがファイナライザーを削除するのは、PodがJobステータスに反映された後なので、他のコントローラーやユーザがPodを削除することができます。
+コントロールプレーンは任意のJobに属するPodを追跡し、そのPodがAPIサーバーから削除されたかどうか認識します。そのためJobコントローラーはファイナライザー`batch.kubernetes.io/job-tracking`を持つPodを作成します。コントローラーがファイナライザーを削除するのは、PodがJobステータスに反映された後なので、他のコントローラーやユーザーがPodを削除することができます。
 
 Kubernetes 1.26にアップグレードする前、またはフィーチャーゲート`JobTrackingWithFinalizers`が有効になる前に作成されたJobは、Podファイナライザーを使用せずに追跡されます。Job{{< glossary_tooltip term_id="controller" text="コントローラー" >}}は、クラスターに存在するPodのみに基づいて、`succeeded`Podと`failed`Podのステータスカウンタを更新します。クラスターからPodが削除されると、コントロールプレーンはJobの進捗を見失う可能性があります。
 
@@ -646,7 +646,7 @@ Jobが`batch.kubernetes.io/job-tracking`というアノテーションを持っ�
 
 `.spec.parallelism`と`.spec.compleitions`の両方を、`.spec.parallelism` == `.spec.compleitions`となるように変更することで、インデックス付きJobを増減させることができます。[APIサーバ](/docs/reference/command-line-tools-reference/kube-apiserver/)の`ElasticIndexedJob`[フィーチャーゲート](/ja/docs/reference/command-line-tools-reference/feature-gates/)が無効になっている場合、`.spec.compleitions`は不変です。
 
-静的なインデックス付きJobの使用例としては、MPI、Horovord、Ray、PyTorchトレーニングジョブなど、インデックス付きJobのスケーリングを必要とするバッチワークロードがあります。
+静的なインデックス付きJobの使用例としては、MPI、Horovod、Ray、PyTorchトレーニングジョブなど、インデックス付きJobのスケーリングを必要とするバッチワークロードがあります。
 
 ## 代替案  {#alternatives}
 
@@ -665,9 +665,6 @@ Replication Controllerは、終了することが想定されていないPod(Web
 ### シングルJobによるコントローラーPodの起動  {#single-job-starts-controller-pod}
 
 もう一つのパターンは、一つのJobが一つPodを作り、そのPodがカスタムコントローラーのような役割を果たし、他のPodを作ります。これは最も柔軟性がありますが、使い始めるにはやや複雑で、Kubernetesとの統合もあまりできません。
-
-このパターンの一例としては、Sparkマスターコントローラーを起動し、sparkドライバーを実行してクリーンアップするスクリプトを実行するPodをJobで起動する([sparkの例](https://github.com/kubernetes/examples/tree/master/staging/spark/README.md)を参照)が挙げられます。
-
 
 この方法のメリットは、全処理過程でJobオブジェクトが完了する保証がありながらも、どのPodを作成し、どのように作業を割り当てるかを完全に制御できることです。
 

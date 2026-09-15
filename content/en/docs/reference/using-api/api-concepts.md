@@ -15,11 +15,13 @@ primary resources via the standard HTTP verbs (POST, PUT, PATCH, DELETE,
 GET).
 
 For some resources, the API includes additional subresources that allow
-fine grained authorization (such as separate views for Pod details and
+fine-grained authorization (such as separate views for Pod details and
 log retrievals), and can accept and serve those resources in different
 representations for convenience or efficiency.
 
-Kubernetes supports efficient change notifications on resources via *watches*.
+Kubernetes supports efficient change notifications on resources via
+_watches_:
+{{< glossary_definition prepend="in the Kubernetes API, watch is" term_id="watch" length="short" >}}
 Kubernetes also provides consistent list operations so that API clients can
 effectively cache, track, and synchronize the state of resources.
 
@@ -55,27 +57,36 @@ All objects you can create via the API have a unique object
 {{< glossary_tooltip text="name" term_id="name" >}} to allow idempotent creation and
 retrieval, except that virtual resource types may not have unique names if they are
 not retrievable, or do not rely on idempotency.
-Within a {{< glossary_tooltip text="namespace" term_id="namespace" >}}, only one object
-of a given kind can have a given name at a time. However, if you delete the object,
-you can make a new object with the same name. Some objects are not namespaced (for
-example: Nodes), and so their names must be unique across the whole cluster.
+
+Within a {{< glossary_tooltip text="namespace" term_id="namespace" >}}, an object's
+unique identity is defined by the tuple of its **API Group**, **Resource**,
+**Namespace**, and **Name**.
+
+* **Cross-Group:** You can have two objects with the same name if they belong to
+different API Groups (for example, `apps` vs. `example.com`).
+* **Cross-Version:** Different API Versions (such as `v1` and `v1beta1`) of the
+same Group and Resource represent the same underlying data. Creating an object
+with the same name in a different version of the same group results in a name
+clash, as they share the same identity in storage.
+
+Some objects are not namespaced (for example: Nodes), and so their names must
+be unique across the whole cluster.
 
 ### API verbs
 
 Almost all object resource types support the standard HTTP verbs - GET, POST, PUT, PATCH,
-and DELETE. Kubernetes also uses its own verbs, which are often written lowercase to distinguish
+and DELETE. Kubernetes also uses its own verbs, which are often written in lowercase to distinguish
 them from HTTP verbs.
 
-Kubernetes uses the term **list** to describe returning a [collection](#collections) of
-resources to distinguish from retrieving a single resource which is usually called
+Kubernetes uses the term **list** to describe the action of returning a [collection](#collections) of
+resources, to distinguish it from retrieving a single resource which is usually called
 a **get**. If you sent an HTTP GET request with the `?watch` query parameter,
-Kubernetes calls this a **watch** and not a **get** (see
-[Efficient detection of changes](#efficient-detection-of-changes) for more details).
+Kubernetes calls this a **watch** and not a **get**
+(see [Efficient detection of changes](#efficient-detection-of-changes) for more details).
 
 For PUT requests, Kubernetes internally classifies these as either **create** or **update**
 based on the state of the existing object. An **update** is different from a **patch**; the
 HTTP verb for a **patch** is PATCH.
-
 
 ## Resource URIs
 
@@ -87,6 +98,7 @@ is controlled by authorization checks on the namespace scope.
 Note: core resources use `/api` instead of `/apis` and omit the GROUP path segment.
 
 Examples:
+
 * `/api/v1/namespaces`
 * `/api/v1/pods`
 * `/api/v1/namespaces/my-namespace/pods`
@@ -104,9 +116,12 @@ The following paths are used to retrieve collections and resources:
 
 * Namespace-scoped resources:
 
-  * `GET /apis/GROUP/VERSION/RESOURCETYPE` - return the collection of all instances of the resource type across all namespaces
-  * `GET /apis/GROUP/VERSION/namespaces/NAMESPACE/RESOURCETYPE` - return collection of all instances of the resource type in NAMESPACE
-  * `GET /apis/GROUP/VERSION/namespaces/NAMESPACE/RESOURCETYPE/NAME` - return the instance of the resource type with NAME in NAMESPACE
+  * `GET /apis/GROUP/VERSION/RESOURCETYPE` - return the collection of all
+    instances of the resource type across all namespaces
+  * `GET /apis/GROUP/VERSION/namespaces/NAMESPACE/RESOURCETYPE` - return
+    collection of all instances of the resource type in NAMESPACE
+  * `GET /apis/GROUP/VERSION/namespaces/NAMESPACE/RESOURCETYPE/NAME` -
+    return the instance of the resource type with NAME in NAMESPACE
 
 Since a namespace is a cluster-scoped resource type, you can retrieve the list
 (“collection”) of all namespaces with `GET /api/v1/namespaces` and details about
@@ -120,6 +135,259 @@ see the [API reference](/docs/reference/kubernetes-api/) for more information. I
 is not possible to access sub-resources across multiple resources - generally a new
 virtual resource type would be used if that becomes necessary.
 
+## HTTP media types {#alternate-representations-of-resources}
+
+Over HTTP, Kubernetes supports JSON, YAML, CBOR and Protobuf wire encodings.
+
+By default, Kubernetes returns objects in [JSON serialization](#json-encoding), using the
+`application/json` media type. Although JSON is the default, clients may request a response in
+YAML, or use the more efficient binary [Protobuf representation](#protobuf-encoding) for better performance at scale.
+
+The Kubernetes API implements standard HTTP content type negotiation: passing an
+`Accept` header with a `GET` call will request that the server tries to return
+a response in your preferred media type. If you want to send an object in Protobuf to
+the server for a `PUT` or `POST` request, you must set the `Content-Type` request header
+appropriately.
+
+If you request an available media type, the API server returns a response with a suitable
+`Content-Type`; if none of the media types you request are supported, the API server returns
+a `406 Not acceptable` error message.
+All built-in resource types support the `application/json` media type.
+
+#### Chunked encoding of collections
+
+For JSON and Protobuf encoding, Kubernetes implements custom encoders that write item, by item.
+The feature doesn't change the output, but allows API server to avoid loading whole LIST response into memory.
+Using other types of encoding (including pretty representation of JSON)
+should be avoided for large collections of resources (>100MB) as it can have negative performance impact.
+
+### JSON resource encoding {#json-encoding}
+
+The Kubernetes API defaults to using [JSON](https://www.json.org/json-en.html) for encoding
+HTTP message bodies.
+
+For example:
+
+1. List all of the pods on a cluster, without specifying a preferred format
+
+   ```
+   GET /api/v1/pods
+   ```
+
+   ```
+   200 OK
+   Content-Type: application/json
+
+   … JSON encoded collection of Pods (PodList object)
+   ```
+
+1. Create a pod by sending JSON to the server, requesting a JSON response.
+
+   ```
+   POST /api/v1/namespaces/test/pods
+   Content-Type: application/json
+   Accept: application/json
+   … JSON encoded Pod object
+   ```
+
+   ```
+   200 OK
+   Content-Type: application/json
+
+   {
+     "kind": "Pod",
+     "apiVersion": "v1",
+     …
+   }
+   ```
+
+You can also request [table](#table-fetches) and [metadata-only](#metadata-only-fetches)
+representations of this encoding.
+
+### YAML resource encoding {#yaml-encoding}
+
+Kubernetes also supports the [`application/yaml`](https://www.rfc-editor.org/rfc/rfc9512.html)
+media type for both requests and responses. [`YAML`](https://yaml.org/)
+can be used for defining Kubernetes manifests and API interactions.
+
+For example:
+
+1. List all of the pods on a cluster in YAML format
+
+   ```
+   GET /api/v1/pods
+   Accept: application/yaml
+   ```
+   
+   ```
+   200 OK
+   Content-Type: application/yaml
+
+   … YAML encoded collection of Pods (PodList object)
+   ```
+
+1. Create a pod by sending YAML-encoded data to the server, requesting a YAML response:
+
+   ```
+   POST /api/v1/namespaces/test/pods
+   Content-Type: application/yaml
+   Accept: application/yaml
+   … YAML encoded Pod object
+   ```
+
+   ```
+   200 OK
+   Content-Type: application/yaml
+
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: my-pod
+     …
+   ```
+
+You can also request [table](#table-fetches) and [metadata-only](#metadata-only-fetches)
+representations of this encoding.
+
+### Kubernetes Protobuf encoding {#protobuf-encoding}
+
+Kubernetes uses an envelope wrapper to encode [Protobuf](https://protobuf.dev/) responses.
+That wrapper starts with a 4 byte magic number to help identify content in disk or in etcd as Protobuf
+(as opposed to JSON). The 4 byte magic number data is followed by a Protobuf encoded wrapper message, which
+describes the encoding and type of the underlying object. Within the Protobuf wrapper message,
+the inner object data is recorded using the `raw` field of Unknown (see the [IDL](#protobuf-encoding-idl)
+for more detail).
+
+For example:
+
+1. List all of the pods on a cluster in Protobuf format.
+
+   ```
+   GET /api/v1/pods
+   Accept: application/vnd.kubernetes.protobuf
+   ```
+
+   ```
+   200 OK
+   Content-Type: application/vnd.kubernetes.protobuf
+
+   … binary encoded collection of Pods (PodList object)
+   ```
+
+1. Create a pod by sending Protobuf encoded data to the server, but request a response
+   in JSON.
+
+   ```
+   POST /api/v1/namespaces/test/pods
+   Content-Type: application/vnd.kubernetes.protobuf
+   Accept: application/json
+   … binary encoded Pod object
+   ```
+
+   ```
+   200 OK
+   Content-Type: application/json
+
+   {
+     "kind": "Pod",
+     "apiVersion": "v1",
+     ...
+   }
+   ```
+
+You can use both techniques together and use Kubernetes' Protobuf encoding to interact with any API that
+supports it, for both reads and writes. Only some API resource types are [compatible](#protobuf-encoding-compatibility)
+with Protobuf.
+
+<a id="protobuf-encoding-idl" />
+
+The wrapper format is:
+
+```
+A four byte magic number prefix:
+  Bytes 0-3: "k8s\x00" [0x6b, 0x38, 0x73, 0x00]
+
+An encoded Protobuf message with the following IDL:
+  message Unknown {
+    // typeMeta should have the string values for "kind" and "apiVersion" as set on the JSON object
+    optional TypeMeta typeMeta = 1;
+
+    // raw will hold the complete serialized object in protobuf. See the protobuf definitions in the client libraries for a given kind.
+    optional bytes raw = 2;
+
+    // contentEncoding is encoding used for the raw data. Unspecified means no encoding.
+    optional string contentEncoding = 3;
+
+    // contentType is the serialization method used to serialize 'raw'. Unspecified means application/vnd.kubernetes.protobuf and is usually
+    // omitted.
+    optional string contentType = 4;
+  }
+
+  message TypeMeta {
+    // apiVersion is the group/version for this type
+    optional string apiVersion = 1;
+    // kind is the name of the object schema. A protobuf definition should exist for this object.
+    optional string kind = 2;
+  }
+```
+
+{{< note >}}
+Clients that receive a response in `application/vnd.kubernetes.protobuf` that does
+not match the expected prefix should reject the response, as future versions may need
+to alter the serialization format in an incompatible way and will do so by changing
+the prefix.
+{{< /note >}}
+
+You can also request [table](#table-fetches) and [metadata-only](#metadata-only-fetches)
+representations of this encoding.
+
+#### Compatibility with Kubernetes Protobuf {#protobuf-encoding-compatibility}
+
+Not all API resource types support Kubernetes' Protobuf encoding; specifically, Protobuf isn't
+available for resources that are defined as
+{{< glossary_tooltip term_id="CustomResourceDefinition" text="CustomResourceDefinitions" >}}
+or are served via the
+{{< glossary_tooltip text="aggregation layer" term_id="aggregation-layer" >}}.
+
+As a client, if you might need to work with extension types you should specify multiple
+content types in the request `Accept` header to support fallback to JSON.
+For example:
+
+```
+Accept: application/vnd.kubernetes.protobuf, application/json
+```
+
+### CBOR resource encoding {#cbor-encoding}
+
+{{< feature-state feature_gate_name="CBORServingAndStorage" >}}
+
+With the `CBORServingAndStorage` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
+enabled, request and response bodies for all built-in resource types and all resources defined by a
+{{< glossary_tooltip term_id="CustomResourceDefinition" text="CustomResourceDefinition" >}} may be encoded to the
+[CBOR](https://www.rfc-editor.org/rfc/rfc8949) binary data format. CBOR is also supported at the
+{{< glossary_tooltip text="aggregation layer" term_id="aggregation-layer" >}} if it is enabled in
+individual aggregated API servers.
+
+Clients should indicate the IANA media type `application/cbor` in the `Content-Type` HTTP request
+header when the request body contains a single CBOR
+[encoded data item](https://www.rfc-editor.org/rfc/rfc8949.html#section-1.2-4.2), and in the `Accept` HTTP request
+header when prepared to accept a CBOR encoded data item in the response. API servers will use
+`application/cbor` in the `Content-Type` HTTP response header when the response body contains a
+CBOR-encoded object.
+
+If an API server encodes its response to a [watch request](#efficient-detection-of-changes) using
+CBOR, the response body will be a [CBOR Sequence](https://www.rfc-editor.org/rfc/rfc8742) and the
+`Content-Type` HTTP response header will use the IANA media type `application/cbor-seq`. Each entry
+of the sequence (if any) is a single CBOR-encoded watch event.
+
+In addition to the existing `application/apply-patch+yaml` media type for YAML-encoded
+[server-side apply configurations](#patch-and-apply), API servers that enable CBOR will accept the
+`application/apply-patch+cbor` media type for CBOR-encoded server-side apply configurations. There
+is no supported CBOR equivalent for `application/json-patch+json` or `application/merge-patch+json`,
+or `application/strategic-merge-patch+json`.
+
+You can also request [table](#table-fetches) and [metadata-only](#metadata-only-fetches)
+representations of this encoding.
 
 ## Efficient detection of changes
 
@@ -148,7 +416,7 @@ For example:
 
 1. List all of the pods in a given namespace.
 
-   ```
+   ```http
    GET /api/v1/namespaces/test/pods
    ---
    200 OK
@@ -167,7 +435,7 @@ For example:
    _test_ namespace. Each change notification is a JSON document. The HTTP response body
    (served as `application/json`) consists a series of JSON documents.
 
-   ```
+   ```http
    GET /api/v1/namespaces/test/pods?watch=1&resourceVersion=10245
    ---
    200 OK
@@ -204,7 +472,7 @@ to a given `resourceVersion` the client is requesting have already been sent. Th
 document representing the `BOOKMARK` event is of the type requested by the request,
 but only includes a `.metadata.resourceVersion` field. For example:
 
-```
+```http
 GET /api/v1/namespaces/test/pods?watch=1&resourceVersion=10245&allowWatchBookmarks=true
 ---
 200 OK
@@ -233,13 +501,11 @@ the API server will send any `BOOKMARK` event even when requested.
 
 On large clusters, retrieving the collection of some resource types may result in
 a significant increase of resource usage (primarily RAM) on the control plane.
-In order to alleviate its impact and simplify the user experience of the **list** + **watch**
-pattern, Kubernetes v1.27 introduces as an alpha feature the support
-for requesting the initial state (previously requested via the **list** request) as part of
-the **watch** request.
+To alleviate the impact and simplify the user experience of the **list** + **watch**
+pattern, Kubernetes v1.32 promotes to beta the feature that allows requesting the initial state
+(previously requested via the **list** request) as part of the **watch** request.
 
-Provided that the `WatchList` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
-is enabled, this can be achieved by specifying `sendInitialEvents=true` as query string parameter
+On the client-side the initial state can be requested by specifying `sendInitialEvents=true` as query string parameter
 in a **watch** request. If set, the API server starts the watch stream with synthetic init
 events (of type `ADDED`) to build the whole state of all existing objects followed by a
 [`BOOKMARK` event](/docs/reference/using-api/api-concepts/#watch-bookmarks)
@@ -262,7 +528,7 @@ is 10245 and there are two pods: `foo` and `bar`. Then sending the following req
 _consistent read_ by setting empty resource version using `resourceVersion=`) could result
 in the following sequence of events:
 
-```
+```http
 GET /api/v1/namespaces/test/pods?watch=1&sendInitialEvents=true&allowWatchBookmarks=true&resourceVersion=&resourceVersionMatch=NotOlderThan
 ---
 200 OK
@@ -285,6 +551,143 @@ Content-Type: application/json
 <followed by regular watch stream starting from resourceVersion="10245">
 ```
 
+## Sharded list and watch {#sharded-list-and-watch}
+
+{{< feature-state feature_gate_name="ShardedListAndWatch" >}}
+
+On large clusters, controllers that watch high-cardinality resource types (such as Pods
+or Endpoints) may consume significant network bandwidth and CPU by receiving and
+deserializing the full event stream, even when they only need a subset of objects.
+Sharded list and watch allows horizontally scaled controllers to split the workload
+so that each replica only receives the events it is responsible for.
+
+Kubernetes {{< skew currentVersion >}} introduces an alpha feature that allows clients
+to request a **filtered shard** of objects from the API server, using hash-based
+partitioning on metadata fields. To use this feature, enable the `ShardedListAndWatch`
+[feature gate](/docs/reference/command-line-tools-reference/feature-gates/) on the
+API server. When enabled, the API server filters both list responses and watch event
+streams server-side, delivering only the objects and events whose hashed metadata value
+falls within the requested range.
+
+### The shardSelector field
+
+The `ShardSelector` field on
+[`ListOptions`](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#listoptions-v1-meta)
+accepts a CEL-based expression using the `shardRange()` function:
+
+```
+shardRange(<field-path>, '<hex-start>', '<hex-end>')
+```
+
+Where:
+
+- **`<field-path>`** is the metadata field to hash, using CEL-style object-rooted syntax.
+  Currently supported paths are:
+  - `object.metadata.uid`
+  - `object.metadata.namespace`
+- **`<hex-start>`** is the inclusive lower bound of the hash range, as a `0x`-prefixed
+  16-digit lowercase hex string (for example, `'0x0000000000000000'`).
+- **`<hex-end>`** is the exclusive upper bound, as a `0x`-prefixed hex string. The maximum
+  value is `'0x10000000000000000'` (2^64).
+
+The API server computes a deterministic 64-bit
+[FNV-1a](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+hash of the specified field value and returns only objects whose hash falls within the
+range `[start, end)`. The hash function produces the same result for the same input
+across all API server instances, so sharded requests are safe to use with multiple
+API server replicas.
+
+You can combine multiple ranges with `||` (logical OR) to cover non-contiguous parts of
+the hash space. All ranges in a single expression must use the same field path.
+
+### Using sharded list and watch in controllers {#sharded-list-and-watch-controllers}
+
+Controllers typically use [informers](/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)
+to list and watch resources. To shard the workload across replicas, each replica
+injects the `ShardSelector` field into the `ListOptions` used by its informers.
+
+The standard way to do this is with `WithTweakListOptions` when constructing a
+shared informer factory. The tweak function runs before every list and watch call
+the informer makes, so the shard selector is applied consistently:
+
+```go
+import (
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/client-go/informers"
+)
+
+// shardSelector is determined by the replica's identity (e.g. from a
+// StatefulSet ordinal or lease-based assignment). Each replica claims a
+// non-overlapping range of the hash space.
+shardSelector := "shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')"
+
+factory := informers.NewSharedInformerFactoryWithOptions(client, resyncPeriod,
+    informers.WithTweakListOptions(func(opts *metav1.ListOptions) {
+        opts.ShardSelector = shardSelector
+    }),
+)
+```
+
+With this configuration, every informer created from the factory only lists and
+watches objects whose hashed UID falls within the assigned range. Each replica
+receives a disjoint subset of the full collection, reducing per-replica network
+traffic and memory usage.
+
+For a 2-replica deployment, the selectors would be:
+
+```go
+// Replica 0: lower half of the hash space
+"shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')"
+
+// Replica 1: upper half of the hash space
+"shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')"
+```
+
+A single replica can also handle non-contiguous ranges using `||`:
+
+```go
+"shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000') || " +
+    "shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')"
+```
+
+### Shard information in responses
+
+When the API server honors a `ShardSelector`, the list response includes a `shardInfo`
+field in the list `metadata`. This echoes back the selector so clients can verify which
+shard they received. For watch streams, the shard selector applies equally: the API
+server only sends events for objects whose hash falls within the requested range.
+
+```json
+{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "10245",
+    "shardInfo": {
+      "selector": "shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')"
+    }
+  },
+  "items": [...]
+}
+```
+
+{{< note >}}
+A list response that contains `shardInfo` represents a filtered subset of the full
+collection. Clients should not treat sharded list responses as a complete representation
+of the resource type.
+{{< /note >}}
+
+### Detecting server support
+
+If the API server does not support sharded list and watch (because the feature gate is
+not enabled, or the server is an older version), the `ShardSelector` field is ignored
+and the server returns the full, unfiltered result set. Clients can detect this by
+checking for the presence of `shardInfo` in the list response metadata. If `shardInfo`
+is absent, the server did not honor the shard selector and the client received the
+complete, unfiltered collection. In this case, the client should be prepared to handle
+the full result set, for example by applying client-side filtering to discard objects
+outside its assigned shard range.
+
 ## Response compression
 
 {{< feature-state feature_gate_name="APIResponseCompression" >}}
@@ -303,7 +706,7 @@ can be saved and the latency can be reduced.
 To verify if `APIResponseCompression` is working, you can send a **get** or **list** request to the
 API server with an `Accept-Encoding` header, and check the response size and headers. For example:
 
-```
+```http
 GET /api/v1/pods
 Accept-Encoding: gzip
 ---
@@ -354,7 +757,7 @@ of 500 pods at a time, request those chunks as follows:
 
 1. List all of the pods on a cluster, retrieving up to 500 pods each time.
 
-   ```
+   ```http
    GET /api/v1/pods?limit=500
    ---
    200 OK
@@ -373,9 +776,9 @@ of 500 pods at a time, request those chunks as follows:
    }
    ```
 
-2. Continue the previous call, retrieving the next set of 500 pods.
+1. Continue the previous call, retrieving the next set of 500 pods.
 
-   ```
+   ```http
    GET /api/v1/pods?limit=500&continue=ENCODED_CONTINUE_TOKEN
    ---
    200 OK
@@ -394,9 +797,9 @@ of 500 pods at a time, request those chunks as follows:
    }
    ```
 
-3. Continue the previous call, retrieving the last 253 pods.
+1. Continue the previous call, retrieving the last 253 pods.
 
-   ```
+   ```http
    GET /api/v1/pods?limit=500&continue=ENCODED_CONTINUE_TOKEN_2
    ---
    200 OK
@@ -417,7 +820,7 @@ of 500 pods at a time, request those chunks as follows:
 Notice that the `resourceVersion` of the collection remains constant across each request,
 indicating the server is showing you a consistent snapshot of the pods. Pods that
 are created, updated, or deleted after version `10245` would not be shown unless
-you make a separate **list** request without the `continue` token.  This allows you
+you make a separate **list** request without the `continue` token. This allows you
 to break large requests into smaller chunks and then perform a **watch** operation
 on the full set without missing any updates.
 
@@ -439,14 +842,15 @@ collections of different types of resource. Collections have a kind
 named for the resource kind, with `List` appended.
 
 When you query the API for a particular type, all items returned by that query are
-of that type.
-For example, when you **list** Services, the collection response
+of that type. For example, when you **list** Services, the collection response
 has `kind` set to
-[`ServiceList`](/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceList); each item in that collection represents a single Service. For example:
+[`ServiceList`](/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceList);
+each item in that collection represents a single Service. For example:
 
-```
+```http
 GET /api/v1/services
 ```
+
 ```yaml
 {
   "kind": "ServiceList",
@@ -520,7 +924,7 @@ collections that might be of different kinds of object. Avoid depending on
 `kind: List` in automation or other code.
 {{< /note >}}
 
-## Receiving resources as Tables
+## Table fetches
 
 When you run `kubectl get`, the default output format is a simple tabular
 representation of one or more instances of a particular resource type. In the past,
@@ -540,7 +944,7 @@ type.
 
 For example, list all of the pods on a cluster in the Table format.
 
-```
+```http
 GET /api/v1/pods
 Accept: application/json;as=Table;g=meta.k8s.io;v=v1
 ---
@@ -561,7 +965,7 @@ For API resource types that do not have a custom Table definition known to the c
 plane, the API server returns a default Table response that consists of the resource's
 `name` and `creationTimestamp` fields.
 
-```
+```http
 GET /apis/crd.example.com/v1alpha1/namespaces/default/resources
 ---
 200 OK
@@ -600,122 +1004,113 @@ extensions, you should make requests that specify multiple content types in the
 Accept: application/json;as=Table;g=meta.k8s.io;v=v1, application/json
 ```
 
-## Alternate representations of resources
+If the client indicates it only accepts `...;as=Table;g=meta.k8s.io;v=v1`, servers
+that don't support table responses will return a 406 error code.
 
-By default, Kubernetes returns objects serialized to JSON with content type
-`application/json`. This is the default serialization format for the API. However,
-clients may request the more efficient
-[Protobuf representation](#protobuf-encoding) of these objects for better performance at scale.
-The Kubernetes API implements standard HTTP content type negotiation: passing an
-`Accept` header with a `GET` call will request that the server tries to return
-a response in your preferred media type, while sending an object in Protobuf to
-the server for a `PUT` or `POST` call means that you must set the `Content-Type`
-header appropriately.
+If falling back to full objects in that case is desired, clients can add `,application/json`
+(or any other supported encoding) to their Accept header, and handle either
+table or full objects in the response:
 
-The server will return a response with a `Content-Type` header if the requested
-format is supported, or the `406 Not acceptable` error if none of the media types you
-requested are supported. All built-in resource types support the `application/json`
-media type.
-
-See the Kubernetes [API reference](/docs/reference/kubernetes-api/) for a list of
-supported content types for each API.
-
-For example:
-
-1. List all of the pods on a cluster in Protobuf format.
-
-   ```
-   GET /api/v1/pods
-   Accept: application/vnd.kubernetes.protobuf
-   ---
-   200 OK
-   Content-Type: application/vnd.kubernetes.protobuf
-
-   ... binary encoded PodList object
-   ```
-
-1. Create a pod by sending Protobuf encoded data to the server, but request a response
-   in JSON.
-
-   ```
-   POST /api/v1/namespaces/test/pods
-   Content-Type: application/vnd.kubernetes.protobuf
-   Accept: application/json
-   ... binary encoded Pod object
-   ---
-   200 OK
-   Content-Type: application/json
-
-   {
-     "kind": "Pod",
-     "apiVersion": "v1",
-     ...
-   }
-   ```
-
-Not all API resource types support Protobuf; specifically, Protobuf isn't available for
-resources that are defined as
-{{< glossary_tooltip term_id="CustomResourceDefinition" text="CustomResourceDefinitions" >}}
-or are served via the
-{{< glossary_tooltip text="aggregation layer" term_id="aggregation-layer" >}}.
-As a client, if you might need to work with extension types you should specify multiple
-content types in the request `Accept` header to support fallback to JSON.
-For example:
-
-```
-Accept: application/vnd.kubernetes.protobuf, application/json
+```http
+Accept: application/json;as=Table;g=meta.k8s.io;v=v1,application/json`
 ```
 
-### Kubernetes Protobuf encoding {#protobuf-encoding}
+For more information on content type negotiation, see the
+[MDN Content Negotiation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation).
 
-Kubernetes uses an envelope wrapper to encode Protobuf responses. That wrapper starts
-with a 4 byte magic number to help identify content in disk or in etcd as Protobuf
-(as opposed to JSON), and then is followed by a Protobuf encoded wrapper message, which
-describes the encoding and type of the underlying object and then contains the object.
+## Metadata-only fetches
 
-The wrapper format is:
-
-```
-A four byte magic number prefix:
-  Bytes 0-3: "k8s\x00" [0x6b, 0x38, 0x73, 0x00]
-
-An encoded Protobuf message with the following IDL:
-  message Unknown {
-    // typeMeta should have the string values for "kind" and "apiVersion" as set on the JSON object
-    optional TypeMeta typeMeta = 1;
-
-    // raw will hold the complete serialized object in protobuf. See the protobuf definitions in the client libraries for a given kind.
-    optional bytes raw = 2;
-
-    // contentEncoding is encoding used for the raw data. Unspecified means no encoding.
-    optional string contentEncoding = 3;
-
-    // contentType is the serialization method used to serialize 'raw'. Unspecified means application/vnd.kubernetes.protobuf and is usually
-    // omitted.
-    optional string contentType = 4;
-  }
-
-  message TypeMeta {
-    // apiVersion is the group/version for this type
-    optional string apiVersion = 1;
-    // kind is the name of the object schema. A protobuf definition should exist for this object.
-    optional string kind = 2;
-  }
-```
+To request partial object metadata, you can request metadata only responses in the `Accept`
+header. The Kubernetes API implements a variation on HTTP content type negotiation.
+As a client, you can provide an `Accept` header with the desired media type,
+along with parameters that indicate you want only metadata.
+For example: `Accept: application/json;as=PartialObjectMetadata;g=meta.k8s.io;v=v1`
+for JSON for a specific object and: 
+`Accept: application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1` for a list.
 
 {{< note >}}
-Clients that receive a response in `application/vnd.kubernetes.protobuf` that does
-not match the expected prefix should reject the response, as future versions may need
-to alter the serialization format in an incompatible way and will do so by changing
-the prefix.
+`as=PartialObjectMetadata` should be used in specific resource requests, and `as=PartialObjectMetadataList` should be used for lists.
 {{< /note >}}
+
+For example, to list all of the pods in a cluster, across all namespaces, but returning only the metadata for each pod:
+
+```http
+GET /api/v1/pods
+Accept: application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1
+---
+200 OK
+Content-Type: application/json
+
+{
+    "kind": "PartialObjectMetadataList",
+    "apiVersion": "meta.k8s.io/v1",
+    "metadata": {
+        "resourceVersion": "...",
+    },
+    "items": [
+        {
+            "apiVersion": "meta.k8s.io/v1",
+            "kind": "PartialObjectMetadata",
+            "metadata": {
+                "name": "pod-1",
+                ...
+            }
+        },
+        {
+            "apiVersion": "meta.k8s.io/v1",
+            "kind": "PartialObjectMetadata",
+            "metadata": {
+                "name": "pod-2",
+                ...
+            }
+        }
+    ]
+}
+```
+
+For a request for a collection, the API server returns a PartialObjectMetadataList.
+For a request for a single object, the API server returns a PartialObjectMetadata
+representation of the
+object. In both cases, the returned objects only contain the `metadata` field.
+The `spec` and `status` fields are omitted.
+
+This feature is useful for clients that only need to check for the existence of
+an object, or that only need to read its metadata. It can significantly reduce
+the size of the response from the API server.
+
+You can request a metadata-only fetch for all available media types (JSON, YAML, CBOR and Kubernetes Protobuf).
+For Protobuf, the
+`Accept` header would be
+`application/vnd.kubernetes.protobuf;as=PartialObjectMetadata;g=meta.k8s.io;v=v1`.
+
+The Kubernetes API server supports partial fetching for nearly all of its built-in APIs.
+However, you can use Kubernetes to access other API servers via the
+{{< glossary_tooltip text="aggregation layer" term_id="aggregation-layer" >}}, and those
+APIs may not support partial fetches.
+
+If a client uses the `Accept` header to **only** request a response `...;as=PartialObjectMetadata;g=meta.k8s.io;v=v1`,
+and accesses an API that doesn't support partial responses, Kubernetes responds
+with a 406 HTTP error.
+
+
+If falling back to full objects in that case is desired, clients can add `,application/json`
+(or any other supported encoding) to their Accept header, and handle either
+PartialObjectMetadata or full objects in the response. It's a good idea to specify
+that a partial response is preferred, using the `q` (_quality_) parameter. For example:
+
+```http
+Accept: application/json;as=PartialObjectMetadata;g=meta.k8s.io;v=v1, application/json;q=0.9
+```
+
+For more information on content type negotiation, see the
+[MDN Content Negotiation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation).
 
 ## Resource deletion
 
 When you **delete** a resource this takes place in two phases.
 
 1. _finalization_
-2. removal
+1. removal
 
 ```yaml
 {
@@ -728,7 +1123,8 @@ When you **delete** a resource this takes place in two phases.
 }
 ```
 
-When a client first sends a **delete** to request the removal of a resource, the `.metadata.deletionTimestamp` is set to the current time.
+When a client first sends a **delete** to request the removal of a resource,
+the `.metadata.deletionTimestamp` is set to the current time.
 Once the `.metadata.deletionTimestamp` is set, external controllers that act on finalizers
 may start performing their cleanup work at any time, in any order.
 
@@ -746,6 +1142,47 @@ not vulnerable to ordering changes in the list.
 
 Once the last finalizer is removed, the resource is actually removed from etcd.
 
+### Force deletion
+
+{{< feature-state feature_gate_name="AllowUnsafeMalformedObjectDeletion" >}}
+
+{{< caution >}}
+This may break the workload associated with the resource being force deleted, if it
+relies on the normal deletion flow, so cluster breaking consequences may apply.
+{{< /caution >}}
+
+By enabling the delete option `ignoreStoreReadErrorWithClusterBreakingPotential`, the
+user can perform an unsafe force **delete** operation of an undecryptable/corrupt
+resource. This option is available when the `AllowUnsafeMalformedObjectDeletion`
+[feature gate](/docs/reference/command-line-tools-reference/feature-gates/) is
+enabled, which is the default since Kubernetes v1.37. A cluster operator can turn
+this behavior off by setting the command line option
+`--feature-gates=AllowUnsafeMalformedObjectDeletion=false`.
+
+{{< note >}}
+The user performing the force **delete** operation must have the privileges to do both
+the **delete** and **unsafe-delete-ignore-read-errors** verbs on the given resource.
+{{< /note >}}
+
+A resource is considered corrupt if it can not be successfully retrieved from the
+storage due to:
+
+- transformation error (for example: decryption failure), or
+- the object failed to decode.
+
+The API server first attempts a normal deletion, and if it fails with
+a _corrupt resource_ error then it triggers the force delete. A force **delete** operation
+is unsafe because it ignores finalizer constraints, and skips precondition checks.
+
+The default value for this option is `false`, this maintains backward compatibility.
+For a **delete** request with `ignoreStoreReadErrorWithClusterBreakingPotential`
+set to `true`, the fields `dryRun`, `gracePeriodSeconds`, `orphanDependents`,
+`preconditions`, and `propagationPolicy` must be left unset.
+
+{{< note >}}
+If the user issues a **delete** request with `ignoreStoreReadErrorWithClusterBreakingPotential`
+set to `true` on an otherwise readable resource, the API server aborts the request with an error.
+{{< /note >}}
 
 ## Single resource API
 
@@ -780,36 +1217,35 @@ an HTTP request.
 These situations are:
 
 1. The field is unrecognized because it is not in the resource's OpenAPI schema. (One
-   exception to this is for {{< glossary_tooltip
-   term_id="CustomResourceDefinition" text="CRDs" >}} that explicitly choose not to prune unknown
-   fields via `x-kubernetes-preserve-unknown-fields`).
-2. The field is duplicated in the object.
+   exception to this is for {{< glossary_tooltip term_id="CustomResourceDefinition" text="CRDs" >}}
+   that explicitly choose not to prune unknown fields via `x-kubernetes-preserve-unknown-fields`).
+1. The field is duplicated in the object.
 
 ### Validation for unrecognized or duplicate fields {#setting-the-field-validation-level}
 
 {{< feature-state feature_gate_name="ServerSideFieldValidation" >}}
 
 From 1.25 onward, unrecognized or duplicate fields in an object are detected via
-validation on the server when you use HTTP verbs that can submit data (`POST`, `PUT`, and `PATCH`). Possible levels of
-validation are `Ignore`, `Warn` (default), and `Strict`.
+validation on the server when you use HTTP verbs that can submit data (`POST`, `PUT`, and `PATCH`).
+Possible levels of validation are `Ignore`, `Warn` (default), and `Strict`.
 
 `Ignore`
 : The API server succeeds in handling the request as it would without the erroneous fields
-being set, dropping all unknown and duplicate fields and giving no indication it
-has done so.
+  being set, dropping all unknown and duplicate fields and giving no indication it
+  has done so.
 
 `Warn`
 : (Default) The API server succeeds in handling the request, and reports a
-warning to the client. The warning is sent using the `Warning:` response header,
-adding one warning item for each unknown or duplicate field. For more
-information about warnings and the Kubernetes API, see the blog article
-[Warning: Helpful Warnings Ahead](/blog/2020/09/03/warnings/).
+  warning to the client. The warning is sent using the `Warning:` response header,
+  adding one warning item for each unknown or duplicate field. For more
+  information about warnings and the Kubernetes API, see the blog article
+  [Warning: Helpful Warnings Ahead](/blog/2020/09/03/warnings/).
 
 `Strict`
 : The API server rejects the request with a 400 Bad Request error when it
-detects any unknown or duplicate fields. The response message from the API
-server specifies all the unknown or duplicate fields that the API server has
-detected.
+  detects any unknown or duplicate fields. The response message from the API
+  server specifies all the unknown or duplicate fields that the API server has
+  detected.
 
 The field validation level is set by the `fieldValidation` query parameter.
 
@@ -839,10 +1275,15 @@ Client-side validation will be removed entirely in a future version of kubectl.
 
 {{< note >}}
 
-Prior to Kubernetes 1.25  `kubectl --validate` was used to toggle client-side validation on or off as
+Prior to Kubernetes 1.25, `kubectl --validate` was used to toggle client-side validation on or off as
 a boolean flag.
 
 {{< /note >}}
+
+Starting from v1.33, Kubernetes (including v{{< skew currentVersion>}}) offers a way to define field validations using _declarative tags_.
+This is useful for people contributing to Kubernetes itself, and it's also relevant if you're
+writing your own API using Kubernetes libraries.
+To learn more, see [Declarative API Validation](/docs/reference/using-api/declarative-validation/).
 
 ## Dry-run
 
@@ -869,7 +1310,6 @@ string, working as an enum, and the only accepted values are:
 : Every stage runs as normal, except for the final storage stage where side effects
   are prevented.
 
-
 When you set `?dryRun=All`, any relevant
 {{< glossary_tooltip text="admission controllers" term_id="admission-controller" >}}
 are run, validating admission controllers check the request post-mutation, merge is
@@ -893,7 +1333,7 @@ effects on any request marked as dry runs.
 
 Here is an example dry-run request that uses `?dryRun=All`:
 
-```
+```http
 POST /api/v1/namespaces/test/pods?dryRun=All
 Content-Type: application/json
 Accept: application/json
@@ -901,7 +1341,6 @@ Accept: application/json
 
 The response would look the same as for non-dry-run request, but the values of some
 generated fields may differ.
-
 
 ### Generated values
 
@@ -912,7 +1351,8 @@ request is made. Some of these fields are:
 
 * `name`: if `generateName` is set, `name` will have a unique random name
 * `creationTimestamp` / `deletionTimestamp`: records the time of creation/deletion
-* `UID`: [uniquely identifies](/docs/concepts/overview/working-with-objects/names/#uids) the object and is randomly generated (non-deterministic)
+* `UID`: [uniquely identifies](/docs/concepts/overview/working-with-objects/names/#uids)
+  the object and is randomly generated (non-deterministic)
 * `resourceVersion`: tracks the persisted version of the object
 * Any field set by a mutating admission controller
 * For the `Service` resource: Ports or IP addresses that the kube-apiserver assigns to Service objects
@@ -952,7 +1392,8 @@ provided is stale), the API server returns a `409 Conflict` error response.
 
 Instead of sending a PUT request, the client can send an instruction to the API
 server to **patch** an existing resource. A **patch** is typically appropriate
-if the change that the client wants to make isn't conditional on the existing data. Clients that need effective detection of lost updates should consider
+if the change that the client wants to make isn't conditional on the existing data.
+Clients that need effective detection of lost updates should consider
 making their request conditional on the existing `resourceVersion` (either HTTP PUT or HTTP PATCH),
 and then handle any retries that are needed in case there is a conflict.
 
@@ -963,14 +1404,14 @@ corresponding HTTP `Content-Type` header:
 : Server Side Apply YAML (a Kubernetes-specific extension, based on YAML).
   All JSON documents are valid YAML, so you can also submit JSON using this
   media type. See [Server Side Apply serialization](/docs/reference/using-api/server-side-apply/#serialization)
-  for more details.  
+  for more details.
   To Kubernetes, this is a **create** operation if the object does not exist,
   or a **patch** operation if the object already exists.
 
 `application/json-patch+json`
 : JSON Patch, as defined in [RFC6902](https://tools.ietf.org/html/rfc6902).
   A JSON patch is a sequence of operations that are executed on the resource;
-  for example `{"op": "add", "path": "/a/b/c", "value": [ "foo", "bar" ]}`.  
+  for example `{"op": "add", "path": "/a/b/c", "value": [ "foo", "bar" ]}`.
   To Kubernetes, this is a **patch** operation.
   
   A **patch** using `application/json-patch+json` can include conditions to
@@ -981,7 +1422,7 @@ corresponding HTTP `Content-Type` header:
 : JSON Merge Patch, as defined in [RFC7386](https://tools.ietf.org/html/rfc7386).
   A JSON Merge Patch is essentially a partial representation of the resource.
   The submitted JSON is combined with the current resource to create a new one,
-  then the new one is saved.  
+  then the new one is saved.
   To Kubernetes, this is a **patch** operation.
 
 `application/strategic-merge-patch+json`
@@ -996,7 +1437,6 @@ corresponding HTTP `Content-Type` header:
   The Kubernetes _server side apply_ mechanism has superseded Strategic Merge
   Patch.
   {{< /note >}}
-
 
 Kubernetes' [Server Side Apply](/docs/reference/using-api/server-side-apply/)
 feature allows the control plane to track managed fields for newly created objects.
@@ -1050,10 +1490,10 @@ A **patch** update is helpful, because:
 
 However:
 
-* you need more local (client) logic to build the patch; it helps a lot if you have
-  a library implementation of JSON Patch, or even for making a JSON Patch specifically against Kubernetes
-* as the author of client software, you need to be careful when building the patch
-  (the HTTP request body) not to drop fields (the order of operations matters)
+* You need more local (client) logic to build the patch; it helps a lot if you have
+  a library implementation of JSON Patch, or even for making a JSON Patch specifically against Kubernetes.
+* As the author of client software, you need to be careful when building the patch
+  (the HTTP request body) not to drop fields (the order of operations matters).
 
 #### HTTP PATCH using Server-Side Apply {#update-mechanism-server-side-apply}
 
@@ -1062,13 +1502,13 @@ Server-Side Apply has some clear benefits:
 * A single round trip: it rarely requires making a `GET` request first.
   * and you can still detect conflicts for unexpected changes
   * you have the option to force override a conflict, if appropriate
-* Client implementations are easy to make
+* Client implementations are easy to make.
 * You get an atomic create-or-update operation without extra effort
-  (similar to `UPSERT` in some SQL dialects)
+  (similar to `UPSERT` in some SQL dialects).
 
 However:
 
-* Server-Side Apply does not work at all for field changes that depend on a current value of the object
+* Server-Side Apply does not work at all for field changes that depend on a current value of the object.
 * You can only apply updates to objects. Some resources in the Kubernetes HTTP API are
   not objects (they do not have a `.metadata` field), and Server-Side Apply
   is only relevant for Kubernetes objects.
@@ -1078,21 +1518,65 @@ However:
 Resource versions are strings that identify the server's internal version of an
 object. Resource versions can be used by clients to determine when objects have
 changed, or to express data consistency requirements when getting, listing and
-watching resources. Resource versions must be treated as opaque by clients and passed
-unmodified back to the server.
+watching resources. Resource versions must be passed unmodified back to the
+server.
 
-You must not assume resource versions are numeric or collatable. API clients may
-only compare two resource versions for equality (this means that you must not compare
-resource versions for greater-than or less-than relationships).
+Resource version strings are orderable as monotonically increasing integers
+within the same resource type for all types served by kube-apiserver. This
+includes built-in API types and types backed by custom resource definitions.
+Both resource versions must be from objects of the same API group and resource
+type. For example, two Deployments from the apps API group can have their
+resource versions compared, but a Pod and a Deployment cannot. Provided that two
+objects are retrieved from the same API resource type, you can compare them even
+if they are in different namespaces.
+
+If you are using API resources served by an extension API server, the client
+needs to check whether the resource version string parses as a decimal number
+(there are more details on that in the next few paragraphs). If either of two
+resource version strings does not parse as a decimal number, the two strings can
+be checked for equality but you **cannot** rely on comparisons for ordering.
+
+Starting with Kubernetes 1.35, orderability of resource versions for all
+Kubernetes types is included in [Certified
+Kubernetes](https://www.cncf.io/training/certification/software-conformance/)
+requirements. Base API objects and custom resources **must** be orderable as a
+monotonically increasing integer for any 1.35+ APIServer implementation in order
+to pass conformance tests.
+
+In order to compare two resource version strings:
+
+Ensure they meet the following requirements:
+* Both resource versions must be from the same resource type as described above
+* Both must start with a digit 1-9 and contain only digits 0-9
+* Resource versions are compared as arbitrary bitsize decimal integers
+
+To compare them without relying on a fixed bitsize one can compare them as
+strings. The bitsize must not be assumed to be some fixed amount.
+
+A lexicographical comparison can be used instead as shown here:
+* If they are not of equal length, the longer one is greater (for example, "123" > "23")
+* If they are of equal length, the lexicographically greater one is greater (for example, "234" > "123")
+
+Some examples of resource version comparisons that should work:
+* "2345678901234567890123456789012345678901" > "345678901234567890123456789012345678901"
+* "345678901234567890123456789012345678901" == "345678901234567890123456789012345678901"
+* "345678901234567890123456789012345678900" < "345678901234567890123456789012345678901"
+
+A helper method is available for
+[client-go](https://pkg.go.dev/k8s.io/apimachinery/pkg/util/resourceversion#CompareResourceVersion)
+to perform this comparison.
 
 ### `resourceVersion` fields in metadata {#resourceversion-in-metadata}
 
 Clients find resource versions in resources, including the resources from the response
 stream for a **watch**, or when using **list** to enumerate resources.
 
-[v1.meta/ObjectMeta](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#objectmeta-v1-meta) - The `metadata.resourceVersion` of a resource instance identifies the resource version the instance was last modified at.
+[v1.meta/ObjectMeta](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#objectmeta-v1-meta) -
+The `metadata.resourceVersion` of a resource instance identifies the resource version the instance was last modified at.
 
-[v1.meta/ListMeta](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#listmeta-v1-meta) - The `metadata.resourceVersion` of a resource collection (the response to a **list**) identifies the resource version at which the collection was constructed.
+[v1.meta/ListMeta](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#listmeta-v1-meta) -
+The `metadata.resourceVersion` of a resource collection (the response to a **list**) identifies the
+resource version at which the collection was constructed.
 
 ### `resourceVersion` parameters in query strings {#the-resourceversion-parameter}
 
@@ -1133,21 +1617,20 @@ quorum read to be served.
 
 Setting the `resourceVersionMatch` parameter without setting `resourceVersion` is not valid.
 
-
 This table explains the behavior of **list** requests with various combinations of
 `resourceVersion` and `resourceVersionMatch`:
 
 {{< table caption="resourceVersionMatch and paging parameters for list" >}}
 
-| resourceVersionMatch param            | paging params                 | resourceVersion not set | resourceVersion="0"                       | resourceVersion="{value other than 0}" |
-|---------------------------------------|-------------------------------|-----------------------|-------------------------------------------|----------------------------------------|
-| _unset_            | _limit unset_                   | Most Recent           | Any                                       | Not older than                         |
-| _unset_            | limit=\<n\>, _continue unset_     | Most Recent           | Any                                       | Exact                                  |
-| _unset_            | limit=\<n\>, continue=\<token\> | Continue Token, Exact | Invalid, treated as Continue Token, Exact | Invalid, HTTP `400 Bad Request`        |
-| `resourceVersionMatch=Exact`        | _limit unset_                 | Invalid               | Invalid                                   | Exact                                  |
-| `resourceVersionMatch=Exact`        | limit=\<n\>, _continue unset_ | Invalid               | Invalid                                   | Exact                                  |
-| `resourceVersionMatch=NotOlderThan` | _limit unset_                 | Invalid               | Any                                       | Not older than                         |
-| `resourceVersionMatch=NotOlderThan` | limit=\<n\>, _continue unset_ | Invalid               | Any                                       | Not older than                         |
+| resourceVersionMatch param          | paging params                  | resourceVersion not set | resourceVersion="0" | resourceVersion="{value other than 0}" |
+|-------------------------------------|--------------------------------|-------------------------|---------------------|----------------------------------------|
+| _unset_                             | _limit unset_                  | Most Recent             | Any                 | Not older than                         |
+| _unset_                             | limit=\<n\>, _continue unset_  | Most Recent             | Any                 | Exact                                  |
+| _unset_                             | limit=\<n\>, continue=\<token\>| Continuation            | Continuation        | Invalid, HTTP `400 Bad Request`        |
+| `resourceVersionMatch=Exact`        | _limit unset_                  | Invalid                 | Invalid             | Exact                                  |
+| `resourceVersionMatch=Exact`        | limit=\<n\>, _continue unset_  | Invalid                 | Invalid             | Exact                                  |
+| `resourceVersionMatch=NotOlderThan` | _limit unset_                  | Invalid                 | Any                 | Not older than                         |
+| `resourceVersionMatch=NotOlderThan` | limit=\<n\>, _continue unset_  | Invalid                 | Any                 | Not older than                         |
 
 {{< /table >}}
 
@@ -1164,30 +1647,47 @@ Any
   for the request to return data at a much older resource version that the client has previously
   observed, particularly in high availability configurations, due to partitions or stale
   caches. Clients that cannot tolerate this should not use this semantic.
+  Always served from _watch cache_, improving performance and reducing etcd load.
 
 Most recent
 : Return data at the most recent resource version. The returned data must be
   consistent (in detail: served from etcd via a quorum read).
+  For etcd v3.4.31+ and v3.5.13+, Kubernetes {{< skew currentVersion >}} serves “most recent” reads from the _watch cache_:
+  an internal, in-memory store within the API server that caches and mirrors the state of data
+  persisted into etcd. Kubernetes requests progress notification to maintain cache consistency against
+  the etcd persistence layer. Kubernetes v1.28 through to v1.30 also supported this
+  feature, although as Alpha it was not recommended for production nor enabled by default until the v1.31 release.
 
 Not older than
 : Return data at least as new as the provided `resourceVersion`. The newest
   available data is preferred, but any data not older than the provided `resourceVersion` may be
-  served.  For **list** requests to servers that honor the `resourceVersionMatch` parameter, this
+  served. For **list** requests to servers that honor the `resourceVersionMatch` parameter, this
   guarantees that the collection's `.metadata.resourceVersion` is not older than the requested
   `resourceVersion`, but does not make any guarantee about the `.metadata.resourceVersion` of any
   of the items in that collection.
+  Always served from _watch cache_, improving performance and reducing etcd load.
 
 Exact
 : Return data at the exact resource version provided. If the provided `resourceVersion` is
-  unavailable, the server responds with HTTP 410 "Gone".  For **list** requests to servers that honor the
+  unavailable, the server responds with HTTP `410 Gone`. For **list** requests to servers that honor the
   `resourceVersionMatch` parameter, this guarantees that the collection's `.metadata.resourceVersion`
   is the same as the `resourceVersion` you requested in the query string. That guarantee does
   not apply to the `.metadata.resourceVersion` of any items within that collection.
+  With the `ListFromCacheSnapshot` feature gate enabled by default,
+  API server will attempt to serve the response from snapshots if one is available with `resourceVersion` older than requested.
+  This improves performance and reduces etcd load. API server starts with no snapshots,
+  creates a new snapshot on every watch event and keeps them until it detects etcd is compacted or if cache is full with events older than 75 seconds.
+  If the provided `resourceVersion` is unavailable, the server will fallback to etcd.
 
-Continue Token, Exact
-: Return data at the resource version of the initial paginated **list** call. The returned _continue
-  tokens_ are responsible for keeping track of the initially provided resource version for all paginated
-  **list** calls after the initial paginated **list**.
+Continuation
+: Return the next page of data for a paginated list request, ensuring consistency with the exact `resourceVersion` established by the initial request in the sequence.
+  Response to **list** requests with limit include _continue token_, that encodes the  `resourceVersion` and last observed position from which to resume the list.
+  If the `resourceVersion` in the provided _continue token_ is unavailable, the server responds with HTTP `410 Gone`.
+  With the `ListFromCacheSnapshot` feature gate enabled by default,
+  API server will attempt to serve the response from snapshots if one is available with `resourceVersion` older than requested.
+  This improves performance and reduces etcd load. API server starts with no snapshots,
+  creates a new snapshot on every watch event and keeps them until it detects etcd is compacted or if cache is full with events older than 75 seconds.
+  If the `resourceVersion` in provided _continue token_ is unavailable, the server will fallback to etcd.
 
 {{< note >}}
 When you **list** resources and receive a collection response, the response includes the
@@ -1200,7 +1700,7 @@ the object is when served.
 {{< /note >}}
 
 When using `resourceVersionMatch=NotOlderThan` and limit is set, clients must
-handle HTTP 410 "Gone" responses. For example, the client might retry with a
+handle HTTP `410 Gone` responses. For example, the client might retry with a
 newer `resourceVersion` or fall back to `resourceVersion=""`.
 
 When using `resourceVersionMatch=Exact` and `limit` is unset, clients must
@@ -1225,11 +1725,7 @@ For **watch**, the semantics of resource version are:
 The meaning of those **watch** semantics are:
 
 Get State and Start at Any
-: {{< caution >}} Watches initialized this way may return arbitrarily stale
-  data. Please review this semantic before using it, and favor the other semantics
-  where possible.
-  {{< /caution >}}
-  Start a **watch** at any resource version; the most recent resource version
+: Start a **watch** at any resource version; the most recent resource version
   available is preferred, but not required. Any starting resource version is
   allowed. It is possible for the **watch** to start at a much older resource
   version that the client has previously observed, particularly in high availability
@@ -1239,6 +1735,12 @@ Get State and Start at Any
   all resource instances that exist at the starting resource version. All following
   watch events are for all changes that occurred after the resource version the
   **watch** started at.
+
+  {{< caution >}}
+  **watches** initialized this way may return arbitrarily stale
+  data. Please review this semantic before using it, and favor the other semantics
+  where possible.
+  {{< /caution >}}
 
 Get State and Start at Most Recent
 : Start a **watch** at the most recent resource version, which must be consistent
@@ -1280,9 +1782,20 @@ then the API server may either:
   should wait before retrying the request.
 
 If you request a resource version that an API server does not recognize, the
-kube-apiserver additionally identifies its error responses with a "Too large resource
-version" message.
+kube-apiserver additionally identifies its error responses with a message
+`Too large resource version`.
 
 If you make a **watch** request for an unrecognized resource version, the API server
 may wait indefinitely (until the request timeout) for the resource version to become
 available.
+
+### Watch cache initialization {#watch-cache-initialization}
+
+To prevent control plane overload and API Priority and Fairness (APF) starvation during watch cache initialization or re-initialization, the Kubernetes API server applies two protective mechanisms:
+
+* **Startup readiness protection**: On startup, the API server delays reporting ready (`/readyz`) until every registered watch cache completes its initial synchronization from etcd. This prevents load balancers from directing client traffic to the API server prematurely, eliminating startup thundering-herd reads that would otherwise bypass the unready cache and hit etcd directly.
+* **Request rejection during cache initialization**: If requests arrive while the watch cache for a resource type is uninitialized—such as during server boot (before readiness) or after a runtime cache resync or disconnection—the API server prevents expensive queries from overwhelming etcd or hanging indefinitely:
+  * **`WATCH` requests** and **unpaginated or filtered `LIST` requests** (any list query without a pagination `limit` or that specifies a label or field selector) are rejected immediately with an HTTP `429 Too Many Requests` status code and a dynamic `Retry-After` header. This avoids hung goroutines, APF seat starvation, and etcd memory exhaustion.
+  * **Safe paginated reads**: Only **`GET` requests** and **paginated, unfiltered `LIST` requests** (`limit` > 0 with no label or field selector) are delegated directly to etcd as a safe fallback.
+
+Clients (including custom controllers and operators) should be designed to handle HTTP `429 Too Many Requests` responses gracefully by respecting `Retry-After` headers and implementing exponential backoff.

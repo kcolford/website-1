@@ -75,7 +75,7 @@ usage statistics, then the kubelet can look up those statistics directly
 (using code from [cAdvisor](https://github.com/google/cadvisor)).
 No matter how those statistics arrive, the kubelet then exposes the aggregated pod
 resource usage statistics through the metrics-server Resource Metrics API.
-This API is served at `/metrics/resource/v1beta1` on the kubelet's authenticated and 
+This API is served at `/metrics/resource` on the kubelet's authenticated and 
 read-only ports. 
 -->
 metrics-server 发现集群中的所有节点，并且查询每个节点的
@@ -88,7 +88,7 @@ kubelet 将每个 Pod 转换为其组成的容器，并通过容器运行时接�
 那么 kubelet 可以直接查找这些统计信息（使用来自 [cAdvisor](https://github.com/google/cadvisor) 的代码）。
 无论这些统计信息如何到达，kubelet 都会通过 metrics-server Resource Metrics API 公开聚合的
 Pod 资源用量统计信息。
-该 API 在 kubelet 的经过身份验证和只读的端口上的 `/metrics/resource/v1beta1` 中提供。
+该 API 在 kubelet 的经过身份验证和只读的端口上的 `/metrics/resource` 中提供。
 
 <!--
 ## Full metrics pipeline
@@ -168,7 +168,6 @@ Kubernetes 不推荐任何特定的指标管道；
 Learn about additional debugging tools, including:
 
 * [Logging](/docs/concepts/cluster-administration/logging/)
-* [Monitoring](/docs/tasks/debug/debug-cluster/resource-usage-monitoring/)
 * [Getting into containers via `exec`](/docs/tasks/debug/debug-application/get-shell-running-container/)
 * [Connecting to containers via proxies](/docs/tasks/extend-kubernetes/http-proxy-access-api/)
 * [Connecting to containers via port forwarding](/docs/tasks/access-application-cluster/port-forward-access-application-cluster/)
@@ -177,7 +176,6 @@ Learn about additional debugging tools, including:
 了解其他调试工具，包括：
 
 * [日志记录](/zh-cn/docs/concepts/cluster-administration/logging/)
-* [监控](/zh-cn/docs/tasks/debug/debug-cluster/resource-usage-monitoring/)
 * [通过 `exec` 进入容器](/zh-cn/docs/tasks/debug/debug-application/get-shell-running-container/)
 * [通过代理连接到容器](/zh-cn/docs/tasks/extend-kubernetes/http-proxy-access-api/)
 * [通过端口转发连接到容器](/zh-cn/docs/tasks/access-application-cluster/port-forward-access-application-cluster/)

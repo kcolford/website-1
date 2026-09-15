@@ -30,7 +30,7 @@ Refer to the [etcd documentation](https://etcd.io/docs/) for more context.
 <!--
 Key details include:
 
-* The minimum recommended etcd versions to run in production are `3.4.22+` and `3.5.6+`.
+* The minimum recommended etcd versions to run in production are `3.4.29+` and `3.5.11+`.
 
 * etcd is a leader-based distributed system. Ensure that the leader
   periodically send heartbeats on time to all followers to keep the cluster
@@ -40,7 +40,7 @@ Key details include:
 -->
 关键要点包括：
 
-* 在生产环境中运行的 etcd 最低推荐版本为 `3.4.22+` 和 `3.5.6+`。
+* 在生产环境中运行的 etcd 最低推荐版本为 `3.4.29+` 和 `3.5.11+`。
 
 * etcd 是一个基于主节点（Leader-Based）的分布式系统。确保主节点定期向所有从节点发送心跳，以保持集群稳定。
 
@@ -69,7 +69,7 @@ For deploying in production, advanced hardware configuration is required.
 Before deploying etcd in production, see
 [resource requirement reference](https://etcd.io/docs/current/op-guide/hardware/#example-hardware-configurations).
 -->
-## etcd 资源需求    {#resource-requirements-for-etcd}
+### etcd 资源需求    {#resource-requirements-for-etcd}
 
 使用有限的资源运行 etcd 只适合测试目的。在生产环境中部署 etcd，你需要有先进的硬件配置。
 在生产中部署 etcd 之前，请查阅[所需资源参考文档](https://etcd.io/docs/current/op-guide/hardware/#example-hardware-configurations)。
@@ -296,12 +296,12 @@ the URL schema.
 
 <!--
 Similarly, to configure etcd with secure client communication, specify flags
-`--key-file=k8sclient.key` and `--cert-file=k8sclient.cert`, and use HTTPS as
+`--key=k8sclient.key` and `--cert=k8sclient.cert`, and use HTTPS as
 the URL schema. Here is an example on a client command that uses secure
 communication:
 -->
-类似地，要使用安全客户端通信对 etcd 进行配置，请指定参数 `--key-file=k8sclient.key`
-和 `--cert-file=k8sclient.cert`，并使用 HTTPS 作为 URL 模式。
+类似地，要使用安全客户端通信对 etcd 进行配置，请指定参数 `--key=k8sclient.key`
+和 `--cert=k8sclient.cert`，并使用 HTTPS 作为 URL 模式。
 使用安全通信的客户端命令的示例：
 
 ```
@@ -343,7 +343,8 @@ flags `--etcd-certfile=k8sclient.cert`, `--etcd-keyfile=k8sclient.key` and
 `--etcd-cafile=ca.cert`.
 -->
 一旦正确配置了 etcd，只有具有有效证书的客户端才能访问它。要让 Kubernetes API 服务器访问，
-可以使用参数 `--etcd-certfile=k8sclient.cert`、`--etcd-keyfile=k8sclient.key` 和 `--etcd-cafile=ca.cert` 配置。
+可以使用参数 `--etcd-certfile=k8sclient.cert`、`--etcd-keyfile=k8sclient.key`
+和 `--etcd-cafile=ca.cert` 配置。
 
 {{< note >}}
 <!--
@@ -724,11 +725,11 @@ restoration, critical components will lose leader lock and restart themselves.
 
 <!--
 etcd supports restoring from snapshots that are taken from an etcd process of
-the [major.minor](http://semver.org/) version. Restoring a version from a
+the [major.minor](https://semver.org/) version. Restoring a version from a
 different patch version of etcd is also supported. A restore operation is
 employed to recover the data of a failed cluster.
 -->
-etcd 支持从 [major.minor](http://semver.org/) 或其他不同 patch 版本的 etcd 进程中获取的快照进行恢复。
+etcd 支持从 [major.minor](https://semver.org/) 或其他不同 patch 版本的 etcd 进程中获取的快照进行恢复。
 还原操作用于恢复失败的集群的数据。
 
 <!--
@@ -782,10 +783,15 @@ either be a snapshot file from a previous backup operation, or from a remaining
 
    <!--
    If `<data-dir-location>` is the same folder as before, delete it and stop the etcd process before restoring the cluster. 
-   Otherwise, change etcd configuration and restart the etcd process after restoration to have it use the new data directory.
+   Otherwise, change etcd configuration and restart the etcd process after restoration to have it use the new data directory:
+   first change  `/etc/kubernetes/manifests/etcd.yaml`'s `volumes.hostPath.path` for `name: etcd-data`  to `<data-dir-location>`,
+   then execute `kubectl -n kube-system delete pod <name-of-etcd-pod>` or `systemctl restart kubelet.service` (or both).
    -->
    如果 `<data-dir-location>` 与之前的文件夹相同，请先删除此文件夹并停止 etcd 进程，再恢复集群。
-   否则，在恢复后更改 etcd 配置并重启 etcd 进程将使用新的数据目录。
+   否则，在恢复后更改 etcd 配置并重启 etcd 进程将使用新的数据目录：
+   首先将 `/etc/kubernetes/manifests/etcd.yaml` 中 `name: etcd-data` 对应条目的
+   `volumes.hostPath.path` 改为 `<data-dir-location>`，
+   然后执行 `kubectl -n kube-system delete pod <name-of-etcd-pod>` 或 `systemctl restart kubelet.service`（或两段命令都执行）。
 
 {{% /tab %}}
 {{< /tabs >}}

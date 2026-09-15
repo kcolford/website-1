@@ -82,13 +82,13 @@ the `system::leader-locking-kube-controller-manager` role. This task guide assum
 that the name of the migration lease is `cloud-provider-extraction-migration`.
 
 ```shell
-kubectl patch -n kube-system role 'system::leader-locking-kube-controller-manager' -p '{"rules": [ {"apiGroups":[ "coordination.k8s.io"], "resources": ["leases"], "resourceNames": ["cloud-provider-extraction-migration"], "verbs": ["create", "list", "get", "update"] } ]}' --type=merge`
+kubectl patch -n kube-system role 'system::leader-locking-kube-controller-manager' -p '{"rules": [ {"apiGroups":[ "coordination.k8s.io"], "resources": ["leases"], "resourceNames": ["cloud-provider-extraction-migration"], "verbs": ["create", "list", "get", "update"] } ]}' --type=merge
 ```
 
 Do the same to the `system::leader-locking-cloud-controller-manager` role.
 
 ```shell
-kubectl patch -n kube-system role 'system::leader-locking-cloud-controller-manager' -p '{"rules": [ {"apiGroups":[ "coordination.k8s.io"], "resources": ["leases"], "resourceNames": ["cloud-provider-extraction-migration"], "verbs": ["create", "list", "get", "update"] } ]}' --type=merge`
+kubectl patch -n kube-system role 'system::leader-locking-cloud-controller-manager' -p '{"rules": [ {"apiGroups":[ "coordination.k8s.io"], "resources": ["leases"], "resourceNames": ["cloud-provider-extraction-migration"], "verbs": ["create", "list", "get", "update"] } ]}' --type=merge
 ```
 
 ### Initial Leader Migration configuration
@@ -105,6 +105,7 @@ Leader Migration can be enabled without a configuration. Please see
 kind: LeaderMigrationConfiguration
 apiVersion: controllermanager.config.k8s.io/v1
 leaderName: cloud-provider-extraction-migration
+resourceLock: leases
 controllerLeaders:
   - name: route
     component: kube-controller-manager
@@ -123,6 +124,7 @@ between both parties of the migration.
 kind: LeaderMigrationConfiguration
 apiVersion: controllermanager.config.k8s.io/v1
 leaderName: cloud-provider-extraction-migration
+resourceLock: leases
 controllerLeaders:
   - name: route
     component: *
@@ -156,6 +158,7 @@ which has the same effect.
 kind: LeaderMigrationConfiguration
 apiVersion: controllermanager.config.k8s.io/v1
 leaderName: cloud-provider-extraction-migration
+resourceLock: leases
 controllerLeaders:
   - name: route
     component: cloud-controller-manager
@@ -235,6 +238,7 @@ controllers.
 kind: LeaderMigrationConfiguration
 apiVersion: controllermanager.config.k8s.io/v1
 leaderName: cloud-provider-extraction-migration
+resourceLock: leases
 controllerLeaders:
   - name: route
     component: *

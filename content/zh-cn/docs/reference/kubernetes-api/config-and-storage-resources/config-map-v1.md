@@ -54,10 +54,10 @@ ConfigMap 包含供 Pod 使用的配置数据。
 -->
 - **binaryData** (map[string][]byte)
 
-  binaryData 包含二进制数据。
+  `binaryData` 包含二进制数据。
   每个键必须由字母、数字、“-”、“\_” 或 “.” 组成。
-  binaryData 可以包含不在 UTF-8 范围中的字节序列。
-  binaryData 中存储的键不得与 data 字段中的键重叠，这在验证过程中是强制要求。
+  `binaryData` 可以包含不在 UTF-8 范围中的字节序列。
+  `binaryData` 中存储的键不得与 `data` 字段中的键重叠，这在验证过程中是强制要求。
   使用此字段需要 apiserver 和 kubelet 的版本高于 1.10。
 
 <!--
@@ -71,14 +71,14 @@ ConfigMap 包含供 Pod 使用的配置数据。
 -->
 - **data** (map[string]string)
 
-  data 包含配置数据。
+  `data` 包含配置数据。
   每个键必须由字母、数字、“-”、“\_” 或 “.” 组成。
   如果值包含非 UTF-8 字节序列，则必须使用 binaryData 字段。
-  data 中存储的键不得与 binaryData 字段中的键重叠，这在验证过程中是强制要求。
+  `data` 中存储的键不得与 binaryData 字段中的键重叠，这在验证过程中是强制要求。
 
 - **immutable** (boolean)
 
-  如果 immutable 设为 true，
+  如果 `immutable` 设为 true，
   则确保不会更新 ConfigMap 中存储的数据（只能修改对象元数据）。
   如果未设为 true，则可以随时修改此字段。
   默认为 nil。
@@ -110,19 +110,20 @@ ConfigMapList 是包含 ConfigMap 对象列表的资源。
 
 - **items** ([]<a href="{{< ref "../config-and-storage-resources/config-map-v1#ConfigMap" >}}">ConfigMap</a>)，必需
 
-  items 是 ConfigMap 的列表。
+  `items` 是 ConfigMap 的列表。
 
 <!--
 ## Operations {#Operations}
-<hr>
-### `get` read the specified ConfigMap
-
-#### HTTP Request
 -->
 ## 操作 {#Operations}
 
 <hr>
 
+<!--
+### `get` read the specified ConfigMap
+
+#### HTTP Request
+-->
 ### `get` 读取指定的 ConfigMap
 
 #### HTTP 请求
@@ -141,7 +142,7 @@ GET /api/v1/namespaces/{namespace}/configmaps/{name}
 
 - **name** (**路径参数**): string，必需
 
-  ConfigMap 的名称
+  ConfigMap 的名称。
 
 - **namespace** (**路径参数**): string，必需
 
@@ -182,6 +183,8 @@ GET /api/v1/namespaces/{namespace}/configmaps
 - **pretty** (*in query*): string
 - **resourceVersion** (*in query*): string
 - **resourceVersionMatch** (*in query*): string
+- **sendInitialEvents** (*in query*): boolean
+- **shardSelector** (*in query*): string
 - **timeoutSeconds** (*in query*): integer
 - **watch** (*in query*): boolean
 -->
@@ -227,6 +230,10 @@ GET /api/v1/namespaces/{namespace}/configmaps
 
   <a href="{{< ref "../common-parameters/common-parameters#sendInitialEvents" >}}">sendInitialEvents</a>
 
+- **shardSelector** (**查询参数**): string
+
+  <a href="{{< ref "../common-parameters/common-parameters#shardSelector" >}}">shardSelector</a>
+
 - **timeoutSeconds** (**查询参数**): integer
 
   <a href="{{< ref "../common-parameters/common-parameters#timeoutSeconds" >}}">timeoutSeconds</a>
@@ -265,6 +272,8 @@ GET /api/v1/configmaps
 - **pretty** (*in query*): string
 - **resourceVersion** (*in query*): string
 - **resourceVersionMatch** (*in query*): string
+- **sendInitialEvents** (*in query*): boolean
+- **shardSelector** (*in query*): string
 - **timeoutSeconds** (*in query*): integer
 - **watch** (*in query*): boolean
 -->
@@ -305,6 +314,10 @@ GET /api/v1/configmaps
 - **sendInitialEvents** (**查询参数**): boolean
 
   <a href="{{< ref "../common-parameters/common-parameters#sendInitialEvents" >}}">sendInitialEvents</a>
+
+- **shardSelector** (**查询参数**): string
+
+  <a href="{{< ref "../common-parameters/common-parameters#shardSelector" >}}">shardSelector</a>
 
 - **timeoutSeconds** (**查询参数**): integer
 
@@ -526,6 +539,7 @@ DELETE /api/v1/namespaces/{namespace}/configmaps/{name}
 - **body**: <a href="{{< ref "../common-definitions/delete-options#DeleteOptions" >}}">DeleteOptions</a>
 - **dryRun** (*in query*): string
 - **gracePeriodSeconds** (*in query*): integer
+- **ignoreStoreReadErrorWithClusterBreakingPotential** (*in query*): boolean
 - **pretty** (*in query*): string
 - **propagationPolicy** (*in query*): string
 -->
@@ -548,6 +562,10 @@ DELETE /api/v1/namespaces/{namespace}/configmaps/{name}
 - **gracePeriodSeconds** (**查询参数**): integer
 
   <a href="{{< ref "../common-parameters/common-parameters#gracePeriodSeconds" >}}">gracePeriodSeconds</a>
+
+- **ignoreStoreReadErrorWithClusterBreakingPotential** (**查询参数**): boolean
+
+  <a href="{{< ref "../common-parameters/common-parameters#ignoreStoreReadErrorWithClusterBreakingPotential" >}}">ignoreStoreReadErrorWithClusterBreakingPotential</a>
 
 - **pretty** (**查询参数**): string
 
@@ -587,12 +605,15 @@ DELETE /api/v1/namespaces/{namespace}/configmaps
 - **dryRun** (*in query*): string
 - **fieldSelector** (*in query*): string
 - **gracePeriodSeconds** (*in query*): integer
+- **ignoreStoreReadErrorWithClusterBreakingPotential** (*in query*): boolean
 - **labelSelector** (*in query*): string
 - **limit** (*in query*): integer
 - **pretty** (*in query*): string
 - **propagationPolicy** (*in query*): string
 - **resourceVersion** (*in query*): string
 - **resourceVersionMatch** (*in query*): string
+- **sendInitialEvents** (*in query*): boolean
+- **shardSelector** (*in query*): string
 - **timeoutSeconds** (*in query*): integer
 -->
 #### 参数
@@ -618,6 +639,10 @@ DELETE /api/v1/namespaces/{namespace}/configmaps
 - **gracePeriodSeconds** (**查询参数**): integer
 
   <a href="{{< ref "../common-parameters/common-parameters#gracePeriodSeconds" >}}">gracePeriodSeconds</a>
+
+- **ignoreStoreReadErrorWithClusterBreakingPotential** (**查询参数**): boolean
+
+  <a href="{{< ref "../common-parameters/common-parameters#ignoreStoreReadErrorWithClusterBreakingPotential" >}}">ignoreStoreReadErrorWithClusterBreakingPotential</a>
 
 - **labelSelector** (**查询参数**): string
 
@@ -646,6 +671,10 @@ DELETE /api/v1/namespaces/{namespace}/configmaps
 - **sendInitialEvents** (**查询参数**): boolean
 
   <a href="{{< ref "../common-parameters/common-parameters#sendInitialEvents" >}}">sendInitialEvents</a>
+
+- **shardSelector** (**查询参数**): string
+
+  <a href="{{< ref "../common-parameters/common-parameters#shardSelector" >}}">shardSelector</a>
 
 - **timeoutSeconds** (**查询参数**): integer
 

@@ -1,7 +1,7 @@
 ---
 title: Настройка Liveness, Readiness и Startup проб
 content_type: task
-weight: 110
+weight: 140
 ---
 
 <!-- overview -->
@@ -47,7 +47,7 @@ Kubernetes предоставляет liveness пробы, чтобы обнар
 
 В этом упражнении вы создадите Pod, который запускает контейнер, основанный на образе `registry.k8s.io/busybox`. Конфигурационный файл для Pod'а:
 
-{{% codenew file="pods/probe/exec-liveness.yaml" %}}
+{{% code_sample file="pods/probe/exec-liveness.yaml" %}}
 
 В конфигурационном файле вы можете видеть, что Pod состоит из одного `Container`.
 Поле `periodSeconds` определяет, что kubelet должен производить liveness
@@ -126,7 +126,7 @@ liveness-exec   1/1       Running   1          1m
 
 Другой вид liveness пробы использует запрос HTTP GET. Ниже представлен файл конфигурации для Pod, который запускает контейнер, основанный на образе `registry.k8s.io/e2e-test-images/agnhost`.
 
-{{% codenew file="pods/probe/http-liveness.yaml" %}}
+{{% code_sample file="pods/probe/http-liveness.yaml" %}}
 
 В конфигурационном файле вы можете видеть Pod с одним контейнером.
 Поле `periodSeconds` определяет, что kubelet должен производить liveness
@@ -182,7 +182,7 @@ HTTP liveness проба использует этот прокси.
 kubelet будет пытаться открыть сокет к вашему контейнеру на определённый порт.
 Если он сможет установить соединение, контейнер будет считаться здоровым, если нет, будет считаться заваленным.
 
-{{% codenew file="pods/probe/tcp-liveness-readiness.yaml" %}}
+{{% code_sample file="pods/probe/tcp-liveness-readiness.yaml" %}}
 
 Как вы можете видеть, конфигурация TCP проверок довольно похожа на HTTP проверки.
 Этот пример использует обе - readiness и liveness пробы. Kubelet будет отправлять первую readiness пробу через 5 секунд после старта контейнера. Он будет пытаться соединиться с `goproxy` контейнером на порт 8080. Если проба успешна, Pod
@@ -296,7 +296,7 @@ Eventually, some of this section could be moved to a concept topic.
 вы можете использовать для более точного контроля поведения
 liveness и readiness проверок:
 
-* `initialDelaySeconds`: Количество секунд от старта контейнера до начала liveness или readiness проб. По умолчанию 0 секунд. Минимальное значение 0.
+* `initialDelaySeconds`: Количество секунд от старта контейнера до инициации startup-, liveness- или readiness-проб. Если определена startup-проба, задержки от liveness- и readiness-проб не вступают в силу, пока startup-проба не завершилась с успехом. Если значение periodSeconds выше initialDelaySeconds, то initialDelaySeconds игнорируется. По умолчанию 0 секунд. Минимальное значение 0.
 * `periodSeconds`: Длительность времени (в секундах) между двумя последовательными проведениями проб. По умолчанию 10
 секунд. Минимальное значение 1.
 * `timeoutSeconds`: Количество секунд ожидания пробы. По умолчанию

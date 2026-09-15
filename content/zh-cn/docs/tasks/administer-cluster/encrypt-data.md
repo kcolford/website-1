@@ -6,7 +6,7 @@ weight: 210
 <!--
 title: Encrypting Confidential Data at Rest
 reviewers:
-- smarterclayton
+- aramase
 - enj
 content_type: task
 weight: 210
@@ -368,10 +368,10 @@ to give it precedence.
 
 <!--
 For more detailed information about the `EncryptionConfiguration` struct, please refer to the
-[encryption configuration API](/docs/reference/config-api/apiserver-encryption.v1/).
+[encryption configuration API](/docs/reference/config-api/apiserver-config.v1/)).
 -->
 有关 `EncryptionConfiguration` 结构体的更多详细信息，
-请参阅[加密配置 API](/zh-cn/docs/reference/config-api/apiserver-encryption.v1/)。
+请参阅[加密配置 API](/zh-cn/docs/reference/config-api/apiserver-config.v1/)。
 
 {{< caution >}}
 <!--
@@ -446,6 +446,7 @@ Kubernetes 静态数据加密的提供程序
   <td><!-- Weak -->弱</td>
   <td><!-- Fast -->快</td>
   <td><!-- 32-byte -->32 字节</td>
+  <td><!-- 16, 24, or 32-byte -->16、24 或 32 字节</td>
   </tr>
   <tr>
   <td colspan="4">
@@ -760,9 +761,9 @@ so that you're relying on KMS encryption.
 请在主机之间使用非对称加密，或更改你正在使用的方法，以便依赖 KMS 加密。
 
 <!--
-## Write an encryption configuration file
+### Write an encryption configuration file
 -->
-## 编辑加密配置文件   {#write-an-encryption-configuration-file}
+### 编辑加密配置文件   {#write-an-encryption-configuration-file}
 
 {{< caution >}}
 <!--

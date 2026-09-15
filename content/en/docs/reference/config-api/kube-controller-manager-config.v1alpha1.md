@@ -16,6 +16,186 @@ auto_generated: true
     
     
 
+## `ClientConnectionConfiguration`     {#ClientConnectionConfiguration}
+    
+
+**Appears in:**
+
+- [KubeSchedulerConfiguration](#kubescheduler-config-k8s-io-v1-KubeSchedulerConfiguration)
+
+- [GenericControllerManagerConfiguration](#controllermanager-config-k8s-io-v1alpha1-GenericControllerManagerConfiguration)
+
+
+<p>ClientConnectionConfiguration contains details for constructing a client.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>kubeconfig</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>kubeconfig is the path to a KubeConfig file.</p>
+</td>
+</tr>
+<tr><td><code>acceptContentTypes</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>acceptContentTypes defines the Accept header sent by clients when connecting to a server, overriding the
+default value of 'application/json'. This field will control all connections to the server used by a particular
+client.</p>
+</td>
+</tr>
+<tr><td><code>contentType</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>contentType is the content type used when sending data to the server from this client.</p>
+</td>
+</tr>
+<tr><td><code>qps</code> <B>[Required]</B><br/>
+<code>float32</code>
+</td>
+<td>
+   <p>qps controls the number of queries per second allowed for this connection.</p>
+</td>
+</tr>
+<tr><td><code>burst</code> <B>[Required]</B><br/>
+<code>int32</code>
+</td>
+<td>
+   <p>burst allows extra queries to accumulate when a client is exceeding its rate.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## `DebuggingConfiguration`     {#DebuggingConfiguration}
+    
+
+**Appears in:**
+
+- [KubeSchedulerConfiguration](#kubescheduler-config-k8s-io-v1-KubeSchedulerConfiguration)
+
+- [GenericControllerManagerConfiguration](#controllermanager-config-k8s-io-v1alpha1-GenericControllerManagerConfiguration)
+
+
+<p>DebuggingConfiguration holds configuration for Debugging related features.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>enableProfiling</code> <B>[Required]</B><br/>
+<code>bool</code>
+</td>
+<td>
+   <p>enableProfiling enables profiling via web interface host:port/debug/pprof/</p>
+</td>
+</tr>
+<tr><td><code>enableContentionProfiling</code> <B>[Required]</B><br/>
+<code>bool</code>
+</td>
+<td>
+   <p>enableContentionProfiling enables block profiling, if
+enableProfiling is true.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## `LeaderElectionConfiguration`     {#LeaderElectionConfiguration}
+    
+
+**Appears in:**
+
+- [KubeSchedulerConfiguration](#kubescheduler-config-k8s-io-v1-KubeSchedulerConfiguration)
+
+- [GenericControllerManagerConfiguration](#controllermanager-config-k8s-io-v1alpha1-GenericControllerManagerConfiguration)
+
+
+<p>LeaderElectionConfiguration defines the configuration of leader election
+clients for components that can run with leader election enabled.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>leaderElect</code> <B>[Required]</B><br/>
+<code>bool</code>
+</td>
+<td>
+   <p>leaderElect enables a leader election client to gain leadership
+before executing the main loop. Enable this when running replicated
+components for high availability.</p>
+</td>
+</tr>
+<tr><td><code>leaseDuration</code> <B>[Required]</B><br/>
+<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
+</td>
+<td>
+   <p>leaseDuration is the duration that non-leader candidates will wait
+after observing a leadership renewal until attempting to acquire
+leadership of a led but unrenewed leader slot. This is effectively the
+maximum duration that a leader can be stopped before it is replaced
+by another candidate. This is only applicable if leader election is
+enabled.</p>
+</td>
+</tr>
+<tr><td><code>renewDeadline</code> <B>[Required]</B><br/>
+<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
+</td>
+<td>
+   <p>renewDeadline is the interval between attempts by the acting master to
+renew a leadership slot before it stops leading. This must be less
+than or equal to the lease duration. This is only applicable if leader
+election is enabled.</p>
+</td>
+</tr>
+<tr><td><code>retryPeriod</code> <B>[Required]</B><br/>
+<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
+</td>
+<td>
+   <p>retryPeriod is the duration the clients should wait between attempting
+acquisition and renewal of a leadership. This is only applicable if
+leader election is enabled.</p>
+</td>
+</tr>
+<tr><td><code>resourceLock</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>resourceLock indicates the resource object type that will be used to lock
+during leader election cycles.</p>
+</td>
+</tr>
+<tr><td><code>resourceName</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>resourceName indicates the name of resource object that will be used to lock
+during leader election cycles.</p>
+</td>
+</tr>
+<tr><td><code>resourceNamespace</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>resourceName indicates the namespace of resource object that will be used to lock
+during leader election cycles.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
 ## `NodeControllerConfiguration`     {#NodeControllerConfiguration}
     
 
@@ -38,6 +218,15 @@ auto_generated: true
 <td>
    <p>ConcurrentNodeSyncs is the number of workers
 concurrently synchronizing nodes</p>
+</td>
+</tr>
+<tr><td><code>ConcurrentNodeStatusUpdates</code> <B>[Required]</B><br/>
+<code>int32</code>
+</td>
+<td>
+   <p>ConcurrentNodeStatusUpdates is the number of workers
+concurrently updating node statuses.
+If unspecified or 0, ConcurrentNodeSyncs is used instead</p>
 </td>
 </tr>
 </tbody>
@@ -109,6 +298,14 @@ both in cloud controller manager and kube-controller manager.</p>
 </td>
 <td>
    <p>NodeController holds configuration for node controller
+related features.</p>
+</td>
+</tr>
+<tr><td><code>NodeLifecycleController</code> <B>[Required]</B><br/>
+<code>k8s.io/cloud-provider/controllers/nodelifecycle/config/v1alpha1.NodeLifecycleControllerConfiguration</code>
+</td>
+<td>
+   <p>NodeLifecycleController holds configuration for node lifecycle controller
 related features.</p>
 </td>
 </tr>
@@ -224,13 +421,6 @@ individual service account credentials.</p>
 </td>
 <td>
    <p>routeReconciliationPeriod is the period for reconciling routes created for Nodes by cloud provider..</p>
-</td>
-</tr>
-<tr><td><code>NodeMonitorPeriod</code> <B>[Required]</B><br/>
-<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
-</td>
-<td>
-   <p>nodeMonitorPeriod is the period for syncing NodeStatus in NodeController.</p>
 </td>
 </tr>
 <tr><td><code>ClusterName</code> <B>[Required]</B><br/>
@@ -557,6 +747,14 @@ related features.</p>
 DeploymentController related features.</p>
 </td>
 </tr>
+<tr><td><code>DisruptionController</code> <B>[Required]</B><br/>
+<a href="#kubecontrollermanager-config-k8s-io-v1alpha1-DisruptionControllerConfiguration"><code>DisruptionControllerConfiguration</code></a>
+</td>
+<td>
+   <p>DisruptionControllerConfiguration holds configuration for
+DisruptionController related features.</p>
+</td>
+</tr>
 <tr><td><code>StatefulSetController</code> <B>[Required]</B><br/>
 <a href="#kubecontrollermanager-config-k8s-io-v1alpha1-StatefulSetControllerConfiguration"><code>StatefulSetControllerConfiguration</code></a>
 </td>
@@ -734,6 +932,20 @@ TTLAfterFinishedController related features.</p>
 <td>
    <p>ValidatingAdmissionPolicyStatusControllerConfiguration holds configuration for
 ValidatingAdmissionPolicyStatusController related features.</p>
+</td>
+</tr>
+<tr><td><code>DeviceTaintEvictionController</code> <B>[Required]</B><br/>
+<a href="#kubecontrollermanager-config-k8s-io-v1alpha1-DeviceTaintEvictionControllerConfiguration"><code>DeviceTaintEvictionControllerConfiguration</code></a>
+</td>
+<td>
+   <p>DeviceTaintEvictionControllerConfiguration contains elements configuring the device taint eviction controller.</p>
+</td>
+</tr>
+<tr><td><code>ResourceClaimController</code> <B>[Required]</B><br/>
+<a href="#kubecontrollermanager-config-k8s-io-v1alpha1-ResourceClaimControllerConfiguration"><code>ResourceClaimControllerConfiguration</code></a>
+</td>
+<td>
+   <p>ResourceClaimControllerConfiguration contains elements configuring the resource claim controller.</p>
 </td>
 </tr>
 </tbody>
@@ -986,6 +1198,62 @@ but more CPU (and network) load.</p>
 
 
 
+
+## `DeviceTaintEvictionControllerConfiguration`     {#kubecontrollermanager-config-k8s-io-v1alpha1-DeviceTaintEvictionControllerConfiguration}
+    
+
+**Appears in:**
+
+- [KubeControllerManagerConfiguration](#kubecontrollermanager-config-k8s-io-v1alpha1-KubeControllerManagerConfiguration)
+
+
+<p>DeviceTaintEvictionControllerConfiguration contains elements configuring the device taint eviction controller.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>ConcurrentSyncs</code> <B>[Required]</B><br/>
+<code>int32</code>
+</td>
+<td>
+   <p>ConcurrentSyncs is the number of operations (deleting a pod, updating a ResourcClaim status, etc.)
+that will be done concurrently. Larger number = processing, but more CPU (and network) load.</p>
+<p>The default is 10.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## `DisruptionControllerConfiguration`     {#kubecontrollermanager-config-k8s-io-v1alpha1-DisruptionControllerConfiguration}
+    
+
+**Appears in:**
+
+- [KubeControllerManagerConfiguration](#kubecontrollermanager-config-k8s-io-v1alpha1-KubeControllerManagerConfiguration)
+
+
+<p>DisruptionControllerConfiguration contains elements describing DisruptionController.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>ConcurrentDisruptionSyncs</code> <B>[Required]</B><br/>
+<code>int32</code>
+</td>
+<td>
+   <p>concurrentDisruptionSyncs is the number of PodDisruptionBudget objects that
+are allowed to sync concurrently. Larger number = more responsive PDB
+updates, but more CPU (and network) load.</p>
+</td>
+</tr>
+</tbody>
+</table>
 
 ## `EndpointControllerConfiguration`     {#kubecontrollermanager-config-k8s-io-v1alpha1-EndpointControllerConfiguration}
     
@@ -1256,26 +1524,12 @@ Larger number = more responsive HPA processing, but more CPU (and network) load.
 pods in horizontal pod autoscaler.</p>
 </td>
 </tr>
-<tr><td><code>HorizontalPodAutoscalerUpscaleForbiddenWindow</code> <B>[Required]</B><br/>
-<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
-</td>
-<td>
-   <p>HorizontalPodAutoscalerUpscaleForbiddenWindow is a period after which next upscale allowed.</p>
-</td>
-</tr>
 <tr><td><code>HorizontalPodAutoscalerDownscaleStabilizationWindow</code> <B>[Required]</B><br/>
 <a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
 </td>
 <td>
    <p>HorizontalPodAutoscalerDowncaleStabilizationWindow is a period for which autoscaler will look
 backwards and not scale down below any recommendation it made during that period.</p>
-</td>
-</tr>
-<tr><td><code>HorizontalPodAutoscalerDownscaleForbiddenWindow</code> <B>[Required]</B><br/>
-<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
-</td>
-<td>
-   <p>HorizontalPodAutoscalerDownscaleForbiddenWindow is a period after which next downscale allowed.</p>
 </td>
 </tr>
 <tr><td><code>HorizontalPodAutoscalerTolerance</code> <B>[Required]</B><br/>
@@ -1496,7 +1750,8 @@ be unresponsive before marking it unhealthy.</p>
    <p>nodeMontiorGracePeriod is the amount of time which we allow a running node to be
 unresponsive before marking it unhealthy. Must be N times more than kubelet's
 nodeStatusUpdateFrequency, where N means number of retries allowed for kubelet
-to post node status.</p>
+to post node status. This value should also be greater than the sum of
+HTTP2_PING_TIMEOUT_SECONDS and HTTP2_READ_IDLE_TIMEOUT_SECONDS.</p>
 </td>
 </tr>
 <tr><td><code>PodEvictionTimeout</code> <B>[Required]</B><br/>
@@ -1519,6 +1774,13 @@ to post node status.</p>
 <td>
    <p>Zone is treated as unhealthy in nodeEvictionRate and secondaryNodeEvictionRate when at least
 unhealthyZoneThreshold (no less than 3) of Nodes in the zone are NotReady</p>
+</td>
+</tr>
+<tr><td><code>NodeMonitorPeriod</code> <B>[Required]</B><br/>
+<a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
+</td>
+<td>
+   <p>NodeMonitorPeriod is the period for syncing NodeStatus in NodeLifecycleController.</p>
 </td>
 </tr>
 </tbody>
@@ -1554,22 +1816,6 @@ and persistent volume claims.</p>
 </td>
 <td>
    <p>volumeConfiguration holds configuration for volume related features.</p>
-</td>
-</tr>
-<tr><td><code>VolumeHostCIDRDenylist</code> <B>[Required]</B><br/>
-<code>[]string</code>
-</td>
-<td>
-   <p>DEPRECATED: VolumeHostCIDRDenylist is a list of CIDRs that should not be reachable by the
-controller from plugins.</p>
-</td>
-</tr>
-<tr><td><code>VolumeHostAllowLocalLoopback</code> <B>[Required]</B><br/>
-<code>bool</code>
-</td>
-<td>
-   <p>DEPRECATED: VolumeHostAllowLocalLoopback indicates if local loopback hosts (127.0.0.1, etc)
-should be allowed from plugins.</p>
 </td>
 </tr>
 </tbody>
@@ -1732,6 +1978,34 @@ CPU (and network) load.</p>
    <p>concurrentRCSyncs is the number of replication controllers that are
 allowed to sync concurrently. Larger number = more responsive replica
 management, but more CPU (and network) load.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## `ResourceClaimControllerConfiguration`     {#kubecontrollermanager-config-k8s-io-v1alpha1-ResourceClaimControllerConfiguration}
+    
+
+**Appears in:**
+
+- [KubeControllerManagerConfiguration](#kubecontrollermanager-config-k8s-io-v1alpha1-KubeControllerManagerConfiguration)
+
+
+<p>ResourceClaimControllerConfiguration contains elements configuring the resource claim controller.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>ConcurrentSyncs</code> <B>[Required]</B><br/>
+<code>int32</code>
+</td>
+<td>
+   <p>ConcurrentSyncs is the number of operations (deleting a pod, updating a ResourcClaim status, etc.)
+that will be done concurrently. Larger number = processing, but more CPU (and network) load.</p>
+<p>The default is 50.</p>
 </td>
 </tr>
 </tbody>

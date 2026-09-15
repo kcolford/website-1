@@ -64,7 +64,7 @@ Kubernetes reviews only the following API request attributes:
  * **API request verb** - API verbs like `get`, `list`, `create`, `update`, `patch`, `watch`, `delete`, and `deletecollection` are used for resource requests. To determine the request verb for a resource API endpoint, see [request verbs and authorization](/docs/reference/access-authn-authz/authorization/#determine-the-request-verb).
  * **HTTP request verb** - Lowercased HTTP methods like `get`, `post`, `put`, and `delete` are used for non-resource requests.
  * **Resource** - The ID or name of the resource that is being accessed (for resource requests only) -- For resource requests using `get`, `update`, `patch`, and `delete` verbs, you must provide the resource name.
- * **Subresource** - The subresource that is being accessed (for resource requests only).
+ * **Subresource** - The subresource that is being accessed (for resource requests only). This can be a standard subresource (for example, `status` or `scale`) or a synthetic subresource used for fine-grained authorization.
  * **Namespace** - The namespace of the object that is being accessed (for namespaced resource requests only).
  * **API group** - The {{< glossary_tooltip text="API Group" term_id="api-group" >}} being accessed (for resource requests only). An empty string designates the _core_ [API group](/docs/reference/using-api/#api-groups).
 
@@ -104,6 +104,11 @@ Kubernetes sometimes checks authorization for additional permissions using speci
   * **approve** verb for CertificateSigningRequests, and **update** for revisions to existing approvals
 * [RBAC](/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping)
   * **bind** and **escalate** verbs on `roles` and `clusterroles` resources in the `rbac.authorization.k8s.io` API group.
+* [Dynamic Resource Allocation (DRA)](/docs/concepts/resource-management/dynamic-resource-allocation/)
+  * Synthetic subresources such as `resourceclaims/binding` and `resourceclaims/driver` in the `resource.k8s.io` API group.
+  * Node-aware verbs such as `associated-node:update`, `associated-node:patch`, `arbitrary-node:update`, and `arbitrary-node:patch` for DRA driver `resourceclaims/status` updates.
+* [Force deletion of corrupt resources](/docs/reference/using-api/api-concepts/#force-deletion)
+  * **unsafe-delete-ignore-read-errors** verb on the resource, checked in addition to the **delete** verb.
 
 ## Authorization context
 
@@ -152,43 +157,26 @@ You should not use the `AlwaysAllow` mode on a Kubernetes cluster where the API 
 is reachable from the public internet.
 {{< /warning >}}
 
+### The system:masters group
+
+The `system:masters` group is a built-in Kubernetes group that grants unrestricted
+access to the API server. Any user assigned to this group has full cluster administrator
+privileges, bypassing any authorization restrictions imposed by the RBAC or Webhook mechanisms.
+[Avoid adding users](/docs/concepts/security/rbac-good-practices/#least-privilege)
+to this group. If you do need to grant a user cluster-admin rights, you can create a
+[ClusterRoleBinding](/docs/reference/access-authn-authz/rbac/#user-facing-roles)
+to the built-in `cluster-admin` ClusterRole.
+
 ### Authorization mode configuration {#choice-of-authz-config}
 
 You can configure the Kubernetes API server's authorizer chain using either
-[command line arguments](#using-flags-for-your-authorization-module) only or, as a beta feature,
-using a [configuration file](#using-configuration-file-for-authorization).
+a [configuration file](#using-configuration-file-for-authorization) only or
+[command line arguments](#using-flags-for-your-authorization-module).
 
 You have to pick one of the two configuration approaches; setting both `--authorization-config`
 path and configuring an authorization webhook using the `--authorization-mode` and
 `--authorization-webhook-*` command line arguments is not allowed.
 If you try this, the API server reports an error message during startup, then exits immediately.
-
-### Command line authorization mode configuration {#using-flags-for-your-authorization-module}
-
-{{< feature-state state="stable" for_k8s_version="v1.8" >}}
-
-You can use the following modes:
-
-* `--authorization-mode=ABAC` (Attribute-based access control mode)
-* `--authorization-mode=RBAC` (Role-based access control mode)
-* `--authorization-mode=Node` (Node authorizer)
-* `--authorization-mode=Webhook` (Webhook authorization mode)
-* `--authorization-mode=AlwaysAllow` (always allows requests; carries [security risks](#warning-always-allow))
-* `--authorization-mode=AlwaysDeny` (always denies requests)
-
-You can choose more than one authorization mode; for example:
-`--authorization-mode=Node,Webhook`
-
-Kubernetes checks authorization modules based on the order that you specify them
-on the API server's command line, so an earlier module has higher priority to allow
-or deny a request.
-
-You cannot combine the `--authorization-mode` command line argument with the
-`--authorization-config` command line argument used for
-[configuring authorization using a local file](#using-configuration-file-for-authorization-mode).
-
-For more information on command line arguments to the API server, read the
-[`kube-apiserver` reference](/docs/reference/command-line-tools-reference/kube-apiserver/).
 
 <!-- keep legacy hyperlinks working -->
 <a id="configuring-the-api-server-using-an-authorization-config-file" />
@@ -197,7 +185,7 @@ For more information on command line arguments to the API server, read the
 
 {{< feature-state feature_gate_name="StructuredAuthorizationConfiguration" >}}
 
-As a beta feature, Kubernetes lets you configure authorization chains that can include multiple
+Kubernetes lets you configure authorization chains that can include multiple
 webhooks. The authorization items in that chain can have well-defined parameters that validate
 requests in a particular order, offering you fine-grained control, such as explicit Deny on failures.
 
@@ -220,7 +208,7 @@ are only available if you use an authorization configuration file.
 #
 # DO NOT USE THE CONFIG AS IS. THIS IS AN EXAMPLE.
 #
-apiVersion: apiserver.config.k8s.io/v1beta1
+apiVersion: apiserver.config.k8s.io/v1
 kind: AuthorizationConfiguration
 authorizers:
   - type: Webhook
@@ -236,11 +224,23 @@ authorizers:
       # Same as setting `--authorization-webhook-cache-authorized-ttl` flag
       # Default: 5m0s
       authorizedTTL: 30s
+      # If set to false, 'authorized' responses from the webhook are not cached
+      # and the specified authorizedTTL is ignored/has no effect.
+      # Same as setting `--authorization-webhook-cache-authorized-ttl` flag to `0`.
+      # Note: Setting authorizedTTL to `0` results in its default value being used.
+      # Default: true
+      cacheAuthorizedRequests: true
       # The duration to cache 'unauthorized' responses from the webhook
       # authorizer.
       # Same as setting `--authorization-webhook-cache-unauthorized-ttl` flag
       # Default: 30s
       unauthorizedTTL: 30s
+      # If set to false, 'unauthorized' responses from the webhook are not cached
+      # and the specified unauthorizedTTL is ignored/has no effect.
+      # Same as setting `--authorization-webhook-cache-unauthorized-ttl` flag to `0`.
+      # Note: Setting unauthorizedTTL to `0` results in its default value being used.
+      # Default: true
+      cacheUnauthorizedRequests: true
       # Timeout for the webhook request
       # Maximum allowed is 30s.
       # Required, with no default.
@@ -268,14 +268,14 @@ authorizers:
       connectionInfo:
         # Controls how the webhook should communicate with the server.
         # Valid values:
-        # - KubeConfig: use the file specified in kubeConfigFile to locate the
+        # - KubeConfigFile: use the file specified in kubeConfigFile to locate the
         #   server.
         # - InClusterConfig: use the in-cluster configuration to call the
         #   SubjectAccessReview API hosted by kube-apiserver. This mode is not
         #   allowed for kube-apiserver.
-        type: KubeConfig
+        type: KubeConfigFile
         # Path to KubeConfigFile for connection info
-        # Required, if connectionInfo.Type is KubeConfig
+        # Required, if connectionInfo.Type is KubeConfigFile
         kubeConfigFile: /kube-system-authz-webhook.yaml
         # matchConditions is a list of conditions that must be met for a request to be sent to this
         # webhook. An empty list of matchConditions matches all requests.
@@ -300,7 +300,7 @@ authorizers:
       # only intercept requests to kube-system
       - expression: request.resourceAttributes.namespace == 'kube-system'
       # don't intercept requests from kube-system service accounts
-      - expression: !('system:serviceaccounts:kube-system' in request.user.groups)
+      - expression: "!('system:serviceaccounts:kube-system' in request.groups)"
   - type: Node
     name: node
   - type: RBAC
@@ -336,6 +336,31 @@ You must ensure that all non-webhook authorizer types remain unchanged in the fi
 A reload **must not** add or remove Node or RBAC authorizers (they can be reordered,
 but cannot be added or removed).
 {{< /note >}}
+
+### Command line authorization mode configuration {#using-flags-for-your-authorization-module}
+
+You can use the following modes:
+
+* `--authorization-mode=ABAC` (Attribute-based access control mode)
+* `--authorization-mode=RBAC` (Role-based access control mode)
+* `--authorization-mode=Node` (Node authorizer)
+* `--authorization-mode=Webhook` (Webhook authorization mode)
+* `--authorization-mode=AlwaysAllow` (always allows requests; carries [security risks](#warning-always-allow))
+* `--authorization-mode=AlwaysDeny` (always denies requests)
+
+You can choose more than one authorization mode; for example:
+`--authorization-mode=Node,RBAC,Webhook`
+
+Kubernetes checks authorization modules based on the order that you specify them
+on the API server's command line, so an earlier module has higher priority to allow
+or deny a request.
+
+You cannot combine the `--authorization-mode` command line argument with the
+`--authorization-config` command line argument used for
+[configuring authorization using a local file](#using-configuration-file-for-authorization-mode).
+
+For more information on command line arguments to the API server, read the
+[`kube-apiserver` reference](/docs/reference/command-line-tools-reference/kube-apiserver/).
 
 ## Privilege escalation via workload creation or edits {#privilege-escalation-via-pod-creation}
 

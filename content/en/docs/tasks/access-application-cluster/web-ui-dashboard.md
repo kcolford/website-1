@@ -15,6 +15,18 @@ card:
   title: Use the Web UI Dashboard
 ---
 
+{{% pageinfo color="primary" %}}
+**Kubernetes Dashboard is deprecated and unmaintained.**
+
+The Kubernetes Dashboard project has been archived and is no longer actively maintained.
+For new installations, consider using [Headlamp](https://headlamp.dev/).
+{{% /pageinfo %}}
+
+{{< note >}}
+For in-cluster deployments similar to Kubernetes Dashboard, see the
+[Headlamp in-cluster installation guide](https://headlamp.dev/docs/latest/installation/in-cluster/).
+{{< /note >}}
+
 <!-- overview -->
 
 Dashboard is a web-based Kubernetes user interface.
@@ -65,12 +77,12 @@ You can enable access to the Dashboard using the `kubectl` command-line tool,
 by running the following command:
 
 ```
-kubectl proxy
+kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
 ```
 
-Kubectl will make Dashboard available at [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/).
+Kubectl will make Dashboard available at [https://localhost:8443](https://localhost:8443).
 
-The UI can _only_ be accessed from the machine where the command is executed. See `kubectl proxy --help` for more options.
+The UI can _only_ be accessed from the machine where the command is executed. See `kubectl port-forward --help` for more options.
 
 {{< note >}}
 The kubeconfig authentication method does **not** support external identity providers

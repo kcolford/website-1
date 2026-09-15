@@ -25,7 +25,7 @@ incluem utilitários de depuração como um shell.
 O compartilhamento de namespace de processos é ativado usando o campo `shareProcessNamespace` da
 `.spec` para um Pod. Por exemplo:
 
-{{% codenew file="pods/share-process-namespace.yaml" %}}
+{{% code_sample file="pods/share-process-namespace.yaml" %}}
 
 1. Crie o pod `nginx` no seu cluster:
 
@@ -36,7 +36,7 @@ O compartilhamento de namespace de processos é ativado usando o campo `sharePro
 1. Conecte ao `shell` do contêiner e execute o comando `ps`:
 
    ```shell
-   kubectl attach -it nginx -c shell
+   kubectl exec -it nginx -c shell -- /bin/sh
    ```
 
    Se você não vir um prompt de comando, tente pressionar Enter. No shell do Contêiner execute:

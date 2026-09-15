@@ -18,7 +18,6 @@ content_type: concept
 <!--
 This page provides an overview of Validating Admission Policy.
 -->
-
 本页面提供验证准入策略（Validating Admission Policy）的概述。
 
 <!-- body -->
@@ -54,46 +53,53 @@ A policy is generally made up of three resources:
 - The `ValidatingAdmissionPolicy` describes the abstract logic of a policy
   (think: "this policy makes sure a particular label is set to a particular value").
 
-- A `ValidatingAdmissionPolicyBinding` links the above resources together and provides scoping.
-  If you only want to require an `owner` label to be set for `Pods`, the binding is where you would
-  specify this restriction.
-
 - A parameter resource provides information to a ValidatingAdmissionPolicy to make it a concrete
   statement (think "the `owner` label must be set to something that ends in `.company.com`").
   A native type such as ConfigMap or a CRD defines the schema of a parameter resource.
   `ValidatingAdmissionPolicy` objects specify what Kind they are expecting for their parameter resource.
+
+- A `ValidatingAdmissionPolicyBinding` links the above resources together and provides scoping.
+  If you only want to require an `owner` label to be set for `Pods`, the binding is where you would
+  specify this restriction.
 -->
-
 - `ValidatingAdmissionPolicy` 描述策略的抽象逻辑（想想看：“这个策略确保一个特定标签被设置为一个特定值”）。
-
-- 一个 `ValidatingAdmissionPolicyBinding` 将上述资源联系在一起，并提供作用域。
-  如果你只想为 `Pods` 设置一个 `owner` 标签，你就需要在这个绑定中指定这个限制。
 
 - 参数资源为 `ValidatingAdmissionPolicy` 提供信息，使其成为一个具体的声明
   （想想看：“`owner` 标签必须被设置为以 `.company.com` 结尾的形式"）。
   参数资源的模式（Schema）使用诸如 ConfigMap 或 CRD 这类原生类型定义。
   `ValidatingAdmissionPolicy` 对象指定它们期望参数资源所呈现的类型。
 
+- 一个 `ValidatingAdmissionPolicyBinding` 将上述资源联系在一起，并提供作用域。
+  如果你只想为 `Pods` 设置一个 `owner` 标签，你就需要在这个绑定中指定这个限制。
+
 <!--
 At least a `ValidatingAdmissionPolicy` and a corresponding `ValidatingAdmissionPolicyBinding`
 must be defined for a policy to have an effect.
+-->
+至少要定义一个 `ValidatingAdmissionPolicy` 和一个相对应的 `ValidatingAdmissionPolicyBinding`
+才能使策略生效。
 
+{{< note >}}
+<!--
+Names ending in `.static.k8s.io` are reserved for
+[manifest-based admission control](/docs/reference/access-authn-authz/manifest-admission-control/)
+and cannot be used for API-based policies or bindings. This reservation is
+enforced when the `ManifestBasedAdmissionControlConfig`
+[feature gate](/docs/reference/command-line-tools-reference/feature-gates/#ManifestBasedAdmissionControlConfig) is enabled.
+-->
+以 `.static.k8s.io`
+结尾的名称保留用于[基于清单的准入控制](/zh-cn/docs/reference/access-authn-authz/manifest-admission-control/)，
+不能用于基于 API 的策略或绑定。当启用 `ManifestBasedAdmissionControlConfig`
+[特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/#ManifestBasedAdmissionControlConfig)时，
+强制执行这一保留规则。
+{{< /note >}}
+
+<!--
 If a `ValidatingAdmissionPolicy` does not need to be configured via parameters, simply leave
 `spec.paramKind` in  `ValidatingAdmissionPolicy` not specified.
 -->
-至少要定义一个 `ValidatingAdmissionPolicy` 和一个相对应的 `ValidatingAdmissionPolicyBinding` 才能使策略生效。
-
 如果 `ValidatingAdmissionPolicy` 不需要参数配置，不设置 `ValidatingAdmissionPolicy` 中的
 `spec.paramKind` 即可。
-
-## {{% heading "prerequisites" %}}
-
-<!--
-- Ensure the `ValidatingAdmissionPolicy` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/) is enabled.
-- Ensure that the `admissionregistration.k8s.io/v1beta1` API is enabled.
--->
-- 确保 `ValidatingAdmissionPolicy` [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)被启用。
-- 确保 `admissionregistration.k8s.io/v1beta1` API 被启用。
 
 <!--
 ## Getting Started with Validating Admission Policy
@@ -101,10 +107,10 @@ If a `ValidatingAdmissionPolicy` does not need to be configured via parameters, 
 Validating Admission Policy is part of the cluster control-plane. You should write and deploy them
 with great caution. The following describes how to quickly experiment with Validating Admission Policy.
 -->
-
 ## 开始使用验证准入策略  {#getting-started-with-validating-admission-policy}
 
-验证准入策略是集群控制平面的一部分。你应该非常谨慎地编写和部署它们。下面介绍如何快速试验验证准入策略。
+验证准入策略是集群控制平面的一部分，你应该非常谨慎地编写和部署这些策略。
+下面介绍如何快速试验验证准入策略。
 
 <!--
 ### Creating a ValidatingAdmissionPolicy
@@ -179,9 +185,9 @@ The supported `validationActions` are:
   as a [warning](/blog/2020/09/03/warnings/).
 - `Audit`: Validation failure is included in the audit event for the API request.
 -->
-- `Deny`: 验证失败会导致请求被拒绝。
-- `Warn`: 验证失败会作为[警告](/blog/2020/09/03/warnings/)报告给请求客户端。
-- `Audit`: 验证失败会包含在 API 请求的审计事件中。
+- `Deny`：验证失败会导致请求被拒绝。
+- `Warn`：验证失败会作为[警告](/zh-cn/blog/2020/09/03/warnings/)报告给请求客户端。
+- `Audit`：验证失败会包含在 API 请求的审计事件中。
 
 <!--
 For example, to both warn clients about a validation failure and to audit the
@@ -192,6 +198,7 @@ validation failures, use:
 ```yaml
 validationActions: [Warn, Audit]
 ```
+
 <!--
 `Deny` and `Warn` may not be used together since this combination
 needlessly duplicates the validation failure both in the
@@ -199,6 +206,7 @@ API response body and the HTTP warning headers.
 -->
 `Deny` 和 `Warn` 不能一起使用，因为这种组合会不必要地将验证失败重复输出到
 API 响应体和 HTTP 警告头中。
+
 <!--
 A `validation` that evaluates to false is always enforced according to these
 actions. Failures defined by the `failurePolicy` are enforced
@@ -210,10 +218,11 @@ otherwise the failures are ignored.
 否则这些失败将被忽略。
 
 <!-- 
-See [Audit Annotations: validation failures](/docs/reference/labels-annotations-taints/audit-annotations/#validation-policy-admission-k8s-io-validation-failure) for more details about the validation failure audit annotation.
- -->
-有关验证失败审计注解的详细信息，请参见
-[审计注解：验证失败](/zh-cn/docs/reference/labels-annotations-taints/audit-annotations/#validation-policy-admission-k8s-io-validation_failure)。
+See [Audit Annotations: validation failures](/docs/reference/labels-annotations-taints/audit-annotations/#validation-policy-admission-k8s-io-validation-failure)
+for more details about the validation failure audit annotation.
+-->
+有关验证失败审计注解的详细信息，
+请参见[审计注解：验证失败](/zh-cn/docs/reference/labels-annotations-taints/audit-annotations/#validation-policy-admission-k8s-io-validation_failure)。
 
 <!--
 ### Parameter resources
@@ -225,7 +234,7 @@ and then a policy binding ties a policy by name (via policyName) to a particular
 If parameter configuration is needed, the following is an example of a ValidatingAdmissionPolicy
 with parameter configuration.
 -->
-### 参数资源
+### 参数资源    {#parameter-resources}
 
 参数资源允许策略配置与其定义分开。
 一个策略可以定义 paramKind，给出参数资源的 GVK，
@@ -245,7 +254,7 @@ parameter reference.
 -->
 ValidatingAdmissionPolicy 的 `spec.paramKind` 字段指定用于参数化此策略的资源类型。
 在这个例子中，它是由自定义资源 ReplicaLimit 配置的。
-在这个例子中请注意 CEL 表达式是如何通过 CEL params 变量引用参数的，如：`params.maxReplicas`。
+在这个例子中请注意 CEL 表达式是如何通过 CEL `params` 变量引用参数的，如：`params.maxReplicas`。
 `spec.matchConstraints` 指定此策略要检查哪些资源。
 请注意，诸如 `ConfigMap` 之类的原生类型也可以用作参数引用。
 
@@ -285,10 +294,12 @@ The parameter resource could be as following:
 
 <!--
 This policy parameter resource limits deployments to a max of 3 replicas.
+
 An admission policy may have multiple bindings. To bind all other environments
 to have a maxReplicas limit of 100, create another ValidatingAdmissionPolicyBinding:
 -->
 此策略参数资源将限制 Deployment 最多有 3 个副本。
+
 一个准入策略可以有多个绑定。
 要绑定所有的其他环境，限制 maxReplicas 为 100，请创建另一个 ValidatingAdmissionPolicyBinding：
 
@@ -333,35 +344,12 @@ parameters.
 或者同一个绑定与多个参数匹配，则策略甚至可以被多次评估。
 
 <!--
-Bindings can have overlapping match criteria. The policy is evaluated for each matching binding.
-In the above example, the "nontest" policy binding could instead have been defined as a global policy:
--->
-绑定可以包含相互重叠的匹配条件。策略会针对每个匹配的绑定进行计算。
-在上面的例子中，`nontest` 策略绑定可以被定义为一个全局策略：
-
-```yaml
-apiVersion: admissionregistration.k8s.io/v1alpha1
-kind: ValidatingAdmissionPolicyBinding
-metadata:
-  name: "replicalimit-binding-global"
-spec:
-  policyName: "replicalimit-policy.example.com"
-  validationActions: [Deny]
-  params: "replica-limit-clusterwide.example.com"
-  matchResources:
-    namespaceSelector:
-      matchExpressions:
-      - key: environment
-        operator: Exists
-```
-
-<!--
 The params object representing a parameter resource will not be set if a parameter resource has
 not been bound, so for policies requiring a parameter resource, it can be useful to add a check to
 ensure one has been bound. A parameter resource will not be bound and `params` will be null
 if `paramKind` of the policy, or `paramRef` of the binding are not specified.
 
-For the use cases require parameter configuration, we recommend to add a param check in
+For the use cases requiring parameter configuration, we recommend to add a param check in
 `spec.validations[0].expression`:
 -->
 如果参数资源尚未被绑定，代表参数资源的 params 对象将不会被设置，
@@ -371,7 +359,7 @@ For the use cases require parameter configuration, we recommend to add a param c
 
 对于需要参数配置的场景，我们建议在 `spec.validations[0].expression` 中添加一个参数检查：
 
-```
+```yaml
 - expression: "params != null"
   message: "params missing but required to bind to this policy"
 ```
@@ -380,35 +368,50 @@ For the use cases require parameter configuration, we recommend to add a param c
 #### Optional parameters
 
 It can be convenient to be able to have optional parameters as part of a parameter resource, and
-only validate them if present. CEL provides `has()`, which checks if the key passed to it exists.
+only validate them if present. CEL provides the `has()` macro, which checks whether a field
+is present before a CEL expression accesses the field's value.
 CEL also implements Boolean short-circuiting. If the first half of a logical OR evaluates to true,
-it won’t evaluate the other half (since the result of the entire OR will be true regardless).
+it won’t evaluate the other half (since the result of the entire OR will be true regardless). 
 
 Combining the two, we can provide a way to validate optional parameters:
 -->
 #### 可选参数
 
 将可选参数作为参数资源的一部分，并且只在参数存在时执行检查操作，这样做会比较方便。
-CEL 提供了 `has()` 方法，它检查传递给它的键是否存在。CEL 还实现了布尔短路逻辑。
-如果逻辑 OR 的前半部分计算为 true，则不会计算另一半（因为无论如何整个 OR 的结果都为真）。
+CEL 提供了 `has()` 宏，它在 CEL 表达式访问某个字段的值之前，检查该字段是否存在。
+CEL 还实现了布尔短路逻辑。如果逻辑 OR 的前半部分计算为 true，
+则不会计算另一半（因为无论如何整个 OR 的结果都为真）。
 
 结合这两者，我们可以提供一种验证可选参数的方法：
 
-`!has(params.optionalNumber) || (params.optionalNumber >= 5 && params.optionalNumber <= 10)`
+```
+!has(params.optionalNumber) || (params.optionalNumber >= 5 && params.optionalNumber <= 10)
+```
 
 <!--
-Here, we first check that the optional parameter is present with `!has(params.optionalNumber)`.
+Here, we first check whether the optional parameter is absent with `!has(params.optionalNumber)`.
+
 - If `optionalNumber` hasn’t been defined, then the expression short-circuits since
-  `!has(params.optionalNumber)` will evaluate to true.
+  `!has(params.optionalNumber)` will evaluate to true. 
 - If `optionalNumber` has been defined, then the latter half of the CEL expression will be
   evaluated, and optionalNumber will be checked to ensure that it contains a value between 5 and
   10 inclusive.
 -->
-在这里，我们首先用 `!has(params.optionalNumber)` 检查可选参数是否存在。
+在这里，我们首先用 `!has(params.optionalNumber)` 检查可选参数是否缺失。
 
 - 如果 `optionalNumber` 没有被定义，那么表达式就会短路，因为 `!has(params.optionalNumber)` 的计算结果为 true。
 - 如果 `optionalNumber` 被定义了，那么将计算 CEL 表达式的后半部分，
   并且 `optionalNumber` 将被检查以确保它包含一个 5 到 10 之间的值（含 5 到 10）。
+
+<!--
+Use `has()` to check field presence. To check whether a map contains a key, use the `in`
+operator instead. For example,
+`has(object.metadata.labels) && 'example.com/environment' in object.metadata.labels` checks that
+the `metadata.labels` field is present and that the map contains the `example.com/environment` key.
+-->
+使用 `has()` 来检查字段是否存在。要检查一个映射是否包含某个键，使用 `in` 运算符。例如，
+`has(object.metadata.labels) && 'example.com/environment' in object.metadata.labels`
+用于检查 `metadata.labels` 字段是否存在，并且该映射中是否包含 `example.com/environment` 键。
 
 <!--
 #### Per-namespace Parameters
@@ -469,7 +472,7 @@ admitted will be used.
 否则，当 `namespace` 为空且 `paramKind` 为命名空间作用域的资源时，使用被准入请求中指定的 `namespace`。
 
 <!--
-#### Authorization Check
+#### Authorization checks {#authorization-check} 
 
 We introduced the authorization check for parameter resources.
 User is expected to have `read` access to the resources referenced by `paramKind` in
@@ -488,6 +491,95 @@ resources of groups is required.
 `read` 访问权限。
 
 <!--
+#### `paramRef`
+
+The `paramRef` field specifies the parameter resource used by the policy. It has the following fields:
+-->
+#### `paramRef`
+
+`paramRef` 字段用于指定策略所使用的参数资源。它包含以下字段：
+
+<!--
+- **name**: The name of the parameter resource.
+- **namespace**: The namespace of the parameter resource.
+- **selector**: A label selector to match multiple parameter resources.
+- **parameterNotFoundAction**: (Required) Controls the behavior when the specified parameters are not found.
+-->
+- **name**：参数资源的名称。
+- **namespace**：参数资源所在的命名空间。
+- **selector**：用于匹配多个参数资源的标签选择算符。
+- **parameterNotFoundAction**：（必需项）控制在未找到指定参数时的行为。
+
+  <!--
+  - **Allowed Values**:
+    - **`Allow`**: The absence of matched parameters is treated as a successful validation by the binding.
+    - **`Deny`**: The absence of matched parameters is subject to the `failurePolicy` of the policy.
+  -->
+
+  - **允许的取值**：
+    - **`Allow`**：如果未匹配到参数，绑定会将其视为验证成功。
+    - **`Deny`**：如果未匹配到参数，则取决于策略的 `failurePolicy`。
+
+<!--
+One of `name` or `selector` must be set, but not both.
+-->
+`name` 和 `selector` 必须设置其中之一，但不能同时设置。
+
+{{< note >}}
+
+<!--
+The `parameterNotFoundAction` field in `paramRef` is **required**. It specifies the action to take when no parameters are found matching the `paramRef`. If not specified, the policy binding may be considered invalid and will be ignored or could lead to unexpected behavior.
+-->
+`paramRef` 中的 `parameterNotFoundAction` 字段是**必需项**。
+它指定在没有参数与 `paramRef` 匹配时应采取的操作。
+如果未指定此字段，策略绑定可能被视为无效，进而被忽略，或可能导致意料之外的行为。
+
+<!--
+- **`Allow`**: If set to `Allow`, and no parameters are found, the binding treats the absence of parameters as a successful validation, and the policy is considered to have passed.
+- **`Deny`**: If set to `Deny`, and no parameters are found, the binding enforces the `failurePolicy` of the policy. If the `failurePolicy` is `Fail`, the request is rejected.
+
+Make sure to set `parameterNotFoundAction` according to the desired behavior when parameters are missing.
+-->
+- **`Allow`**：如果设置为 `Allow`，且未找到参数，绑定会将参数缺失视为验证成功，
+  此策略被认为是通过的。
+- **`Deny`**：如果设置为 `Deny`，且未找到参数，绑定将执行策略的 `failurePolicy`。
+  如果 `failurePolicy` 设置为 `Fail`，则该请求会被拒绝。
+
+请根据在参数缺失时期望的行为，正确设置 `parameterNotFoundAction`。
+
+{{< /note >}}
+
+<!--
+#### Handling Missing Parameters with `parameterNotFoundAction`
+
+When using `paramRef` with a selector, it's possible that no parameters match the selector. The `parameterNotFoundAction` field determines how the binding behaves in this scenario.
+
+**Example:**
+-->
+#### 使用 `parameterNotFoundAction` 处理缺失的参数
+
+当在 `paramRef` 中使用 `selector` 时，有可能不会匹配到任何参数。
+在这种情况下，`parameterNotFoundAction` 字段决定绑定的行为。
+
+**示例：**
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1alpha1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: example-binding
+spec:
+  policyName: example-policy
+  paramRef:
+    selector:
+      matchLabels:
+        environment: test
+    parameterNotFoundAction: Allow
+  validationActions:
+  - Deny
+```  
+
+<!--
 ### Failure Policy
 
 `failurePolicy` defines how mis-configurations and CEL expressions evaluating to error from the
@@ -500,7 +592,7 @@ admission policy are handled. Allowed values are `Ignore` or `Fail`.
 
 Note that the `failurePolicy` is defined inside `ValidatingAdmissionPolicy`:
 -->
-### 失效策略
+### 失效策略   {#failure-policy}
 
 `failurePolicy` 定义了如何处理错误配置和准入策略的 CEL 表达式取值为 error 的情况。
 
@@ -520,39 +612,54 @@ Note that the `failurePolicy` is defined inside `ValidatingAdmissionPolicy`:
 To learn more, see the [CEL language specification](https://github.com/google/cel-spec)
 CEL expressions have access to the contents of the Admission request/response, organized into CEL
 variables as well as some other useful variables:
+-->
+### 检查表达式   {#validation-expression}
 
+`spec.validations[i].expression` 代表将使用 CEL 来计算表达式。
+要了解更多信息，请参阅 [CEL 语言规范](https://github.com/google/cel-spec)。
+CEL 表达式可以访问按 CEL 变量来组织的 Admission 请求/响应的内容，以及其他一些有用的变量：
+
+<!--
 - 'object' - The object from the incoming request. The value is null for DELETE requests.
 - 'oldObject' - The existing object. The value is null for CREATE requests.
 - 'request' - Attributes of the [admission request](/docs/reference/config-api/apiserver-admission.v1/#admission-k8s-io-v1-AdmissionRequest).
 - 'params' - Parameter resource referred to by the policy binding being evaluated. The value is
   null if `ParamKind` is not specified.
+- `namespaceObject` - The namespace, as a Kubernetes resource, that the incoming object belongs to.
+  The value is null if the incoming object is cluster-scoped.
+-->
+- 'object' - 来自传入请求的对象。对于 DELETE 请求，该值为 null。
+- 'oldObject' - 现有对象。对于 CREATE 请求，该值为 null。
+- 'request' - [准入请求](/zh-cn/docs/reference/config-api/apiserver-admission.v1/#admission-k8s-io-v1-AdmissionRequest)的属性。
+- 'params' - 被计算的策略绑定引用的参数资源。如果未设置 `paramKind`，该值为 null。
+- `namespaceObject` - 作为 Kubernetes 资源的、传输对象所在的名字空间。
+  如果传入对象是集群作用域的，则此值为 null。
+<!--
 - `authorizer` - A CEL Authorizer. May be used to perform authorization checks for the principal
   (authenticated user) of the request. See
+  [AuthzSelectors](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#AuthzSelectors) and
   [Authz](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz) in the Kubernetes CEL library
   documentation for more details.
 - `authorizer.requestResource` - A shortcut for an authorization check configured with the request
   resource (group, resource, (subresource), namespace, name).
 -->
-### 检查表达式
-
-`spec.validations[i].expression` 代表将使用 CEL 来计算表达式。
-要了解更多信息，请参阅 [CEL 语言规范](https://github.com/google/cel-spec)。
-CEL 表达式可以访问按 CEL 变量来组织的 Admission 请求/响应的内容，以及其他一些有用的变量 :
-
-- 'object' - 来自传入请求的对象。对于 DELETE 请求，该值为 null。
-- 'oldObject' - 现有对象。对于 CREATE 请求，该值为 null。
-- 'request' - [准入请求](/zh-cn/docs/reference/config-api/apiserver-admission.v1/#admission-k8s-io-v1-AdmissionRequest)的属性。
-- 'params' - 被计算的策略绑定引用的参数资源。如果未设置 `paramKind`，该值为 null。
 - `authorizer` - 一个 CEL 鉴权组件。可以用来为请求的主体（经过身份验证的用户）执行鉴权检查。
-  更多细节可以参考 Kubernetes CEL 库的文档中的 [Authz](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz)。
+  更多细节可以参考 [AuthzSelectors](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#AuthzSelectors)
+  和 Kubernetes CEL 库的文档中的 [Authz](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz)。
 - `authorizer.requestResource` - 针对请求资源（组、资源、（子资源）、命名空间、名称）所配置的鉴权检查的快捷方式。
 
 <!--
-The `apiVersion`, `kind`, `metadata.name` and `metadata.generateName` are always accessible from
-the root of the object. No other metadata properties are accessible.
+In CEL expressions, variables like `object` and `oldObject` are strongly-typed.
+You can access any field in the object's schema, such as `object.metadata.labels` and fields in `spec`.
+
+For any Kubernetes object, including schemaless Custom Resources, CEL guarantees access to a minimal set of properties:
+`apiVersion`, `kind`, `metadata.name`, and `metadata.generateName`.
 -->
-总是可以从对象的根访问的属性有 `apiVersion`、`kind`、`metadata.name` 和 `metadata.generateName`。
-其他元数据属性不能访问。
+在 CEL 表达式中，像 `object` 和 `oldObject` 这样的变量是强类型的。
+你可以访问对象模式中的任意字段，例如 `object.metadata.labels` 和 `spec` 中的字段。
+
+对于任意 Kubernetes 对象，包括无模式的自定义资源，CEL 保证至少可以访问以下一组属性：
+`apiVersion`、`kind`、`metadata.name` 和 `metadata.generateName`。
 
 <!--
 Equality on arrays with list type of 'set' or 'map' ignores element order, i.e. [1, 2] == [2, 1].
@@ -567,12 +674,28 @@ Concatenation on arrays with x-kubernetes-list-type use the semantics of the lis
 列表类型为 "set" 或 "map" 的数组上的等价关系比较会忽略元素顺序，即 [1, 2] == [2, 1]。
 使用 x-kubernetes-list-type 连接数组时使用列表类型的语义：
 
-- 'set': `X + Y` 执行并集，其中 `X` 中所有元素的数组位置被保留，`Y` 中不相交的元素被追加，保留其元素的偏序关系。
+- 'set'：`X + Y` 执行并集，其中 `X` 中所有元素的数组位置被保留，`Y` 中不相交的元素被追加，保留其元素的偏序关系。
 - 'map'：`X + Y` 执行合并，保留 `X` 中所有键的数组位置，但是当 `X` 和 `Y` 的键集相交时，其值被 `Y` 的值覆盖。
   `Y` 中键值不相交的元素被追加，保留其元素之间的偏序关系。
 
 <!--
 #### Validation expression examples
+
+| Expression                                                                                   | Purpose                                                                           |
+|----------------------------------------------------------------------------------------------| ------------                                                                      |
+| `object.minReplicas <= object.replicas && object.replicas <= object.maxReplicas`             | Validate that the three fields defining replicas are ordered appropriately        |
+| `'Available' in object.stateCounts`                                                          | Validate that an entry with the 'Available' key exists in a map                   |
+| `(size(object.list1) == 0) != (size(object.list2) == 0)`                                     | Validate that one of two lists is non-empty, but not both                         |
+| <code>!('MY_KEY' in object.map1) &#124;&#124; object.map1['MY_KEY'].matches('^[a-zA-Z]*$')</code> | Validate the value of a map for a specific key, if it is in the map        |
+| `object.envars.filter(e, e.name == 'MY_ENV').all(e, e.value.matches('^[a-zA-Z]*$')`          | Validate the 'value' field of a listMap entry where key field 'name' is 'MY_ENV'  |
+| `has(object.expired) && object.created + object.ttl < object.expired`                        | Validate that 'expired' date is after a 'create' date plus a 'ttl' duration       |
+| `object.health.startsWith('ok')`                                                             | Validate a 'health' string field has the prefix 'ok'                              |
+| `object.widgets.exists(w, w.key == 'x' && w.foo < 10)`                                       | Validate that the 'foo' property of a listMap item with a key 'x' is less than 10 |
+| `type(object) == string ? object == '100%' : object == 1000`                                 | Validate an int-or-string field for both the int and string cases             |
+| `object.metadata.name.startsWith(object.prefix)`                                             | Validate that an object's name has the prefix of another field value              |
+| `object.set1.all(e, !(e in object.set2))`                                                    | Validate that two listSets are disjoint                                           |
+| `size(object.names) == size(object.details) && object.names.all(n, n in object.details)`     | Validate the 'details' map is keyed by the items in the 'names' listSet           |
+| `size(object.clusters.filter(c, c.name == object.primary)) == 1`                             | Validate that the 'primary' property has one and only one occurrence in the 'clusters' listMap           |
 -->
 #### 检查表达式示例
 
@@ -581,7 +704,7 @@ Concatenation on arrays with x-kubernetes-list-type use the semantics of the lis
 | `object.minReplicas <= object.replicas && object.replicas <= object.maxReplicas`              | 检查定义副本的三个字段是否大小关系正确                                   |
 | `'Available' in object.stateCounts`                                                           | 检查映射中是否存在键为 `Available` 的条目                                |
 | `(size(object.list1) == 0) != (size(object.list2) == 0)`                                      | 检查两个列表是否有且只有一个非空                                         |
-| <code>!('MY_KEY' in object.map1) &#124;&#124; object['MY_KEY'].matches('^[a-zA-Z]\*$')</code> | 检查映射中存在特定的键时其取值符合某规则                                 |
+| <code>!('MY_KEY' in object.map1) &#124;&#124; object.map1['MY_KEY'].matches('^[a-zA-Z]*$')</code> | 检查映射中存在特定的键时其取值符合某规则        |
 | `object.envars.filter(e, e.name == 'MY_ENV').all(e, e.value.matches('^[a-zA-Z]*$')`           | 验证 listMap 中所有键名为 "MY_ENV" 的条目的 “value” 字段，确保其符合规则 |
 | `has(object.expired) && object.created + object.ttl < object.expired`                         | 检查 expired 日期在 create 日期加上 ttl 时长之后                         |
 | `object.health.startsWith('ok')`                                                              | 检查 health 字符串字段的取值有 “ok” 前缀                                 |
@@ -662,7 +785,7 @@ the request is determined as follows:
 
 For example, here is an admission policy with an audit annotation:
 -->
-### 审计注解
+### 审计注解   {#audit-annotations}
 
 `auditAnnotations` 可用于在 API 请求的审计事件中包括审计注解。
 
@@ -710,7 +833,7 @@ When an API request is validated with this admission policy, the resulting audit
 In this example the annotation will only be included if the `spec.replicas` of the Deployment is more than
 50, otherwise the CEL expression evaluates to null and the annotation will not be included.
 
-Note that audit annotation keys are prefixed by the name of the `ValidatingAdmissionWebhook` and a `/`. If
+Note that audit annotation keys are prefixed by the name of the `ValidatingAdmissionPolicy` and a `/`. If
 another admission controller, such as an admission webhook, uses the exact same audit annotation key, the 
 value of the first admission controller to include the audit annotation will be included in the audit
 event and all other values will be ignored.
@@ -718,7 +841,7 @@ event and all other values will be ignored.
 在此示例中，只有 Deployment 的 `spec.replicas` 大于 50 时才会包含注解，
 否则 CEL 表达式将求值为 null，并且不会包含注解。
 
-请注意，审计注解键以 `ValidatingAdmissionWebhook` 的名称和 `/` 为前缀。
+请注意，审计注解键以 `ValidatingAdmissionPolicy` 的名称和 `/` 为前缀。
 如果另一个准入控制器（例如准入 Webhook）使用完全相同的审计注解键，
 则第一个包括审计注解值的准入控制器将出现在审计事件中，而所有其他值都将被忽略。
 
@@ -733,7 +856,7 @@ message expression must evaluate to a string.
 For example, to better inform the user of the reason of denial when the policy refers to a parameter,
 we can have the following validation:
 -->
-### 消息表达式
+### 消息表达式   {#message-expression}
 
 为了在策略拒绝请求时返回更友好的消息，我们在 `spec.validations[i].messageExpression`
 中使用 CEL 表达式来构造消息。
@@ -751,7 +874,7 @@ when we try to create a deployment with 5 replicas, we will receive the followin
 在创建限制副本为 3 的 Params 对象并设置绑定之后，当我们尝试创建具有 5 个副本的 Deployment
 时，我们将收到以下消息：
 
-```
+```shell
 $ kubectl create deploy --image=nginx nginx --replicas=5
 error: failed to create deployment: deployments.apps "nginx" is forbidden: ValidatingAdmissionPolicy 'deploy-replica-policy.example.com' with binding 'demo-binding-test.example.com' denied request: object.spec.replicas must be no greater than 3
 ```
@@ -768,8 +891,7 @@ Note that static message is validated against multi-line strings.
 这比静态消息 "too many replicas" 更具说明性。
 
 如果既定义了消息表达式，又在 `spec.validations[i].message` 中定义了静态消息，
-则消息表达式优先于静态消息。
-但是，如果消息表达式求值失败，则将使用静态消息。
+则消息表达式优先于静态消息。但是，如果消息表达式求值失败，则将使用静态消息。
 此外，如果消息表达式求值为多行字符串，则会丢弃求值结果并使用静态消息（如果存在）。
 请注意，静态消息也要检查是否存在多行字符串。
 
@@ -786,7 +908,7 @@ and an empty `status.typeChecking` means that no errors were detected.
 
 For example, given the following policy definition:
 -->
-### 类型检查
+### 类型检查   {#type-checking}
 
 创建或更新策略定义时，验证过程将解析它包含的表达式，在发现错误时报告语法错误并拒绝该定义。
 之后，引用的变量将根据 `spec.matchConstraints` 的匹配类型检查类型错误，包括缺少字段和类型混淆。
@@ -800,7 +922,7 @@ For example, given the following policy definition:
 <!--
 The status will yield the following information:
 -->
-status 字段将提供以下信息：
+`status` 字段将提供以下信息：
 
 ```yaml
 status:
@@ -840,6 +962,7 @@ status:
          | object.replicas > 1
          | ......^
 ```
+
 <!--
 Type Checking has the following limitation:
 
@@ -853,9 +976,8 @@ Type Checking has the following limitation:
 -->
 类型检查具有以下限制：
 
-- 没有通配符匹配。
-  如果 `spec.matchConstraints.resourceRules` 中的任何一个 `apiGroups`、`apiVersions`
-  或 `resources` 包含 "\*"，则不会检查与 "\*" 匹配的类型。
+- 没有通配符匹配。如果 `spec.matchConstraints.resourceRules` 中的任何一个 `apiGroups`、`apiVersions`
+  或 `resources` 包含 `"\*"`，则不会检查与 `"\*"` 匹配的类型。
 - 匹配的类型数量最多为 10 种。这是为了防止手动指定过多类型的策略消耗过多计算资源。
   按升序处理组、版本，然后是资源，忽略第 11 个及其之后的组合。
 - 类型检查不会以任何方式影响策略行为。即使类型检查检测到错误，策略也将继续评估。
@@ -870,7 +992,7 @@ If an expression grows too complicated, or part of the expression is reusable an
 you can extract some part of the expressions into variables. A variable is a named expression that can be referred later
 in `variables` in other expressions.
 -->
-### 变量组合
+### 变量组合   {#variable-composition}
 
 如果表达式变得太复杂，或者表达式的一部分可重用且进行评估时计算开销较大，可以将表达式的某些部分提取为变量。
 变量是一个命名表达式，后期可以在其他表达式中的 `variables` 中引用。
@@ -918,8 +1040,50 @@ kubectl create deploy --image=dev.example.com/nginx invalid
 <!--
 The error message is similar to this.
 -->
-错误信息类似于：
+错误消息类似于：
 
 ```console
 error: failed to create deployment: deployments.apps "invalid" is forbidden: ValidatingAdmissionPolicy 'image-matches-namespace-environment.policy.example.com' with binding 'demo-binding-test.example.com' denied request: only prod images are allowed in namespace default
 ```
+
+<!--
+## API kinds exempt from admission validation
+
+There are certain API kinds that are exempt from admission-time validation checks. For example, you can't create a ValidatingAdmissionPolicy that prevents changes to ValidatingAdmissionPolicyBindings.
+-->
+## 免于准入验证的 API 类别   {#api-kinds-exempt-from-admission-validation}
+
+某些 API 类别可以豁免准入时验证检查。例如，你无法创建阻止更改 ValidatingAdmissionPolicyBindings
+的 ValidatingAdmissionPolicy。
+
+{{< note >}}
+<!--
+When configured via
+[manifest-based admission control](/docs/reference/access-authn-authz/manifest-admission-control/),
+a ValidatingAdmissionPolicy can intercept all resource types listed below.
+This bypasses the restrictions usually applied to policies created via the REST
+API, allowing you to validate even admission configuration and
+security-sensitive resources. Unlike the REST API, a bad manifest-based
+admission policy intercepting these resources would not be unrecoverable since
+it is defined on disk rather than through the API.
+-->
+当通过[基于清单的准入控制](/zh-cn/docs/reference/access-authn-authz/manifest-admission-control/)进行配置时，
+ValidatingAdmissionPolicy 可以拦截下面列出的所有资源类型。
+这绕过了通常通过 REST API 创建策略时所施加的限制，使你甚至可以校验准入配置以及安全敏感资源。
+与 REST API 不同的是，如果基于清单的准入策略错误地拦截了这些资源，
+它不会变成不可恢复的状态，因为该策略是定义在磁盘上的，而不是通过 API 创建的。
+{{< /note >}}
+
+<!--
+The list of exempt API kinds is:
+-->
+豁免准入验证的 API 类别列表如下：
+
+- [ValidatingAdmissionPolicies]({{< relref "/docs/reference/kubernetes-api/policy-resources/validating-admission-policy-v1/" >}})
+- [ValidatingAdmissionPolicyBindings]({{< relref "/docs/reference/kubernetes-api/policy-resources/validating-admission-policy-binding-v1/" >}})
+- MutatingAdmissionPolicies
+- MutatingAdmissionPolicyBindings
+- [TokenReviews]({{< relref "/docs/reference/kubernetes-api/authentication-resources/token-review-v1/" >}})
+- [LocalSubjectAccessReviews]({{< relref "/docs/reference/kubernetes-api/authorization-resources/local-subject-access-review-v1/" >}})
+- [SelfSubjectAccessReviews]({{< relref "/docs/reference/kubernetes-api/authorization-resources/self-subject-access-review-v1/" >}})
+- [SelfSubjectReviews]({{< relref "/docs/reference/kubernetes-api/authentication-resources/self-subject-review-v1/" >}})

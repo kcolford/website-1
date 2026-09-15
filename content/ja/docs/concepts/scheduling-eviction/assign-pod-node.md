@@ -88,7 +88,7 @@ Podのspec(仕様)にある`.spec.affinity.nodeAffinity`フィールドを使用
 
 例えば、次のようなPodのspec(仕様)を考えてみましょう:
 
-{{% codenew file="pods/pod-with-node-affinity.yaml" %}}
+{{% code_sample file="pods/pod-with-node-affinity.yaml" %}}
 
 この例では、以下のルールが適用されます:
 
@@ -118,7 +118,7 @@ Podの他のスケジューリング要件をすべて満たすノードを見�
 
 例えば、次のようなPodのspec(仕様)を考えてみましょう: 
 
-{{% codenew file="pods/pod-with-affinity-anti-affinity.yaml" %}}
+{{% code_sample file="pods/pod-with-affinity-anti-affinity.yaml" %}}
 
 `preferredDuringSchedulingIgnoredDuringExecution`ルールにマッチするノードとして、一つは`label-1:key-1`ラベル、もう一つは`label-2:key-2`ラベルの2つの候補がある場合、スケジューラーは各ノードの`weight`を考慮し、その重みとノードの他のスコアを加え、最終スコアが最も高いノードにPodをスケジューリングします。
 
@@ -133,7 +133,7 @@ Podの他のスケジューリング要件をすべて満たすノードを見�
 複数の[スケジューリングプロファイル](/ja/docs/reference/scheduling/config/#multiple-profiles)を設定する場合、プロファイルにノードアフィニティを関連付けることができます。これは、プロファイルが特定のノード群にのみ適用される場合に便利です。[スケジューラーの設定](/ja/docs/reference/scheduling/config/)にある[`NodeAffinity`プラグイン](/ja/docs/reference/scheduling/config/#scheduling-plugins)の`args`フィールドに`addedAffinity`を追加すると実現できます。例えば:
 
 ```yaml
-apiVersion: kubescheduler.config.k8s.io/v1beta3
+apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 
 profiles:
@@ -197,7 +197,7 @@ Pod間アフィニティを使用するには、Pod仕様(spec)の`affinity.podA
 
 次のようなPod仕様(spec)を考えてみましょう:
 
-{{% codenew file="pods/pod-with-pod-affinity.yaml" %}}
+{{% code_sample file="pods/pod-with-pod-affinity.yaml" %}}
 
 この例では、PodアフィニティルールとPodアンチアフィニティルールを1つずつ定義しています。
 Podアフィニティルールは"ハード"な`requiredDuringSchedulingIgnoredDuringExecution`を使用し、アンチアフィニティルールは"ソフト"な`preferredDuringSchedulingIgnoredDuringExecution`を使用しています。

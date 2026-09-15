@@ -67,6 +67,32 @@ Kubernetes 也使用 Lease 确保在任何给定时间某个组件只有一个�
 这些组件只应有一个实例激活运行，而其他实例待机。
 
 <!--
+Read [coordinated leader election](/docs/concepts/cluster-administration/coordinated-leader-election)
+to learn about how Kubernetes builds on the Lease API to select which component instance
+acts as leader.
+-->
+参阅[协调领导者选举](/zh-cn/docs/concepts/cluster-administration/coordinated-leader-election)以了解
+Kubernetes 如何基于 Lease API 来选择哪个组件实例充当领导者。
+
+<!--
+### Kube controller manager lock release on exit
+-->
+### Kube 控制器管理器在退出时释放锁定
+
+{{< feature-state feature_gate_name="ControllerManagerReleaseLeaderElectionLockOnExit" >}}
+
+<!--
+When the `ControllerManagerReleaseLeaderElectionLockOnExit` feature gate is enabled,
+the `kube-controller-manager` actively releases its leader election lock during
+leader transitions, rather than waiting for the lock's TTL to expire. This allows
+a new leader to be elected more quickly, reducing leader transition latency.
+-->
+启用 `ControllerManagerReleaseLeaderElectionLockOnExit` 特性门后，
+`kube-controller-manager` 会在领导者切换期间主动释放其领导者选举锁，
+而不是等待锁的 TTL 过期。这使得新领导者能够更快地被选出，
+从而降低领导者切换延迟。
+
+<!--
 ## API server identity
 -->
 ## API 服务器身份   {#api-server-identity}
@@ -81,40 +107,41 @@ Existence of kube-apiserver leases enables future capabilities that may require 
 each kube-apiserver.
 
 You can inspect Leases owned by each kube-apiserver by checking for lease objects in the `kube-system` namespace
-with the name `kube-apiserver-<sha256-hash>`. Alternatively you can use the label selector `apiserver.kubernetes.io/identity=kube-apiserver`:
+with the name `apiserver-<sha256-hash>`. Alternatively you can use the label selector `apiserver.kubernetes.io/identity=kube-apiserver`:
 -->
 从 Kubernetes v1.26 开始，每个 `kube-apiserver` 都使用 Lease API 将其身份发布到系统中的其他位置。
 虽然它本身并不是特别有用，但为客户端提供了一种机制来发现有多少个 `kube-apiserver` 实例正在操作
 Kubernetes 控制平面。kube-apiserver 租约的存在使得未来可以在各个 kube-apiserver 之间协调新的能力。
 
-你可以检查 `kube-system` 名字空间中名为 `kube-apiserver-<sha256-hash>` 的 Lease 对象来查看每个
+你可以检查 `kube-system` 名字空间中名为 `apiserver-<sha256-hash>` 的 Lease 对象来查看每个
 kube-apiserver 拥有的租约。你还可以使用标签选择算符 `apiserver.kubernetes.io/identity=kube-apiserver`：
 
 ```shell
 kubectl -n kube-system get lease -l apiserver.kubernetes.io/identity=kube-apiserver
 ```
+
 ```
 NAME                                        HOLDER                                                                           AGE
 apiserver-07a5ea9b9b072c4a5f3d1c3702        apiserver-07a5ea9b9b072c4a5f3d1c3702_0c8914f7-0f35-440e-8676-7844977d3a05        5m33s
 apiserver-7be9e061c59d368b3ddaf1376e        apiserver-7be9e061c59d368b3ddaf1376e_84f2a85d-37c1-4b14-b6b9-603e62e4896f        4m23s
 apiserver-1dfef752bcb36637d2763d1868        apiserver-1dfef752bcb36637d2763d1868_c5ffa286-8a9a-45d4-91e7-61118ed58d2e        4m43s
-
 ```
 
 <!--
 The SHA256 hash used in the lease name is based on the OS hostname as seen by that API server. Each kube-apiserver should be
 configured to use a hostname that is unique within the cluster. New instances of kube-apiserver that use the same hostname
 will take over existing Leases using a new holder identity, as opposed to instantiating new Lease objects. You can check the
-hostname used by kube-apisever by checking the value of the `kubernetes.io/hostname` label:
+hostname used by kube-apiserver by checking the value of the `kubernetes.io/hostname` label:
 -->
 租约名称中使用的 SHA256 哈希基于 API 服务器所看到的操作系统主机名生成。
 每个 kube-apiserver 都应该被配置为使用集群中唯一的主机名。
 使用相同主机名的 kube-apiserver 新实例将使用新的持有者身份接管现有 Lease，而不是实例化新的 Lease 对象。
-你可以通过检查 `kubernetes.io/hostname` 标签的值来查看 kube-apisever 所使用的主机名：
+你可以通过检查 `kubernetes.io/hostname` 标签的值来查看 kube-apiserver 所使用的主机名：
 
 ```shell
 kubectl -n kube-system get lease apiserver-07a5ea9b9b072c4a5f3d1c3702 -o yaml
 ```
+
 ```yaml
 apiVersion: coordination.k8s.io/v1
 kind: Lease

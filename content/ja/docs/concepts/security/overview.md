@@ -1,5 +1,4 @@
 ---
-reviewers:
 title: クラウドネイティブセキュリティの概要
 content_type: concept
 weight: 1
@@ -46,7 +45,7 @@ Huawei Cloud | https://www.huaweicloud.com/intl/ja-jp/securecenter/overallsafety
 IBM Cloud | https://www.ibm.com/cloud/security |
 Microsoft Azure | https://docs.microsoft.com/en-us/azure/security/azure-security |
 Oracle Cloud Infrastructure | https://www.oracle.com/security/ |
-VMWare VSphere | https://www.vmware.com/security/hardening-guides.html |
+VMWare VSphere | https://www.vmware.com/solutions/security/hardening-guides |
 
 {{< /table >}}
 

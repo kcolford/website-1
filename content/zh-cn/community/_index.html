@@ -1,10 +1,32 @@
 ---
 title: 社区
 layout: basic
+body_class: community
 cid: community
 community_styles_migrated: true
+menu:
+  main:
+    weight: 50
 ---
+<!--
+title: Community
+layout: basic
+body_class: community
+cid: community
+community_styles_migrated: true
+menu:
+  main:
+    weight: 50
+-->
 
+<!--
+<img
+  id="banner"
+  srcset="/images/community/kubernetes-community-final-02.jpg 1500w, /images/community/kubernetes-community-02-mobile.jpg 900w"
+  sizes="(max-width: 900px) 900px, (max-width: 1920px) 1500px"
+  src="/images/community/kubernetes-community-final-02.jpg"
+  alt="Kubernetes conference photo">
+-->
 <img
   id="banner"
   srcset="/images/community/kubernetes-community-final-02.jpg 1500w, /images/community/kubernetes-community-02-mobile.jpg 900w"
@@ -28,7 +50,7 @@ community_styles_migrated: true
     是这个开源项目持续增长的最重要原因。我们的文化和价值观随着项目自身的成长和变化而成长着、变化着。我们一起努力地持续改进项目本身，以及我们在这个项目中的工作方式。
   </p>
   <p>
-    我们是登记缺陷、提出拉取请求、参加 SIG 会议、Kubernetes 聚会、KubeCon、为了技术采纳和创新四处宣讲、运行
+    我们是登记 Issue、提交 PR、参加 SIG 会议、Kubernetes 聚会、KubeCon、为了技术采纳和创新四处宣讲、运行
     <code>kubectl get pods</code>
     并通过难以计数的其他重要方式作出贡献的一群人。如果想要了解如何参与进来并成为这一令人赞叹的社区的一员，请继续阅读。
   </p>
@@ -65,24 +87,34 @@ community_styles_migrated: true
   </div>
   <div class="community-nav-item">
     <!-- <a href="/releases">Releases</a> -->
-    <a href="/releases">发行版本</a>
+    <a href="/zh-cn/releases">发行版本</a>
+  </div>
+  <div class="community-nav-item">
+    <!-- <a href="/case-studies">Case Studies</a> -->
+    <a href="/zh-cn/case-studies">案例分析</a>
   </div>
 </div>
 
 <div class="community-section" id="gallery">
+  <!-- <img src="/images/community/kubernetes-community-final-03.jpg" alt="Kubernetes conference gallery photo" class="community-gallery-desktop"> -->
   <img src="/images/community/kubernetes-community-final-03.jpg" alt="Kubernetes 会议一览" class="community-gallery-desktop">
+  <!-- <img src="/images/community/kubernetes-community-final-04.jpg" alt="Kubernetes conference gallery photo" class="community-gallery-desktop"> -->
   <img src="/images/community/kubernetes-community-final-04.jpg" alt="Kubernetes 会议一览" class="community-gallery-desktop">
+  <!-- <img src="/images/community/kubernetes-community-final-05.jpg" alt="Kubernetes conference gallery photo" class="community-gallery-desktop"> -->
   <img src="/images/community/kubernetes-community-final-05.jpg" alt="Kubernetes 会议一览" class="community-gallery-desktop">
+  <!-- <img src="/images/community/kubernetes-community-04-mobile.jpg" alt="Kubernetes conference gallery photo" class="community-gallery-mobile"> -->
   <img src="/images/community/kubernetes-community-04-mobile.jpg" alt="Kubernetes 会议一览" class="community-gallery-mobile">
 </div>
 
 <div class="community-section" id="values">
   <!-- <h2>Community Values</h2> -->
   <h2>社区价值观</h2>
-  <!-- <p>
+  <!--
+  <p>
     The Kubernetes Community values are the keystone to the ongoing success of the project.<br class="optional"/>
     These principles guide every aspect of the Kubernetes project.
-  </p> -->
+  </p>
+  -->
   <p>
     Kubernetes 社区价值观是项目持续成功的基石。<br class="optional"/>
     这些原则会指导 Kubernetes 项目的方方面面。
@@ -164,12 +196,12 @@ community_styles_migrated: true
       <p>基于主题的技术讨论，涵盖了文档，问题排查，以及很多其他内容。</p>
     </div>
 
-    <div id="twitter" class="community-resource">
-      <a href="https://twitter.com/kubernetesio">
-        <img src="/images/community/x-org.png" alt="𝕏.org">
+    <div id="bluesky" class="community-resource">
+      <a href="https://bsky.app/profile/kubernetes.io">
+        <img src="/images/community/bluesky.png" alt="Bluesky">
       </a>
-      <a href="https://twitter.com/kubernetesio">𝕏&nbsp;&#9654;</a>
-      <p><em>#kubernetesio</em></p>
+      <a href="https://bsky.app/profile/kubernetes.io">Bluesky&nbsp;&#9654;</a>
+      <p><em>@kubernetes.io</em></p>
       <!-- <p>Real-time announcements of blog posts, events, news, ideas.</p> -->
       <p>关于博客更新、活动、新闻、以及想法的实时更新。</p>
     </div>
@@ -208,6 +240,17 @@ community_styles_migrated: true
         来获取邀请。
       </details>
     </div>
+
+    <div id="twitter" class="community-resource">
+      <a href="https://x.com/kubernetesio">
+        <img src="/images/community/x-org.png" alt="X">
+      </a>
+      <a href="https://x.com/kubernetesio">𝕏&nbsp;&#9654;</a>
+      <p><em>@kubernetesio</em></p>
+      <!-- <p>Real-time announcements of blog posts, events, news, ideas.</p> -->
+      <p>关于博客更新、活动、新闻、以及想法的实时更新。</p>
+    </div>
+
   </div>
 </div>
 
@@ -235,8 +278,5 @@ community_styles_migrated: true
 <div class="community-section community-frame" id="news">
   <!-- <h2>Recent News</h2> -->
   <h2>最新新闻</h2>
-  <div class="twittercol1">
-    <!-- <a class="twitter-timeline" data-tweet-limit="1" data-width="600" data-height="800" href="https://twitter.com/kubernetesio?ref_src=twsrc%5Etfw">Tweets by kubernetesio</a> -->
-    <a class="twitter-timeline" data-tweet-limit="1" data-width="600" data-height="800" href="https://twitter.com/kubernetesio?ref_src=twsrc%5Etfw">kubernetesio 账号发布的推文</a>
-  </div>
+  {{< social-media-feed kind="bluesky" >}}
 </div>

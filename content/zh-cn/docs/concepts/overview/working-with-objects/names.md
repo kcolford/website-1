@@ -26,7 +26,8 @@ For example, you can only have one Pod named `myapp-1234` within the same [names
 每个 Kubernetes 对象也有一个 [**UID**](#uids) 来标识在整个集群中的唯一性。
 
 比如，在同一个[名字空间](/zh-cn/docs/concepts/overview/working-with-objects/namespaces/)
-中只能有一个名为 `myapp-1234` 的 Pod，但是可以命名一个 Pod 和一个 Deployment 同为 `myapp-1234`。
+中只能有一个名为 `myapp-1234` 的 Pod，但是可以命名一个 Pod 和一个
+Deployment 同为 `myapp-1234`。
 
 <!--
 For non-unique user-provided attributes, Kubernetes provides [labels](/docs/concepts/overview/working-with-objects/labels/) and [annotations](/docs/concepts/overview/working-with-objects/annotations/).
@@ -45,14 +46,30 @@ For non-unique user-provided attributes, Kubernetes provides [labels](/docs/conc
 {{< glossary_definition term_id="name" length="all" >}}
 
 <!--
-**Names must be unique across all [API versions](/docs/concepts/overview/kubernetes-api/#api-groups-and-versioning)
-of the same resource. API resources are distinguished by their API group, resource type, namespace
-(for namespaced resources), and name. In other words, API version is irrelevant in this context.**
+Names must be unique across all [API versions](/docs/concepts/overview/kubernetes-api/#api-groups-and-versioning) of the same resource. 
 -->
 **名称在同一资源的所有
 [API 版本](/zh-cn/docs/concepts/overview/kubernetes-api/#api-groups-and-versioning)中必须是唯一的。
-这些 API 资源通过各自的 API 组、资源类型、名字空间（对于划分名字空间的资源）和名称来区分。
-换言之，API 版本在此上下文中是不相关的。**
+
+<!--
+Kubernetes uniquely identifies objects using a combination of four attributes:
+* **API group** (e.g., `apps`)
+* **Resource type** (e.g., `deployments`)
+* **Namespace** (for namespaced resources)
+* **Name**
+-->
+Kubernetes 使用以下四个属性的组合唯一标识对象：
+* **API 组**（例如 `apps`）
+* **资源类型**（例如 `deployments`）
+* **命名空间**（针对命名空间范围的资源）
+* **名称**
+
+<!--
+While you can access a resource through different API versions (such as `v1` or `v1beta1`), the version is simply a different representation of the same underlying object. Because the version is not part of the unique identification, you cannot create two objects with the same name and resource type in the same namespace by using different API versions.
+-->
+虽然你可以通过不同的 API 版本（如 `v1` 或 `v1beta1`）访问资源，
+但版本只是同一底层对象的不同表示。因为版本不是唯一标识的一部分，
+所以不能通过使用不同的 API 版本在同一个命名空间中创建名称和资源类型相同的两个对象。
 
 {{< note >}}
 <!--
@@ -62,6 +79,19 @@ In cases when objects represent a physical entity, like a Node representing a ph
 如果在 Node 对象未被删除并重建的条件下，重新创建了同名的物理主机，
 则 Kubernetes 会将新的主机看作是老的主机，这可能会带来某种不一致性。
 {{< /note >}}
+
+<!--
+The server may generate a name when `generateName` is provided instead of `name` in a resource create request.
+When `generateName` is used, the provided value is used as a name prefix, which server appends a generated suffix
+to. Even though the name is generated, it may conflict with existing names resulting in an HTTP 409 response. This
+became far less likely to happen in Kubernetes v1.31 and later, since the server will make up to 8 attempts to generate a
+unique name before returning an HTTP 409 response.
+-->
+当在资源创建请求中提供 `generateName` 而不是 `name` 时，服务器可能会生成一个名称。
+使用 `generateName` 时，所提供的值将作为名称前缀，服务器会在其后附加一个生成的后缀。
+即使名称是自动生成的，它仍可能与现有名称冲突，从而导致 HTTP 409 响应。
+从 Kubernetes v1.31 及更高版本开始，这种情况发生的概率大大降低，
+因为服务器会尝试最多 8 次生成唯一名称，然后才返回 HTTP 409 响应。
 
 <!--
 Below are four types of commonly used name constraints for resources.
@@ -100,7 +130,7 @@ This means the name must:
 
 - contain at most 63 characters
 - contain only lowercase alphanumeric characters or '-'
-- start with an alphanumeric character
+- start with an alphabetic character
 - end with an alphanumeric character
 -->
 ### RFC 1123 标签名    {#dns-label-names}
@@ -110,9 +140,17 @@ This means the name must:
 
 - 最多 63 个字符
 - 只能包含小写字母、数字，以及 '-'
-- 必须以字母数字开头
+- 必须以字母开头
 - 必须以字母数字结尾
 
+{{< note >}}
+<!--
+When the `RelaxedServiceNameValidation` feature gate is enabled,
+Service object names are allowed to start with a digit.
+-->
+当启用 `RelaxedServiceNameValidation` 特性门控时，
+Service 对象名称可以以数字开头。
+{{< /note >}}
 
 <!--
 ### RFC 1035 Label Names
@@ -138,13 +176,14 @@ This means the name must:
 
 {{< note >}}
 <!--
-The only difference between the RFC 1035 and RFC 1123
-label standards is that RFC 1123 labels are allowed to
-start with a digit, whereas RFC 1035 labels can start
-with a lowercase alphabetic character only.
+While RFC 1123 technically allows labels to start with digits, the current
+Kubernetes implementation requires both RFC 1035 and RFC 1123 labels to start
+with an alphabetic character. The exception is when the `RelaxedServiceNameValidation`
+feature gate is enabled for Service objects, which allows Service names to start with digits.
 -->
-RFC 1035 和 RFC 1123 标签标准之间的唯一区别是 RFC 1123
-标签允许以数字开头，而 RFC 1035 标签只能以小写字母字符开头。
+尽管 RFC 1123 在技术上允许标签以数字开头，当前的 Kubernetes 实现要求
+RFC 1035 和 RFC 1123 标签都以字母字符开头。例外情况是当为 Service 对象启用了
+`RelaxedServiceNameValidation` 特性门控时，这允许 Service 名称以数字开头。
 {{< /note >}}
 
 <!--
@@ -201,5 +240,6 @@ UUID 是标准化的，见 ISO/IEC 9834-8 和 ITU-T X.667。
 * Read about [labels](/docs/concepts/overview/working-with-objects/labels/) and [annotations](/docs/concepts/overview/working-with-objects/annotations/) in Kubernetes.
 * See the [Identifiers and Names in Kubernetes](https://git.k8s.io/design-proposals-archive/architecture/identifiers.md) design document.
 -->
-* 进一步了解 Kubernetes [标签](/zh-cn/docs/concepts/overview/working-with-objects/labels/)和[注解](/zh-cn/docs/concepts/overview/working-with-objects/annotations/)。
+* 进一步了解 Kubernetes
+  [标签](/zh-cn/docs/concepts/overview/working-with-objects/labels/)和[注解](/zh-cn/docs/concepts/overview/working-with-objects/annotations/)。
 * 参阅 [Kubernetes 标识符和名称](https://git.k8s.io/design-proposals-archive/architecture/identifiers.md)的设计文档。

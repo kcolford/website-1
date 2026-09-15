@@ -77,7 +77,7 @@ Then you may be missing `ebtables`, `ethtool` or a similar executable on your no
 You can install them with the following commands:
 
 - For Ubuntu/Debian users, run `apt install ebtables ethtool`.
-- For CentOS/Fedora users, run `yum install ebtables ethtool`.
+- For CentOS/Fedora users, run `dnf install ebtables ethtool`.
 
 ## kubeadm blocks waiting for control plane during installation
 
@@ -90,8 +90,6 @@ If you notice that `kubeadm init` hangs after printing out the following line:
 This may be caused by a number of problems. The most common are:
 
 - network connection problems. Check that your machine has full network connectivity before continuing.
-- the cgroup driver of the container runtime differs from that of the kubelet. To understand how to
-  configure it properly, see [Configuring a cgroup driver](/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/).
 - control plane containers are crashlooping or hanging. You can check this by running `docker ps`
   and investigating each container by running `docker logs`. For other container runtime, see
   [Debugging Kubernetes nodes with crictl](/docs/tasks/debug/debug-cluster/crictl/).
@@ -264,7 +262,7 @@ Error from server: Get https://10.19.0.41:10250/containerLogs/default/mysql-ddc6
 
   Use `ip addr show` to check for this scenario instead of `ifconfig` because `ifconfig` will
   not display the offending alias IP address. Alternatively an API endpoint specific to
-  DigitalOcean allows to query for the anchor IP from the droplet:
+  DigitalOcean allows you to query for the anchor IP from the droplet:
 
   ```sh
   curl http://169.254.169.254/metadata/v1/interfaces/public/0/anchor_ipv4/address
@@ -274,7 +272,7 @@ Error from server: Get https://10.19.0.41:10250/containerLogs/default/mysql-ddc6
   When using DigitalOcean, it can be the public one (assigned to `eth0`) or
   the private one (assigned to `eth1`) should you want to use the optional
   private network. The `kubeletExtraArgs` section of the kubeadm
-  [`NodeRegistrationOptions` structure](/docs/reference/config-api/kubeadm-config.v1beta3/#kubeadm-k8s-io-v1beta3-NodeRegistrationOptions)
+  [`NodeRegistrationOptions` structure](/docs/reference/config-api/kubeadm-config.v1beta4/#kubeadm-k8s-io-v1beta4-NodeRegistrationOptions)
   can be used for this.
 
   Then restart `kubelet`:
@@ -326,14 +324,14 @@ To work around the issue, choose one of these options:
 - Roll back to an earlier version of Docker, such as 1.13.1-75
 
   ```
-  yum downgrade docker-1.13.1-75.git8633870.el7.centos.x86_64 docker-client-1.13.1-75.git8633870.el7.centos.x86_64 docker-common-1.13.1-75.git8633870.el7.centos.x86_64
+  dnf downgrade docker-1.13.1-75.git8633870.el7.centos.x86_64 docker-client-1.13.1-75.git8633870.el7.centos.x86_64 docker-common-1.13.1-75.git8633870.el7.centos.x86_64
   ```
 
 - Install one of the more recent recommended versions, such as 18.06:
 
   ```bash
-  sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-  yum install docker-ce-18.06.1.ce-3.el7.x86_64
+  sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  dnf install docker-ce-18.06.1.ce-3.el7.x86_64
   ```
 
 ## Not possible to pass a comma separated list of values to arguments inside a `--component-extra-args` flag
@@ -352,7 +350,7 @@ Alternatively, you can try separating the `key=value` pairs like so:
 `--apiserver-extra-args "enable-admission-plugins=LimitRanger,enable-admission-plugins=NamespaceExists"`
 but this will result in the key `enable-admission-plugins` only having the value of `NamespaceExists`.
 
-A known workaround is to use the kubeadm [configuration file](/docs/reference/config-api/kubeadm-config.v1beta3/).
+A known workaround is to use the kubeadm [configuration file](/docs/reference/config-api/kubeadm-config.v1beta4/).
 
 ## kube-proxy scheduled before node is initialized by cloud-controller-manager
 
@@ -408,33 +406,36 @@ FlexVolume was deprecated in the Kubernetes v1.23 release.
 {{< /note >}}
 
 To workaround this issue, you can configure the flex-volume directory using the kubeadm
-[configuration file](/docs/reference/config-api/kubeadm-config.v1beta3/).
+[configuration file](/docs/reference/config-api/kubeadm-config.v1beta4/).
 
 On the primary control-plane Node (created using `kubeadm init`), pass the following
 file using `--config`:
 
 ```yaml
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 nodeRegistration:
   kubeletExtraArgs:
-    volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+  - name: "volume-plugin-dir"
+    value: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
 ---
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 controllerManager:
   extraArgs:
-    flex-volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+  - name: "flex-volume-plugin-dir"
+    value: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
 ```
 
 On joining Nodes:
 
 ```yaml
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: JoinConfiguration
 nodeRegistration:
   kubeletExtraArgs:
-    volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+  - name: "volume-plugin-dir"
+    value: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
 ```
 
 Alternatively, you can modify `/etc/fstab` to make the `/usr` mount writeable, but please

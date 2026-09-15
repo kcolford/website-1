@@ -25,6 +25,28 @@ card:
   title: Use the Web UI Dashboard
 -->
 
+{{% pageinfo color="primary" %}}
+<!--
+**Kubernetes Dashboard is deprecated and unmaintained.**
+
+The Kubernetes Dashboard project has been archived and is no longer actively maintained.
+For new installations, consider using [Headlamp](https://headlamp.dev/).
+-->
+**Kubernetes Dashboard 已弃用且停止维护。**
+
+Kubernetes Dashboard 项目已归档，不再进行积极维护。
+对于新 Web 工具的选择，请考虑使用 [Headlamp](https://headlamp.dev/)。
+{{% /pageinfo %}}
+
+{{< note >}}
+<!--
+For in-cluster deployments similar to Kubernetes Dashboard, see the
+[Headlamp in-cluster installation guide](https://headlamp.dev/docs/latest/installation/in-cluster/).
+-->
+对于类似于 Kubernetes Dashboard 的集群内部署，请参阅
+[Headlamp 集群内安装指南](https://headlamp.dev/docs/latest/installation/in-cluster/)。
+{{< /note >}}
+
 <!-- overview -->
 
 <!--
@@ -115,18 +137,18 @@ by running the following command:
 你可以使用 `kubectl` 命令行工具来启用 Dashboard 访问，命令如下：
 
 ```
-kubectl proxy
+kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
 ```
 
 <!--
-Kubectl will make Dashboard available at [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/).
+Kubectl will make Dashboard available at [https://localhost:8443](https://localhost:8443).
 -->
-kubectl 会使得 Dashboard 可以通过 [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/) 访问。
+kubectl 会使得 Dashboard 可以通过 [https://localhost:8443](https://localhost:8443) 访问。
 
 <!--
-The UI can _only_ be accessed from the machine where the command is executed. See `kubectl proxy --help` for more options.
+The UI can _only_ be accessed from the machine where the command is executed. See `kubectl port-forward --help` for more options.
 -->
-UI **只能**通过执行这条命令的机器进行访问。更多选项参见 `kubectl proxy --help`。
+UI **只能**通过执行这条命令的机器进行访问。更多选项参见 `kubectl port-forward --help`。
 
 {{< note >}}
 <!--

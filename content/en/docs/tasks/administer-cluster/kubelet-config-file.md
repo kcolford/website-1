@@ -50,6 +50,7 @@ evictionHard:
     nodefs.available:  "10%"
     nodefs.inodesFree: "5%"
     imagefs.available: "15%"
+    imagefs.inodesFree: "5%"
 ```
 
 In this example, the kubelet is configured with the following settings:
@@ -69,6 +70,9 @@ In the example, by changing the default value of only one parameter for
 evictionHard, the default values of other parameters will not be inherited and
 will be set to zero. In order to provide custom values, you should provide all
 the threshold values respectively.
+Alternatively, you can set the MergeDefaultEvictionSettings to true in the kubelet
+configuration file, if any parameter is changed then the other parameters will inherit
+their default values instead of 0.
 {{< /note >}}
 
 The `imagefs` is an optional filesystem that container runtimes use to store container
@@ -97,8 +101,6 @@ defaults for the `KubeletConfiguration` version apply.
 In the above example, this version is `kubelet.config.k8s.io/v1beta1`.
 
 ## Drop-in directory for kubelet configuration files {#kubelet-conf-d}
-
-{{<feature-state for_k8s_version="v1.30" state="beta" >}}
 
 You can specify a drop-in configuration directory for the kubelet. By default, the kubelet does not look
 for drop-in configuration files anywhere - you must specify a path.
@@ -146,7 +148,7 @@ and replaces every field present in a higher priority file.
 Since the configuration could now be spread over multiple files with this feature, if someone wants to inspect the final actuated configuration,
 they can follow these steps to inspect the kubelet configuration:
 
-1. Start a proxy server using [`kubectl proxy`](/docs/reference/kubectl/generated/kubectl-commands#proxy) in your terminal.
+1. Start a proxy server using [`kubectl proxy`](/docs/reference/kubectl/generated/kubectl_proxy/) in your terminal.
 
    ```bash
    kubectl proxy
@@ -243,9 +245,11 @@ they can follow these steps to inspect the kubelet configuration:
          "imagefs.available": "15%",
          "memory.available": "100Mi",
          "nodefs.available": "10%",
-         "nodefs.inodesFree": "5%"
+         "nodefs.inodesFree": "5%",
+         "imagefs.inodesFree": "5%"
        },
        "evictionPressureTransitionPeriod": "1m0s",
+       "mergeDefaultEvictionSettings": false,
        "enableControllerAttachDetach": true,
        "makeIPTablesUtilChains": true,
        "iptablesMasqueradeBit": 14,
@@ -279,7 +283,6 @@ they can follow these steps to inspect the kubelet configuration:
        "enableProfilingHandler": true,
        "enableDebugFlagsHandler": true,
        "seccompDefault": false,
-       "memoryThrottlingFactor": 0.9,
        "registerNode": true,
        "localStorageCapacityIsolation": true,
        "containerRuntimeEndpoint": "unix:///var/run/crio/crio.sock"

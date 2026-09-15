@@ -119,11 +119,11 @@ Events:
 
 Here you can see configuration information about the container(s) and Pod (labels, resource requirements, etc.), as well as status information about the container(s) and Pod (state, readiness, restart count, events, etc.).
 
-The container state is one of Waiting, Running, or Terminated. Depending on the state, additional information will be provided -- here you can see that for a container in Running state, the system tells you when the container started.
+The container state is one of Waiting, Running, or Terminated. Depending on the state, additional information will be provided - here you can see that for a container in Running state, the system tells you when the container started.
 
 Ready tells you whether the container passed its last readiness probe. (In this case, the container does not have a readiness probe configured; the container is assumed to be ready if no readiness probe is configured.)
 
-Restart Count tells you how many times the container has been restarted; this information can be useful for detecting crash loops in containers that are configured with a restart policy of 'always.'
+Restart Count tells you how many times the container has been restarted; this information can be useful for detecting crash loops in containers that are configured with a restart policy of `Always`.
 
 Currently the only Condition associated with a Pod is the binary Ready condition, which indicates that the pod is able to service requests and should be added to the load balancing pools of all matching services.
 
@@ -205,7 +205,7 @@ kubectl get events --namespace=my-namespace
 
 To see events from all namespaces, you can use the `--all-namespaces` argument.
 
-In addition to `kubectl describe pod`, another way to get extra information about a pod (beyond what is provided by `kubectl get pod`) is to pass the `-o yaml` output format flag to `kubectl get pod`. This will give you, in YAML format, even more information than `kubectl describe pod`--essentially all of the information the system has about the Pod. Here you will see things like annotations (which are key-value metadata without the label restrictions, that is used internally by Kubernetes system components), restart policy, ports, and volumes.
+In addition to `kubectl describe pod`, another way to get extra information about a pod (beyond what is provided by `kubectl get pod`) is to pass the `-o yaml` output format flag to `kubectl get pod`. This will give you, in YAML format, even more information than `kubectl describe pod` - essentially all of the information the system has about the Pod. Here you will see things like annotations (which are key-value metadata without the label restrictions, that is used internally by Kubernetes system components), restart policy, ports, and volumes.
 
 ```shell
 kubectl get pod nginx-deployment-1006230814-6winp -o yaml
@@ -336,13 +336,13 @@ status:
 First, look at the logs of the affected container:
 
 ```shell
-kubectl logs ${POD_NAME} ${CONTAINER_NAME}
+kubectl logs ${POD_NAME} -c ${CONTAINER_NAME}
 ```
 
 If your container has previously crashed, you can access the previous container's crash log with:
 
 ```shell
-kubectl logs --previous ${POD_NAME} ${CONTAINER_NAME}
+kubectl logs ${POD_NAME} -c ${CONTAINER_NAME} --previous
 ```
 
 ## Debugging with container exec {#container-exec}
@@ -640,14 +640,52 @@ Don't forget to clean up the debugging Pod when you're finished with it:
 kubectl delete pod node-debugger-mynode-pdx84
 ```
 
-## Debugging Profiles {#debugging-profiles}
+### Capturing and analyzing Node/Pod traffic
+
+When debugging networking issues, capturing and analyzing network traffic from Nodes/Pods can provide valuable insights
+into connectivity problems, DNS resolution failures, or unexpected network behavior.
+
+You can use `kubectl debug` with the `--profile=sysadmin` flag to run network capture tools on a node.
+First, create a debugging session on the node where your Pod is running:
+
+```shell
+kubectl debug --profile=sysadmin node/${NODE_NAME} -it --image=ubuntu:latest
+```
+
+Once inside the debug container, install tcpdump and capture traffic on the node's network interfaces:
+
+```shell
+apt-get update && apt-get install -y tcpdump
+tcpdump -i any -n
+```
+
+{{< note >}}
+Don't forget to clean up the debugging Pod when you're finished with it:
+
+```shell
+kubectl delete pod node-debugger-mynode-pdx84
+```
+{{< /note >}}
+
+You can also capture traffic from a specific Pod:
+
+```shell
+kubectl debug --profile=sysadmin pod/${POD_NAME} -n ${NAMESPACE} -it --image=ubuntu:latest
+```
+
+And then perform the same `tcpdump` command inside the debug container to capture traffic from the Pod's network namespace.
+
+## Debugging a Pod or Node while applying a profile {#debugging-profiles}
 
 When using `kubectl debug` to debug a node via a debugging Pod, a Pod via an ephemeral container, 
-or a copied Pod, you can apply a debugging profile to them using the `--profile` flag.
+or a copied Pod, you can apply a profile to them.
 By applying a profile, specific properties such as [securityContext](/docs/tasks/configure-pod-container/security-context/)
 are set, allowing for adaptation to various scenarios.
+There are two types of profiles, static profile and custom profile.
 
+### Applying a Static Profile {#static-profile}
 
+A static profile is a set of predefined properties, and you can apply them using the `--profile` flag.
 The available profiles are as follows:
 
 | Profile      | Description                                                     |
@@ -711,6 +749,73 @@ kubectl get pod myapp -o jsonpath='{.spec.ephemeralContainers[0].securityContext
 
 ```
 {"privileged":true}
+```
+
+Clean up the Pod when you're finished with it:
+
+```shell
+kubectl delete pod myapp
+```
+
+### Applying Custom Profile {#custom-profile}
+
+{{< feature-state for_k8s_version="v1.32" state="stable" >}}
+
+You can define a partial container spec for debugging as a custom profile in either YAML or JSON format, 
+and apply it using the `--custom` flag.
+
+{{< note >}}
+Custom profile only supports the modification of the container spec, 
+but modifications to `name`, `image`, `command`, `lifecycle` and `volumeDevices` fields of the container spec 
+are not allowed.
+It does not support the modification of the Pod spec.
+{{< /note >}}
+
+Create a Pod named myapp as an example:
+
+```shell
+kubectl run myapp --image=busybox:1.28 --restart=Never -- sleep 1d
+```
+
+Create a custom profile in YAML or JSON format.
+Here, create a YAML format file named `custom-profile.yaml`:
+
+```yaml
+env:
+- name: ENV_VAR_1
+  value: value_1
+- name: ENV_VAR_2
+  value: value_2
+securityContext:
+  capabilities:
+    add:
+    - NET_ADMIN
+    - SYS_TIME
+
+```
+
+Run this command to debug the Pod using an ephemeral container with the custom profile:
+
+```shell
+kubectl debug -it myapp --image=busybox:1.28 --target=myapp --profile=general --custom=custom-profile.yaml
+```
+
+You can check that the ephemeral container has been added to the target Pod with the custom profile applied:
+
+```shell
+kubectl get pod myapp -o jsonpath='{.spec.ephemeralContainers[0].env}'
+```
+
+```
+[{"name":"ENV_VAR_1","value":"value_1"},{"name":"ENV_VAR_2","value":"value_2"}]
+```
+
+```shell
+kubectl get pod myapp -o jsonpath='{.spec.ephemeralContainers[0].securityContext}'
+```
+
+```
+{"capabilities":{"add":["NET_ADMIN","SYS_TIME"]}}
 ```
 
 Clean up the Pod when you're finished with it:

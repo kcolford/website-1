@@ -907,12 +907,14 @@ Here is the manifest you will use:
   现在，Pod 的输出包含环境变量 `SPECIAL_LEVEL_KEY=very` 和 `LOG_LEVEL=INFO`。
 
   <!--
-  Once you're happy to move on, delete that Pod:
+  Once you're happy to move on, delete that Pod and ConfigMap:
   -->
-  一旦你乐意继续前进，删除该 Pod：
+  一旦你乐意继续前进，删除此 Pod 和 ConfigMap：
 
   ```shell
   kubectl delete pod dapi-test-pod --now
+  kubectl delete configmap special-config
+  kubectl delete configmap env-config
   ```
 
 <!--
@@ -1145,9 +1147,9 @@ very
 
 {{< caution >}}
 <!--
-Like before, all previous files in the `/etc/config/` directory will be deleted.
+Like before, all previous files in the `/etc/config/` directory will be inaccessible.
 -->
-如前，`/etc/config/` 目录中所有先前的文件都将被删除。
+如前，`/etc/config/` 目录中所有先前的文件都将无法访问。
 {{< /caution >}}
 
 <!--
@@ -1336,7 +1338,7 @@ Pod 可以从使用 `data` 或 `binaryData` 的 ConfigMap 中加载数据。
 <!--
 ## Optional ConfigMaps
 -->
-### 可选的 ConfigMap {#optional-configmaps}
+## 可选的 ConfigMap {#optional-configmaps}
 
 <!--
 You can mark a reference to a ConfigMap as _optional_ in a Pod specification.
@@ -1425,7 +1427,7 @@ spec:
 <!--
 ## Restrictions
 -->
-### 限制   {#restrictions}
+## 限制   {#restrictions}
 
 <!--
 - You must create the `ConfigMap` object before you reference it in a Pod
@@ -1500,11 +1502,24 @@ kubectl delete configmap -l 'game-config in (config-4,config-5)'
 ```
 
 <!--
+Remove the `kustomization.yaml` file that you used to generate the ConfigMap:
+-->
+删除用于生成 ConfigMap 的 `kustomization.yaml` 文件：
+
+```bash
+rm kustomization.yaml
+```
+
+<!--
 If you created a directory `configure-pod-container` and no longer need it, you should remove that too,
 or move it into the trash can / deleted files location.
 -->
 如果你创建了一个目录 `configure-pod-container` 并且不再需要它，你也应该删除这个目录，
 或者将该目录移动到回收站/删除文件的位置。
+
+```bash
+rm -r configure-pod-container
+```
 
 ## {{% heading "whatsnext" %}}
 

@@ -1,7 +1,7 @@
 ---
 title: Kubernetes 对象
 content_type: concept
-weight: 10
+weight: 30
 description: >
   Kubernetes 对象是 Kubernetes 系统中的持久性实体。
   Kubernetes 使用这些实体表示你的集群状态。
@@ -14,7 +14,7 @@ card:
 <!--
 title: Objects In Kubernetes
 content_type: concept
-weight: 10
+weight: 30
 description: >
   Kubernetes objects are persistent entities in the Kubernetes system.
   Kubernetes uses these entities to represent the state of your cluster.
@@ -242,10 +242,11 @@ detail the structure of that `.status` field, and its content for each different
 
 {{< note >}}
 <!--
-See [Configuration Best Practices](/docs/concepts/configuration/overview/) for additional
+See [Kubernetes Configuration Best Practices](/blog/2025/11/25/configuration-good-practices/) for additional
 information on writing YAML configuration files.
 -->
-请查看[配置最佳实践](/zh-cn/docs/concepts/configuration/overview/)来获取有关编写 YAML 配置文件的更多信息。
+请查看 [Kubernetes 配置最佳实践](/zh-cn/blog/2025/11/25/configuration-good-practices/)来获取有关编写
+YAML 配置文件的更多信息。
 {{< /note >}}
 
 <!--

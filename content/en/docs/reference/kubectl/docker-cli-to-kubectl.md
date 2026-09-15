@@ -15,6 +15,7 @@ You can use the Kubernetes command line tool `kubectl` to interact with the API 
 ## docker run
 
 To run an nginx Deployment and expose the Deployment, see [kubectl create deployment](/docs/reference/generated/kubectl/kubectl-commands#-em-deployment-em-).
+
 docker:
 
 ```shell
@@ -359,7 +360,7 @@ kubectl cluster-info
 ```
 ```
 Kubernetes master is running at https://203.0.113.141
-KubeDNS is running at https://203.0.113.141/api/v1/namespaces/kube-system/services/kube-dns/proxy
+CoreDNS is running at https://203.0.113.141/api/v1/namespaces/kube-system/services/kube-dns/proxy
 kubernetes-dashboard is running at https://203.0.113.141/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy
 Grafana is running at https://203.0.113.141/api/v1/namespaces/kube-system/services/monitoring-grafana/proxy
 Heapster is running at https://203.0.113.141/api/v1/namespaces/kube-system/services/monitoring-heapster/proxy

@@ -358,6 +358,40 @@ following methods:
   此特性门控在 v1.27 版本中被移除，因为此特性已升级为正式发布（GA）状态；
   你仍然可以手动为 ServiceAccount 创建无限期的服务账户令牌，但应考虑到安全影响。
 
+<!--
+#### Node audience restriction for service account tokens {#node-audience-restriction}
+-->
+#### 服务账号令牌的节点受众限制  {#node-audience-restriction}
+
+{{< feature-state feature_gate_name="ServiceAccountNodeAudienceRestriction" >}}
+
+<!--
+When the `ServiceAccountNodeAudienceRestriction` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
+is enabled, the [NodeRestriction](/docs/reference/access-authn-authz/admission-controllers#noderestriction)
+admission plugin limits which audiences a kubelet can request when creating service
+account tokens via the `TokenRequest` API. By default, the kubelet can only request
+tokens for audiences already referenced by pods on that node (through projected service
+account token volumes or CSI driver token requests). Administrators can grant
+kubelets access to additional audiences using RBAC rules with the
+`request-serviceaccounts-token-audience` verb.
+-->
+当启用了 `ServiceAccountNodeAudienceRestriction`
+[特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)时，
+[NodeRestriction](/zh-cn/docs/reference/access-authn-authz/admission-controllers#noderestriction)
+限制了 kubelet 在通过 `TokenRequest` API 创建服务账号令牌时可以请求的受众。
+默认情况下，kubelet 只能请求该节点上已有 Pod 引用的受众（通过 projected 服务账号令牌卷或 CSI 驱动程序令牌请求）。
+管理员可以使用带有 `request-serviceaccounts-token-audience`
+动词的 RBAC 规则授予 kubelet 访问其他受众的权限。
+
+<!--
+This restriction applies only to kubelets (node identities) and does not affect other
+callers of the `TokenRequest` API. For details and RBAC examples,
+see [Service account token audience restriction](/docs/reference/access-authn-authz/node/#service-account-token-audience-restriction).
+-->
+此限制仅适用于 kubelet（节点身份），不影响 `TokenRequest` API 的其他调用者。
+有关详细信息和 RBAC 示例，
+请参阅[服务账号令牌受众限制](/zh-cn/docs/reference/access-authn-authz/node/#service-account-token-audience-restriction)。
+
 {{< note >}}
 <!--
 For applications running outside your Kubernetes cluster, you might be considering
@@ -381,9 +415,19 @@ You can also use TokenRequest to obtain short-lived tokens for your external app
 {{< /note >}}
 
 <!--
-### Restricting access to Secrets {#enforce-mountable-secrets}
+### Restricting access to Secrets (deprecated) {#enforce-mountable-secrets}
 -->
-### 限制对 Secret 的访问   {#enforce-mountable-secrets}
+### 限制对 Secret 的访问（已弃用）  {#enforce-mountable-secrets}
+
+{{< feature-state for_k8s_version="v1.32" state="deprecated" >}}
+
+{{< note >}}
+<!--
+`kubernetes.io/enforce-mountable-secrets` is deprecated since Kubernetes v1.32. Use separate namespaces to isolate access to mounted secrets.
+-->
+`kubernetes.io/enforce-mountable-secrets` 自 Kubernetes v1.32 起已弃用。
+你可以使用单独的命名空间来隔离对挂载 Secret 的访问。
+{{< /note >}}
 
 <!--
 Kubernetes provides an annotation called `kubernetes.io/enforce-mountable-secrets`
@@ -413,7 +457,8 @@ metadata:
 When this annotation is set to "true", the Kubernetes control plane ensures that
 the Secrets from this ServiceAccount are subject to certain mounting restrictions.
 -->
-当此注解设置为 "true" 时，Kubernetes 控制平面确保来自该 ServiceAccount 的 Secret 受到特定挂载限制。
+当此注解设置为 "true" 时，Kubernetes 控制平面确保来自该 ServiceAccount
+的 Secret 受到特定挂载限制。
 
 <!--
 1. The name of each Secret that is mounted as a volume in a Pod must appear in the `secrets` field of the
@@ -425,7 +470,8 @@ the Secrets from this ServiceAccount are subject to certain mounting restriction
 1. The name of each Secret referenced using `envFrom` in a Pod must also appear in the `secrets`
    field of the Pod's ServiceAccount.
 -->
-2. 在 Pod 中使用 `envFrom` 引用的每个 Secret 的名称也必须列在该 Pod 中 ServiceAccount 的 `secrets` 字段中。
+2. 在 Pod 中使用 `envFrom` 引用的每个 Secret 的名称也必须列在该 Pod 中
+   ServiceAccount 的 `secrets` 字段中。
 
 <!--
 1. The name of each Secret referenced using `imagePullSecrets` in a Pod must also appear in the `secrets`
@@ -456,7 +502,7 @@ acting as a ServiceAccount tries to communicate with the Kubernetes API server,
 the client includes an `Authorization: Bearer <token>` header with the HTTP
 request. The API server checks the validity of that bearer token as follows:
 -->
-ServiceAccount 使用签名的 JSON Web Token (JWT) 来向 Kubernetes API
+ServiceAccount 使用签名的 JSON Web Token（JWT）来向 Kubernetes API
 服务器以及任何其他存在信任关系的系统进行身份认证。根据令牌的签发方式
 （使用 `TokenRequest` 限制时间或使用传统的 Secret 机制），ServiceAccount
 令牌也可能有到期时间、受众和令牌**开始**生效的时间点。
@@ -577,8 +623,8 @@ used in your application and nowhere else.
   * [Use the CertificateSigningRequest API with client certificates](/docs/tasks/tls/managing-tls-in-a-cluster/).
 -->
 * 从集群外部向 API 服务器进行身份认证，而不使用服务账号令牌：
-  * [配置 API 服务器接受来自你自己的身份驱动的 OpenID Connect (OIDC) 令牌](/zh-cn/docs/reference/access-authn-authz/authentication/#openid-connect-tokens)。
-  * 使用来自云提供商等外部身份和访问管理 (IAM) 服务创建的服务账号或用户账号向集群进行身份认证。
+  * [配置 API 服务器接受来自你自己的身份驱动的 OpenID Connect（OIDC）令牌](/zh-cn/docs/reference/access-authn-authz/authentication/#openid-connect-tokens)。
+  * 使用来自云提供商等外部身份和访问管理（IAM）服务创建的服务账号或用户账号向集群进行身份认证。
   * [使用 CertificateSigningRequest API 和客户端证书](/zh-cn/docs/tasks/tls/managing-tls-in-a-cluster/)。
 
 <!--
@@ -587,7 +633,7 @@ used in your application and nowhere else.
   then allows authentication using a private key.
 -->
 * [配置 kubelet 从镜像仓库中获取凭据](/zh-cn/docs/tasks/administer-cluster/kubelet-credential-provider/)。
-* 使用设备插件访问虚拟的可信平台模块 (TPM)，进而可以使用私钥进行身份认证。
+* 使用设备插件访问虚拟的可信平台模块（TPM），进而可以使用私钥进行身份认证。
 
 ## {{% heading "whatsnext" %}}
 

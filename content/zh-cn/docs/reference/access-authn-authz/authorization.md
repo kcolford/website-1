@@ -102,7 +102,7 @@ Kubernetes reviews only the following API request attributes:
  * **API request verb** - API verbs `get`, `list`, `create`, `update`, `patch`, `watch`, `proxy`, `redirect`, `delete`, and `deletecollection` are used for resource requests. To determine the request verb for a resource API endpoint, see [request verbs and authorization](/docs/reference/access-authn-authz/authorization/#determine-the-request-verb).
  * **HTTP request verb** - HTTP verbs `get`, `post`, `put`, and `delete` are used for non-resource requests.
  * **Resource** - The ID or name of the resource that is being accessed (for resource requests only) -- For resource requests using `get`, `update`, `patch`, and `delete` verbs, you must provide the resource name.
- * **Subresource** - The subresource that is being accessed (for resource requests only).
+ * **Subresource** - The subresource that is being accessed (for resource requests only). This can be a standard subresource (for example, `status` or `scale`) or a synthetic subresource used for fine-grained authorization.
  * **Namespace** - The namespace of the object that is being accessed (for namespaced resource requests only).
  * **API group** - The {{< glossary_tooltip text="API Group" term_id="api-group" >}} being accessed (for resource requests only). An empty string designates the _core_ [API group](/docs/reference/using-api/#api-groups).
 -->
@@ -121,7 +121,8 @@ Kubernetes 仅审查以下 API 请求属性：
 * **HTTP 请求动词** —— HTTP 动词 `get`、`post`、`put` 和 `delete` 用于非资源请求。
 * **资源** —— 正在访问的资源的 ID 或名称（仅限资源请求）- 
   对于使用 `get`、`update`、`patch` 和 `delete` 动词的资源请求，你必须提供资源名称。
-* **子资源** —— 正在访问的子资源（仅限资源请求）。
+* **子资源** —— 正在访问的子资源（仅限资源请求）。这可以是标准子资源（例如，`status` 或 `scale`），
+  也可以是用于细粒度授权的合成子资源。
 * **名字空间** —— 正在访问的对象的名称空间（仅适用于名字空间资源请求）。
 * **API 组** —— 正在访问的 {{< glossary_tooltip text="API 组" term_id="api-group" >}}
   （仅限资源请求）。空字符串表示[核心 API 组](/zh-cn/docs/reference/using-api/#api-groups)。
@@ -194,6 +195,9 @@ Kubernetes sometimes checks authorization for additional permissions using speci
   * **approve** verb for CertificateSigningRequests, and **update** for revisions to existing approvals
  [RBAC](/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping)
   * **bind** and **escalate** verbs on `roles` and `clusterroles` resources in the `rbac.authorization.k8s.io` API group.
+* [Dynamic Resource Allocation (DRA)](/docs/concepts/scheduling-eviction/dynamic-resource-allocation/)
+  * Synthetic subresources such as `resourceclaims/binding` and `resourceclaims/driver` in the `resource.k8s.io` API group.
+  * Node-aware verbs such as `associated-node:update`, `associated-node:patch`, `arbitrary-node:update`, and `arbitrary-node:patch` for DRA driver `resourceclaims/status` updates.
 -->
 Kubernetes 有时使用专门的动词以对额外的权限进行鉴权。例如：
 
@@ -203,6 +207,12 @@ Kubernetes 有时使用专门的动词以对额外的权限进行鉴权。例如
 * [RBAC](/zh-cn/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping)
   * 对 `rbac.authorization.k8s.io` API 组中 `roles` 和 `clusterroles` 资源的 **bind**
     和 **escalate** 动词
+* [动态资源分配（DRA）](/zh-cn/docs/concepts/scheduling-eviction/dynamic-resource-allocation/)
+  * `resource.k8s.io` API 组中的合成子资源，例如
+    `resourceclaims/binding` 和 `resourceclaims/driver`。
+  * 用于 DRA 驱动程序 `resourceclaims/status` 更新的节点感知动词，
+    例如 `associated-node:update`、`associated-node:patch`、`arbitrary-node:update`
+    和 `arbitrary-node:patch`。
 
 <!--
 ## Authorization context
@@ -265,8 +275,9 @@ Kubernetes 需要 REST API 请求所共有的属性，
   要了解有关 Node 鉴权模式的更多信息，请参阅 [Node 鉴权](/zh-cn/docs/reference/access-authn-authz/node/)。
 
 `Webhook`
-: Kubernetes 的 [Webhook 鉴权模式](/docs/reference/access-authn-authz/webhook/)用于鉴权，进行同步 HTTP 调用，
-  阻塞请求直到远程 HTTP 服务响应查询。你可以编写自己的软件来处理这种向外调用，也可以使用生态系统中的解决方案。
+: Kubernetes 的 [Webhook 鉴权模式](/docs/reference/access-authn-authz/webhook/)用于鉴权，
+  进行同步 HTTP 调用，阻塞请求直到远程 HTTP 服务响应查询。
+  你可以编写自己的软件来处理这种向外调用，也可以使用生态系统中的解决方案。
 
 <a id="warning-always-allow" />
 
@@ -298,11 +309,31 @@ is reachable from the public internet.
 {{< /warning >}}
 
 <!--
+### The system:masters group
+
+The `system:masters` group is a built-in Kubernetes group that grants unrestricted
+access to the API server. Any user assigned to this group has full cluster administrator
+privileges, bypassing any authorization restrictions imposed by the RBAC or Webhook mechanisms.
+[Avoid adding users](/docs/concepts/security/rbac-good-practices/#least-privilege)
+to this group. If you do need to grant a user cluster-admin rights, you can create a
+[ClusterRoleBinding](/docs/reference/access-authn-authz/rbac/#user-facing-roles)
+to the built-in `cluster-admin` ClusterRole.
+-->
+### `system:masters` 组
+
+`system:masters` 组是 Kubernetes 内置的一个组，授予其成员对 API 服务器的无限制访问权限。
+任何被分配到此组的用户都具有完全的集群管理员权限，可以绕过由 RBAC 或 Webhook 机制施加的任何鉴权限制。
+请[避免将用户添加到此组](/zh-cn/docs/concepts/security/rbac-good-practices/#least-privilege)。
+如果你确实需要授予某个用户集群管理员权限，可以通过创建一个
+[ClusterRoleBinding](/zh-cn/docs/reference/access-authn-authz/rbac/#user-facing-roles)
+将其绑定到内置的 `cluster-admin` ClusterRole。
+
+<!--
 ### Authorization mode configuration {#choice-of-authz-config}
 
 You can configure the Kubernetes API server's authorizer chain using either
-[command line arguments](#using-flags-for-your-authorization-module) only or, as a beta feature,
-using a [configuration file](#using-configuration-file-for-authorization).
+a [configuration file](#using-configuration-file-for-authorization) only or
+[command line arguments](#using-flags-for-your-authorization-module).
 
 You have to pick one of the two configuration approaches; setting both `--authorization-config`
 path and configuring an authorization webhook using the `--authorization-mode` and
@@ -311,66 +342,13 @@ If you try this, the API server reports an error message during startup, then ex
 -->
 ### 鉴权模式配置 {#choice-of-authz-config}
 
-你可以仅使用[命令行参数](#using-flags-for-your-authorization-module)，
-或使用[配置文件](#using-configuration-file-for-authorization)来配置 Kubernetes API
-服务器的鉴权链，后者目前是 Beta 特性。
+你可以仅使用[配置文件](#using-configuration-file-for-authorization)，
+或使用[命令行参数](#using-flags-for-your-authorization-module)来配置
+Kubernetes API 服务器的鉴权链。
 
 你必须选择两种配置方法之一；不允许同时设置 `--authorization-config` 路径并使用
 `--authorization-mode` 和 `--authorization-webhook-*` 命令行参数配置鉴权 Webhook。
 如果你尝试这样做，API 服务器会在启动期间报告错误消息，然后立即退出。
-
-<!--
-### Command line authorization mode configuration {#using-flags-for-your-authorization-module}
--->
-### 命令行鉴权模式配置  {#using-flags-for-your-authorization-module}
-
-{{< feature-state state="stable" for_k8s_version="v1.8" >}}
-
-<!--
-You can use the following modes:
-
-* `--authorization-mode=ABAC` (Attribute-based access control mode)
-* `--authorization-mode=RBAC` (Role-based access control mode)
-* `--authorization-mode=Node` (Node authorizer)
-* `--authorization-mode=Webhook` (Webhook authorization mode)
-* `--authorization-mode=AlwaysAllow` (always allows requests; carries [security risks](#warning-always-allow))
-* `--authorization-mode=AlwaysDeny` (always denies requests)
-
-You can choose more than one authorization mode; for example:
-`--authorization-mode=Node,Webhook`
--->
-你可以使用以下模式：
-
-* `--authorization-mode=ABAC`（基于属性的访问控制模式）
-* `--authorization-mode=RBAC`（基于角色的访问控制模式）
-* `--authorization-mode=Node`（节点鉴权组件）
-* `--authorization-mode=Webhook`（Webhook 鉴权模式）
-* `--authorization-mode=AlwaysAllow`（始终允许请求；存在[安全风险](#warning-always-allow))
-* `--authorization-mode=AlwaysDeny`（始终拒绝请求）
-
-你可以选择多种鉴权模式；例如：`--authorization-mode=Node,Webhook`
-
-<!--
-Kubernetes checks authorization modules based on the order that you specify them
-on the API server's command line, so an earlier module has higher priority to allow
-or deny a request.
-
-You cannot combine the `--authorization-mode` command line argument with the
-`--authorization-config` command line argument used for
-[configuring authorization using a local file](#using-configuration-file-for-authorization-mode).
--->
-Kubernetes 根据你在 API 服务器的命令行上指定鉴权模块的顺序来检查鉴权模块，
-因此较早的模块具有更高的优先级来允许或拒绝请求。
-
-你不能将 `--authorization-mode` 命令行参数与用于[使用本地文件配置鉴权](#using-configuration-file-for-authorization-mode)的
-`--authorization-config` 命令行参数结合使用。
-
-<!--
-For more information on command line arguments to the API server, read the
-[`kube-apiserver` reference](/docs/reference/command-line-tools-reference/kube-apiserver/).
--->
-有关 API 服务器命令行参数的更多信息，请阅读
-[`kube-apiserver` 参考](/zh-cn/docs/reference/command-line-tools-reference/kube-apiserver/)。
 
 <!-- keep legacy hyperlinks working -->
 <a id="configuring-the-api-server-using-an-authorization-config-file" />
@@ -383,7 +361,7 @@ For more information on command line arguments to the API server, read the
 {{< feature-state feature_gate_name="StructuredAuthorizationConfiguration" >}}
 
 <!--
-As a beta feature, Kubernetes lets you configure authorization chains that can include multiple
+Kubernetes lets you configure authorization chains that can include multiple
 webhooks. The authorization items in that chain can have well-defined parameters that validate
 requests in a particular order, offering you fine-grained control, such as explicit Deny on failures.
 
@@ -392,12 +370,12 @@ The configuration file approach even allows you to specify
 to webhooks, helping you to prevent unnecessary invocations. The API server also automatically
 reloads the authorizer chain when the configuration file is modified.
 -->
-作为一项 Beta 级别特性，Kubernetes 允许你配置可包含多个 Webhook 的鉴权链。
+Kubernetes 允许你配置可包含多个 Webhook 的鉴权链。
 该链中的鉴权项可以具有明确定义的参数，这些参数可以按特定顺序检查请求，
 从而为你提供细粒度的控制，例如在失败时明确拒绝。
 
-配置文件方法甚至允许你指定 [CEL](/zh-cn/docs/reference/using-api/cel/)规则，
-在将请求发送到 Webhook 之前对其进行预过滤，从而帮助你防止不必要的调用。
+配置文件方法甚至允许你指定 [CEL](/zh-cn/docs/reference/using-api/cel/)
+规则，在将请求发送到 Webhook 之前对其进行预过滤，从而帮助你防止不必要的调用。
 修改配置文件时，API 服务器还会自动重新加载鉴权链。
 
 <!--
@@ -423,7 +401,7 @@ are only available if you use an authorization configuration file.
 #
 # DO NOT USE THE CONFIG AS IS. THIS IS AN EXAMPLE.
 #
-apiVersion: apiserver.config.k8s.io/v1beta1
+apiVersion: apiserver.config.k8s.io/v1
 kind: AuthorizationConfiguration
 authorizers:
   - type: Webhook
@@ -439,11 +417,23 @@ authorizers:
       # Same as setting `--authorization-webhook-cache-authorized-ttl` flag
       # Default: 5m0s
       authorizedTTL: 30s
+      # If set to false, 'authorized' responses from the webhook are not cached
+      # and the specified authorizedTTL is ignored/has no effect.
+      # Same as setting `--authorization-webhook-cache-authorized-ttl` flag to `0`.
+      # Note: Setting authorizedTTL to `0` results in its default value being used.
+      # Default: true
+      cacheAuthorizedRequests: true
       # The duration to cache 'unauthorized' responses from the webhook
       # authorizer.
       # Same as setting `--authorization-webhook-cache-unauthorized-ttl` flag
       # Default: 30s
       unauthorizedTTL: 30s
+      # If set to false, 'unauthorized' responses from the webhook are not cached
+      # and the specified unauthorizedTTL is ignored/has no effect.
+      # Same as setting `--authorization-webhook-cache-unauthorized-ttl` flag to `0`.
+      # Note: Setting unauthorizedTTL to `0` results in its default value being used.
+      # Default: true
+      cacheUnauthorizedRequests: true
       # Timeout for the webhook request
       # Maximum allowed is 30s.
       # Required, with no default.
@@ -471,14 +461,14 @@ authorizers:
       connectionInfo:
         # Controls how the webhook should communicate with the server.
         # Valid values:
-        # - KubeConfig: use the file specified in kubeConfigFile to locate the
+        # - KubeConfigFile: use the file specified in kubeConfigFile to locate the
         #   server.
         # - InClusterConfig: use the in-cluster configuration to call the
         #   SubjectAccessReview API hosted by kube-apiserver. This mode is not
         #   allowed for kube-apiserver.
-        type: KubeConfig
+        type: KubeConfigFile
         # Path to KubeConfigFile for connection info
-        # Required, if connectionInfo.Type is KubeConfig
+        # Required, if connectionInfo.Type is KubeConfigFile
         kubeConfigFile: /kube-system-authz-webhook.yaml
         # matchConditions is a list of conditions that must be met for a request to be sent to this
         # webhook. An empty list of matchConditions matches all requests.
@@ -503,7 +493,7 @@ authorizers:
       # only intercept requests to kube-system
       - expression: request.resourceAttributes.namespace == 'kube-system'
       # don't intercept requests from kube-system service accounts
-      - expression: !('system:serviceaccounts:kube-system' in request.user.groups)
+      - expression: "!('system:serviceaccounts:kube-system' in request.groups)"
   - type: Node
     name: node
   - type: RBAC
@@ -524,7 +514,7 @@ authorizers:
 #
 # 请勿按原样使用配置，这只是一个示例。
 #
-apiVersion: apiserver.config.k8s.io/v1beta1
+apiVersion: apiserver.config.k8s.io/v1
 kind: AuthorizationConfiguration
 authorizers:
   - type: Webhook
@@ -539,10 +529,22 @@ authorizers:
       # 与设置 `--authorization-webhook-cache-authorized-ttl` 标志相同
       # 默认值：5m0s
       authorizedTTL: 30s
+      # 如果设置为 false，来自 Webhook 的 'authorized' 响应不会被缓存，
+      # 并且指定的 authorizedTTL 将被忽略/不起作用。
+      # 等同于将 `--authorization-webhook-cache-authorized-ttl` 标志设置为 `0`。
+      # 注意：将 authorizedTTL 设置为 `0` 会导致使用其默认值。
+      # 默认值：true
+      cacheAuthorizedRequests: true
       # 缓存来自 Webhook 鉴权组件的“未授权”响应的持续时间。
       # 与设置 `--authorization-webhook-cache-unauthorized-ttl` 标志相同
       # 默认值：30s
       unauthorizedTTL: 30s
+      # 如果设置为 false，来自 webhook 的 'unauthorized' 响应不会被缓存，
+      # 并且指定的 unauthorizedTTL 将被忽略/不起作用。
+      # 等同于将 `--authorization-webhook-cache-unauthorized-ttl` 标志设置为 `0`。
+      # 注意：将 unauthorizedTTL 设置为 `0` 会导致使用其默认值。
+      # 默认值：true
+      cacheUnauthorizedRequests: true
       # Webhook 请求超时
       # 允许的最大时间为 30 秒。
       # 必填，没有默认值。
@@ -565,9 +567,9 @@ authorizers:
       connectionInfo:
         # 控制 Webhook 如何与服务器通信。
         # 有效值：
-        # - KubeConfig：使用 kubeConfigFile 中指定的文件来定位服务器。
+        # - KubeConfigFile：使用 kubeConfigFile 中指定的文件来定位服务器。
         # - InClusterConfig：使用集群内配置来调用由 kube-apiserver 托管的 SubjectAccessReview API，kube-apiserver 不允许使用此模式。
-        type: KubeConfig
+        type: KubeConfigFile
         # 连接信息的 KubeConfig 文件的路径
         # 如果 connectionInfo.Type 是 KubeConfig，则为必填项
         kubeConfigFile: /kube-system-authz-webhook.yaml
@@ -587,14 +589,14 @@ authorizers:
         # 如果请求变量中 subjectAccessReviewVersion 指定的版本是 v1beta1，
         # 在评估 CEL 表达式之前，内容将转换为 v1 版本。
       #
-      # CEL 文档：https://kubernetes.io/docs/reference/using-api/cel/
+      # CEL 文档：https://kubernetes.io/zh-cn/docs/reference/using-api/cel/
       #
       # 仅向 Webhook 发送资源请求
       - expression: has(request.resourceAttributes)
       # 仅拦截对 kube-system 的请求
       - expression: request.resourceAttributes.namespace == 'kube-system'
       # 不要拦截来自 kube-system 服务账户的请求
-      - expression: !('system:serviceaccounts:kube-system' in request.user.groups)
+      - expression: "!('system:serviceaccounts:kube-system' in request.groups)"
   - type: Node
     name: node
   - type: RBAC
@@ -648,6 +650,57 @@ but cannot be added or removed).
 
 重新加载**不能**添加或删除节点或 RBAC 鉴权组件（可以重新排序，但不能添加或删除）。
 {{< /note >}}
+
+<!--
+### Command line authorization mode configuration {#using-flags-for-your-authorization-module}
+-->
+### 命令行鉴权模式配置  {#using-flags-for-your-authorization-module}
+
+<!--
+You can use the following modes:
+
+* `--authorization-mode=ABAC` (Attribute-based access control mode)
+* `--authorization-mode=RBAC` (Role-based access control mode)
+* `--authorization-mode=Node` (Node authorizer)
+* `--authorization-mode=Webhook` (Webhook authorization mode)
+* `--authorization-mode=AlwaysAllow` (always allows requests; carries [security risks](#warning-always-allow))
+* `--authorization-mode=AlwaysDeny` (always denies requests)
+
+You can choose more than one authorization mode; for example:
+`--authorization-mode=Node,Webhook`
+-->
+你可以使用以下模式：
+
+* `--authorization-mode=ABAC`（基于属性的访问控制模式）
+* `--authorization-mode=RBAC`（基于角色的访问控制模式）
+* `--authorization-mode=Node`（节点鉴权组件）
+* `--authorization-mode=Webhook`（Webhook 鉴权模式）
+* `--authorization-mode=AlwaysAllow`（始终允许请求；存在[安全风险](#warning-always-allow))
+* `--authorization-mode=AlwaysDeny`（始终拒绝请求）
+
+你可以选择多种鉴权模式；例如：`--authorization-mode=Node,Webhook`
+
+<!--
+Kubernetes checks authorization modules based on the order that you specify them
+on the API server's command line, so an earlier module has higher priority to allow
+or deny a request.
+
+You cannot combine the `--authorization-mode` command line argument with the
+`--authorization-config` command line argument used for
+[configuring authorization using a local file](#using-configuration-file-for-authorization-mode).
+-->
+Kubernetes 根据你在 API 服务器的命令行上指定鉴权模块的顺序来检查鉴权模块，
+因此较早的模块具有更高的优先级来允许或拒绝请求。
+
+你不能将 `--authorization-mode` 命令行参数与用于[使用本地文件配置鉴权](#using-configuration-file-for-authorization-mode)的
+`--authorization-config` 命令行参数结合使用。
+
+<!--
+For more information on command line arguments to the API server, read the
+[`kube-apiserver` reference](/docs/reference/command-line-tools-reference/kube-apiserver/).
+-->
+有关 API 服务器命令行参数的更多信息，请阅读
+[`kube-apiserver` 参考](/zh-cn/docs/reference/command-line-tools-reference/kube-apiserver/)。
 
 <!--
 ## Privilege escalation via workload creation or edits {#privilege-escalation-via-pod-creation}
@@ -716,8 +769,8 @@ As a system administrator, you should be cautious when deploying CustomResourceD
 that let users make changes to the above areas. These may open privilege escalations paths.
 Consider the consequences of this kind of change when deciding on your authorization controls.
 -->
-作为系统管理员，在部署允许用户更改上述区域的 CustomResourceDefinitions 时应谨慎行事，这些可能会打开特权升级路径。
-在配置你的鉴权控制时，请考虑这种变化的后果。
+作为系统管理员，在部署允许用户更改上述区域的 CustomResourceDefinitions 时应谨慎行事，
+这些可能会打开特权升级路径。在配置你的鉴权控制时，请考虑这种变化的后果。
 {{< /caution >}}
 
 <!--
@@ -783,7 +836,8 @@ no
 Similarly, to check whether a ServiceAccount named `dev-sa` in Namespace `dev`
 can list Pods in the Namespace `target`:
 -->
-类似地，检查名字空间 `dev` 里的 `dev-sa` 服务账户是否可以列举名字空间 `target` 里的 Pod：
+类似地，检查名字空间 `dev` 里的 `dev-sa` 服务账户是否可以列举名字空间
+`target` 里的 Pod：
 
 ```bash
 kubectl auth can-i list pods \
@@ -882,4 +936,3 @@ status:
 * 有关概述，请阅读[控制对 Kubernetes API 的访问](/zh-cn/docs/concepts/security/controlling-access/)。
 * 要了解有关准入控制的更多信息，请参阅[使用准入控制器](/zh-cn/docs/reference/access-authn-authz/admission-controllers/)。
 * 阅读更多关于 [Kubernetes 中的通用表达语言](/zh-cn/docs/reference/using-api/cel/)。
-

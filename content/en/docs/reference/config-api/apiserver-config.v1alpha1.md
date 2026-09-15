@@ -119,8 +119,15 @@ JWT authenticator will attempt to cryptographically validate the token.</p>
 &quot;iss&quot;: &quot;https://issuer.example.com&quot;,
 &quot;aud&quot;: [&quot;audience&quot;],
 &quot;exp&quot;: 1234567890,
-&quot;&lt;username claim&gt;&quot;: &quot;username&quot;
+&quot;<!-- raw HTML omitted -->&quot;: &quot;username&quot;
 }</p>
+</td>
+</tr>
+<tr><td><code>anonymous</code> <B>[Required]</B><br/>
+<a href="#apiserver-k8s-io-v1alpha1-AnonymousAuthConfig"><code>AnonymousAuthConfig</code></a>
+</td>
+<td>
+   <p>If present --anonymous-auth must not be set</p>
 </td>
 </tr>
 </tbody>
@@ -195,7 +202,7 @@ Must be at least one.</p>
 <tr><td><code>TracingConfiguration</code> <B>[Required]</B><br/>
 <a href="#TracingConfiguration"><code>TracingConfiguration</code></a>
 </td>
-<td>(Members of <code>TracingConfiguration</code> are embedded into this type.)
+<td>
    <p>Embed the component config tracing configuration struct</p>
 </td>
 </tr>
@@ -240,6 +247,66 @@ configuration</p>
 <td>
    <p>Configuration is an embedded configuration object to be used as the plugin's
 configuration. If present, it will be used instead of the path to the configuration file.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## `AnonymousAuthCondition`     {#apiserver-k8s-io-v1alpha1-AnonymousAuthCondition}
+    
+
+**Appears in:**
+
+- [AnonymousAuthConfig](#apiserver-k8s-io-v1alpha1-AnonymousAuthConfig)
+
+
+<p>AnonymousAuthCondition describes the condition under which anonymous auth
+should be enabled.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>path</code> <B>[Required]</B><br/>
+<code>string</code>
+</td>
+<td>
+   <p>Path for which anonymous auth is enabled.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## `AnonymousAuthConfig`     {#apiserver-k8s-io-v1alpha1-AnonymousAuthConfig}
+    
+
+**Appears in:**
+
+- [AuthenticationConfiguration](#apiserver-k8s-io-v1alpha1-AuthenticationConfiguration)
+
+
+<p>AnonymousAuthConfig provides the configuration for the anonymous authenticator.</p>
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>enabled</code> <B>[Required]</B><br/>
+<code>bool</code>
+</td>
+<td>
+   <span class="text-muted">No description provided.</span></td>
+</tr>
+<tr><td><code>conditions</code> <B>[Required]</B><br/>
+<a href="#apiserver-k8s-io-v1alpha1-AnonymousAuthCondition"><code>[]AnonymousAuthCondition</code></a>
+</td>
+<td>
+   <p>If set, anonymous auth is only allowed if the request meets one of the
+conditions.</p>
 </td>
 </tr>
 </tbody>
@@ -331,9 +398,11 @@ The claim's value must be a singular string.
 Same as the --oidc-username-claim and --oidc-username-prefix flags.
 If username.expression is set, the expression must produce a string value.
 If username.expression uses 'claims.email', then 'claims.email_verified' must be used in
-username.expression or extra[&ast;].valueExpression or claimValidationRules[&ast;].expression.
+username.expression or extra[<em>].valueExpression or claimValidationRules[</em>].expression.
 An example claim validation rule expression that matches the validation automatically
-applied when username.claim is set to 'email' is 'claims.?email_verified.orValue(true)'.</p>
+applied when username.claim is set to 'email' is 'claims.?email_verified.orValue(true) == true'. By explicitly comparing
+the value to true, we let type-checking see the result will be a boolean, and to make sure a non-boolean email_verified
+claim will be caught at runtime.</p>
 <p>In the flag based approach, the --oidc-username-claim and --oidc-username-prefix are optional. If --oidc-username-claim is not set,
 the default value is &quot;sub&quot;. For the authentication config, there is no defaulting for claim or prefix. The claim and prefix must be set explicitly.
 For claim, if --oidc-username-claim was not set with legacy flag approach, configure username.claim=&quot;sub&quot; in the authentication config.
@@ -341,8 +410,8 @@ For prefix:
 (1) --oidc-username-prefix=&quot;-&quot;, no prefix was added to the username. For the same behavior using authentication config,
 set username.prefix=&quot;&quot;
 (2) --oidc-username-prefix=&quot;&quot; and  --oidc-username-claim != &quot;email&quot;, prefix was &quot;&lt;value of --oidc-issuer-url&gt;#&quot;. For the same
-behavior using authentication config, set username.prefix=&quot;&lt;value of issuer.url&gt;#&quot;
-(3) --oidc-username-prefix=&quot;&lt;value&gt;&quot;. For the same behavior using authentication config, set username.prefix=&quot;&lt;value&gt;&quot;</p>
+behavior using authentication config, set username.prefix=&quot;<!-- raw HTML omitted -->#&quot;
+(3) --oidc-username-prefix=&quot;<!-- raw HTML omitted -->&quot;. For the same behavior using authentication config, set username.prefix=&quot;<!-- raw HTML omitted -->&quot;</p>
 </td>
 </tr>
 <tr><td><code>groups</code><br/>
@@ -575,6 +644,20 @@ The &quot;master&quot; egress selector is deprecated in favor of &quot;controlpl
 </tbody>
 </table>
 
+## `EgressSelectorType`     {#apiserver-k8s-io-v1alpha1-EgressSelectorType}
+    
+(Alias of `string`)
+
+**Appears in:**
+
+- [Issuer](#apiserver-k8s-io-v1alpha1-Issuer)
+
+
+<p>EgressSelectorType is an indicator of which egress selection should be used for sending traffic.</p>
+
+
+
+
 ## `ExtraMapping`     {#apiserver-k8s-io-v1alpha1-ExtraMapping}
     
 
@@ -719,6 +802,24 @@ For example, if &quot;audiences&quot; is [&quot;foo&quot;, &quot;bar&quot;], the
 </ul>
 <p>For more nuanced audience validation, use claimValidationRules.
 example: claimValidationRule[].expression: 'sets.equivalent(claims.aud, [&quot;bar&quot;, &quot;foo&quot;, &quot;baz&quot;])' to require an exact match.</p>
+</td>
+</tr>
+<tr><td><code>egressSelectorType</code><br/>
+<a href="#apiserver-k8s-io-v1alpha1-EgressSelectorType"><code>EgressSelectorType</code></a>
+</td>
+<td>
+   <p>egressSelectorType is an indicator of which egress selection should be used for sending all traffic related
+to this issuer (discovery, JWKS, distributed claims, etc).  If unspecified, no custom dialer is used.
+When specified, the valid choices are &quot;controlplane&quot; and &quot;cluster&quot;.  These correspond to the associated
+values in the --egress-selector-config-file.</p>
+<ul>
+<li>
+<p>controlplane: for traffic intended to go to the control plane.</p>
+</li>
+<li>
+<p>cluster: for traffic intended to go to the system being managed by Kubernetes.</p>
+</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -917,6 +1018,13 @@ Must be absent/empty if TCPTransport.URL is prefixed with http://
 Must be configured if TCPTransport.URL is prefixed with https://</p>
 </td>
 </tr>
+<tr><td><code>tlsServerName</code><br/>
+<code>string</code>
+</td>
+<td>
+   <p>tlsServerName is used to check server certificate. If tlsServerName is empty, the hostname used to contact the server is used.</p>
+</td>
+</tr>
 </tbody>
 </table>
 
@@ -1049,6 +1157,16 @@ Same as setting <code>--authorization-webhook-cache-authorized-ttl</code> flag
 Default: 5m0s</p>
 </td>
 </tr>
+<tr><td><code>cacheAuthorizedRequests</code><br/>
+<code>bool</code>
+</td>
+<td>
+   <p>CacheAuthorizedRequests specifies whether authorized requests should be cached.
+If set to true, the TTL for cached decisions can be configured via the
+AuthorizedTTL field.
+Default: true</p>
+</td>
+</tr>
 <tr><td><code>unauthorizedTTL</code> <B>[Required]</B><br/>
 <a href="https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Duration"><code>meta/v1.Duration</code></a>
 </td>
@@ -1057,6 +1175,16 @@ Default: 5m0s</p>
 authorizer.
 Same as setting <code>--authorization-webhook-cache-unauthorized-ttl</code> flag
 Default: 30s</p>
+</td>
+</tr>
+<tr><td><code>cacheUnauthorizedRequests</code><br/>
+<code>bool</code>
+</td>
+<td>
+   <p>CacheUnauthorizedRequests specifies whether unauthorized requests should be cached.
+If set to true, the TTL for cached decisions can be configured via the
+UnauthorizedTTL field.
+Default: true</p>
 </td>
 </tr>
 <tr><td><code>timeout</code> <B>[Required]</B><br/>
@@ -1197,6 +1325,14 @@ Required, if connectionInfo.Type is KubeConfig</p>
 CEL expressions have access to the contents of the SubjectAccessReview in v1 version.
 If version specified by subjectAccessReviewVersion in the request variable is v1beta1,
 the contents would be converted to the v1 version before evaluating the CEL expression.</p>
+<ul>
+<li>'resourceAttributes' describes information for a resource access request and is unset for non-resource requests. e.g. has(request.resourceAttributes) &amp;&amp; request.resourceAttributes.namespace == 'default'</li>
+<li>'nonResourceAttributes' describes information for a non-resource access request and is unset for resource requests. e.g. has(request.nonResourceAttributes) &amp;&amp; request.nonResourceAttributes.path == '/healthz'.</li>
+<li>'user' is the user to test for. e.g. request.user == 'alice'</li>
+<li>'groups' is the groups to test for. e.g. ('group1' in request.groups)</li>
+<li>'extra' corresponds to the user.Info.GetExtra() method from the authenticator.</li>
+<li>'uid' is the information about the requesting user. e.g. request.uid == '1'</li>
+</ul>
 <p>Documentation on CEL: https://kubernetes.io/docs/reference/using-api/cel/</p>
 </td>
 </tr>

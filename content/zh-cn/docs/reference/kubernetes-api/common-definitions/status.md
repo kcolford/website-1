@@ -35,7 +35,7 @@ Status is a return value for calls that don't return other objects.
   APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources 
   -->
 
-  apiVersion 定义对象表示的版本化模式。
+  `apiVersion` 定义对象表示的版本化模式。
   服务器应将已识别的模式转换为最新的内部值，并可能拒绝无法识别的值。
   更多信息： https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 
@@ -68,12 +68,16 @@ Status is a return value for calls that don't return other objects.
   - **details.causes** ([]StatusCause)
 
     <!--
+    *Atomic: will be replaced during a merge*
+
     The Causes array includes more details associated with the StatusReason failure. 
     Not all StatusReasons may provide detailed causes. 
 
     <a name="StatusCause"></a>
     *StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.*
     -->
+
+    **原子：将在合并期间被替换**
 
     causes 数组包含与 StatusReason 故障相关的更多详细信息。
     并非所有 StatusReasons 都可以提供详细的原因。

@@ -146,8 +146,8 @@ and all resources with no labels with the `tier` key. One could filter for resou
 excluding `frontend` using the comma operator: `environment=production,tier!=frontend`
 
 One usage scenario for equality-based label requirement is for Pods to specify
-node selection criteria. For example, the sample Pod below selects nodes with
-the label "`accelerator=nvidia-tesla-p100`".
+node selection criteria. For example, the sample Pod below selects nodes where
+the `accelerator` label exists and is set to `nvidia-tesla-p100`.
 
 ```yaml
 apiVersion: v1
@@ -201,8 +201,11 @@ For example: `partition in (customerA, customerB),environment!=qa`.
 
 ### LIST and WATCH filtering
 
-LIST and WATCH operations may specify label selectors to filter the sets of objects
-returned using a query parameter. Both requirements are permitted
+For **list** and **watch** operations, you can specify label selectors to filter the sets of objects
+returned; you specify the filter using a query parameter.
+(To learn in detail about watches in Kubernetes, read
+[efficient detection of changes](/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)).
+Both requirements are permitted
 (presented here as they would appear in a URL query string):
 
 * _equality-based_ requirements: `?labelSelector=environment%3Dproduction,tier%3Dfrontend`
@@ -304,12 +307,19 @@ best practice. There are many scenarios where multiple labels should be used to
 distinguish resource sets from one another.
 
 For instance, different applications would use different values for the `app` label, but a
-multi-tier application, such as the [guestbook example](https://github.com/kubernetes/examples/tree/master/guestbook/),
-would additionally need to distinguish each tier. The frontend could carry the following labels:
+multi-tier application, such as the [guestbook example](https://github.com/kubernetes/examples/tree/master/web/guestbook/),
+would additionally need to distinguish each tier. 
+
+In the following examples, the `app` label is included for convenience in manual queries
+and simple CLI usage. The `app.kubernetes.io/name` label follows the recommended Kubernetes
+labeling conventions and is better suited for tooling and automation.
+
+The frontend could carry the following labels:
 
 ```yaml
 labels:
   app: guestbook
+  app.kubernetes.io/name: guestbook
   tier: frontend
 ```
 
@@ -319,6 +329,7 @@ additional `role` label:
 ```yaml
 labels:
   app: guestbook
+  app.kubernetes.io/name: guestbook
   tier: backend
   role: master
 ```
@@ -328,6 +339,7 @@ and
 ```yaml
 labels:
   app: guestbook
+  app.kubernetes.io/name: guestbook
   tier: backend
   role: replica
 ```

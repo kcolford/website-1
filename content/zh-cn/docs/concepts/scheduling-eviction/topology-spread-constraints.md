@@ -26,7 +26,8 @@ or configure topology spread constraints for individual workloads.
 例如区域（Region）、可用区（Zone）、节点和其他用户自定义拓扑域。
 这样做有助于实现高可用并提升资源利用率。
 
-你可以将[集群级约束](#cluster-level-default-constraints)设为默认值，或为个别工作负载配置拓扑分布约束。
+你可以将[集群级约束](#cluster-level-default-constraints)设为默认值，
+或为个别工作负载配置拓扑分布约束。
 
 <!-- body -->
 
@@ -62,12 +63,6 @@ are split across three different datacenters (or infrastructure zones). Now you
 have less concern about a single node failure, but you notice that latency is
 higher than you'd like, and you are paying for network costs associated with
 sending network traffic between the different zones.
-
-You decide that under normal operation you'd prefer to have a similar number of replicas
-[scheduled](/docs/concepts/scheduling-eviction/) into each infrastructure zone,
-and you'd like the cluster to self-heal in the case that there is a problem.
-
-Pod topology spread constraints offer you a declarative way to configure that.
 -->
 随着你的工作负载扩容，运行的 Pod 变多，将需要考虑另一个重要问题。
 假设你有 3 个节点，每个节点运行 5 个 Pod。这些节点有足够的容量能够运行许多副本；
@@ -75,6 +70,13 @@ Pod topology spread constraints offer you a declarative way to configure that.
 现在你可能不太关注单节点故障问题，但你会注意到延迟高于自己的预期，
 在不同的可用区之间发送网络流量会产生一些网络成本。
 
+<!--
+You decide that under normal operation you'd prefer to have a similar number of replicas
+[scheduled](/docs/concepts/scheduling-eviction/) into each infrastructure zone,
+and you'd like the cluster to self-heal in the case that there is a problem.
+
+Pod topology spread constraints offer you a declarative way to configure that.
+-->
 你决定在正常运营时倾向于将类似数量的副本[调度](/zh-cn/docs/concepts/scheduling-eviction/)
 到每个基础设施可用区，且你想要该集群在遇到问题时能够自愈。
 
@@ -125,11 +127,22 @@ spec:
       topologyKey: <string>
       whenUnsatisfiable: <string>
       labelSelector: <object>
-      matchLabelKeys: <list> # 可选；自从 v1.27 开始成为 Beta
-      nodeAffinityPolicy: [Honor|Ignore] # 可选；自从 v1.26 开始成为 Beta
-      nodeTaintsPolicy: [Honor|Ignore] # 可选；自从 v1.26 开始成为 Beta
+      matchLabelKeys: <list> # 可选；从 v1.27 开始成为 Beta
+      nodeAffinityPolicy: [Honor|Ignore] # 可选；从 v1.26 开始成为 Beta
+      nodeTaintsPolicy: [Honor|Ignore] # 可选；从 v1.26 开始成为 Beta
   ### 其他 Pod 字段置于此处
 ```
+
+{{< note >}}
+<!--
+There can only be one `topologySpreadConstraint` for a given `topologyKey` and `whenUnsatisfiable` value. For example, if you have defined a `topologySpreadConstraint` that uses the `topologyKey` "kubernetes.io/hostname" and `whenUnsatisfiable` value "DoNotSchedule", you can only add another `topologySpreadConstraint` for the `topologyKey` "kubernetes.io/hostname" if you use a different `whenUnsatisfiable` value.
+-->
+对于特定的 `topologyKey` 和 `whenUnsatisfiable` 值，只能有一个 `topologySpreadConstraint`。
+例如，如果你已经定义了一个 `topologySpreadConstraint`，其 `topologyKey`
+为 "kubernetes.io/hostname"，`whenUnsatisfiable` 值为 "DoNotSchedule"，
+那么你在添加另一个 `topologyKey` 为 "kubernetes.io/hostname" 的 `topologySpreadConstraint`
+时，`whenUnsatisfiable` 需要使用不同的值。
+{{< /note >}}
 
 <!--
 You can read more about this field by running `kubectl explain Pod.spec.topologySpreadConstraints` or
@@ -185,12 +198,13 @@ your cluster. Those fields are:
   {{< note >}}
   <!--
   Before Kubernetes v1.30, the `minDomains` field was only available if the
-  `MinDomainsInPodTopologySpread` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
+  `MinDomainsInPodTopologySpread` [feature gate](/docs/reference/command-line-tools-reference/feature-gates-removed/)
   was enabled (default since v1.28). In older Kubernetes clusters it might be explicitly
   disabled or the field might not be available.
   -->
   在 Kubernetes v1.30 之前，`minDomains` 字段只有在启用 `MinDomainsInPodTopologySpread`
-  [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)时才可用（自 v1.28 起默认启用）
+  [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates-removed/)时才可用
+ （自 v1.28 起默认启用）。
   在早期的 Kubernetes 集群中，此特性门控可能被显式禁用或此字段可能不可用。
   {{< /note >}}
 
@@ -220,7 +234,13 @@ your cluster. Those fields are:
   will try to put a balanced number of pods into each domain.
 	Also, we define an eligible domain as a domain whose nodes meet the requirements of
 	nodeAffinityPolicy and nodeTaintsPolicy.
+-->
+- **topologyKey** 是[节点标签](#node-labels)的键。如果节点使用此键标记并且具有相同的标签值，
+  则将这些节点视为处于同一拓扑域中。我们将拓扑域中（即键值对）的每个实例称为一个域。
+  调度器将尝试在每个拓扑域中放置数量均衡的 Pod。
+  另外，我们将符合条件的域定义为其节点满足 nodeAffinityPolicy 和 nodeTaintsPolicy 要求的域。
 
+<!--
 - **whenUnsatisfiable** indicates how to deal with a Pod if it doesn't satisfy the spread constraint:
   - `DoNotSchedule` (default) tells the scheduler not to schedule it.
   - `ScheduleAnyway` tells the scheduler to still schedule it while prioritizing nodes that minimize the skew.
@@ -231,11 +251,6 @@ your cluster. Those fields are:
   See [Label Selectors](/docs/concepts/overview/working-with-objects/labels/#label-selectors)
   for more details.
 -->
-- **topologyKey** 是[节点标签](#node-labels)的键。如果节点使用此键标记并且具有相同的标签值，
-  则将这些节点视为处于同一拓扑域中。我们将拓扑域中（即键值对）的每个实例称为一个域。
-  调度器将尝试在每个拓扑域中放置数量均衡的 Pod。
-  另外，我们将符合条件的域定义为其节点满足 nodeAffinityPolicy 和 nodeTaintsPolicy 要求的域。
-
 - **whenUnsatisfiable** 指示如果 Pod 不满足分布约束时如何处理：
   - `DoNotSchedule`（默认）告诉调度器不要调度。
   - `ScheduleAnyway` 告诉调度器仍然继续调度，只是根据如何能将偏差最小化来对节点进行排序。
@@ -244,32 +259,48 @@ your cluster. Those fields are:
   有关详细信息，请参考[标签选择算符](/zh-cn/docs/concepts/overview/working-with-objects/labels/#label-selectors)。
 
 <!--
-- **matchLabelKeys** is a list of pod label keys to select the pods over which
-  spreading will be calculated. The keys are used to lookup values from the pod labels,
-  those key-value labels are ANDed with `labelSelector` to select the group of existing
-  pods over which spreading will be calculated for the incoming pod. The same key is
-  forbidden to exist in both `matchLabelKeys` and `labelSelector`. `matchLabelKeys` cannot
-  be set when `labelSelector` isn't set. Keys that don't exist in the pod labels will be
-  ignored. A null or empty list means only match against the `labelSelector`.
+- **matchLabelKeys** is a list of pod label keys to select the group of pods over which 
+  the spreading skew will be calculated. At a pod creation, 
+  the kube-apiserver uses those keys to lookup values from the incoming pod labels,
+  and those key-value labels will be merged with any existing `labelSelector`.
+  The same key is forbidden to exist in both `matchLabelKeys` and `labelSelector`. 
+  `matchLabelKeys` cannot be set when `labelSelector` isn't set. 
+  Keys that don't exist in the pod labels will be ignored. 
+  A null or empty list means only match against the `labelSelector`.
+-->
+- - **matchLabelKeys** 是一个 Pod 标签键的列表，用于选择计算分布偏差的 Pod 组。在创建 Pod 时，
+  kube-apiserver 使用这些键从传入的 Pod 标签中查找值，并将这些键值标签与现有的 `labelSelector` 合并。
+  相同的键不允许同时出现在 `matchLabelKeys` 和 `labelSelector` 中。
+  当 `labelSelector` 未设置时，不能设置 `matchLabelKeys`。
+  如果键在 Pod 标签中不存在，则会被忽略。
+  一个空或 `null` 的列表意味着仅与 `labelSelector` 匹配。
 
+  {{< caution >}}
+  <!--
+  It's not recommended to use `matchLabelKeys` with labels that might be updated directly on pods.
+  Even if you edit the pod's label that is specified at `matchLabelKeys` **directly**,
+  (that is, you edit the Pod and not a Deployment),
+  kube-apiserver doesn't reflect the label update onto the merged `labelSelector`.
+  -->
+  不建议将 `matchLabelKeys` 与可能直接在 Pod 上更新的标签一起使用。
+  即使你**直接**编辑了位于 `matchLabelKeys` 中指定的 Pod 标签，
+  （也就是说，你编辑的是 Pod 而不是 Deployment），
+  kube-apiserver 不会将标签更新反映到合并的 `labelSelector` 上。
+  {{< /caution >}}
+
+
+<!--
   With `matchLabelKeys`, you don't need to update the `pod.spec` between different revisions.
   The controller/operator just needs to set different values to the same label key for different
-  revisions. The scheduler will assume the values automatically based on `matchLabelKeys`. For
-  example, if you are configuring a Deployment, you can use the label keyed with
+  revisions. For example, if you are configuring a Deployment, you can use the label keyed with
   [pod-template-hash](/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label), which
   is added automatically by the Deployment controller, to distinguish between different revisions
   in a single Deployment.
 -->
-- **matchLabelKeys** 是一个 Pod 标签键的列表，用于选择需要计算分布方式的 Pod 集合。
-  这些键用于从 Pod 标签中查找值，这些键值标签与 `labelSelector` 进行逻辑与运算，以选择一组已有的 Pod，
-  通过这些 Pod 计算新来 Pod 的分布方式。`matchLabelKeys` 和 `labelSelector` 中禁止存在相同的键。
-  未设置 `labelSelector` 时无法设置 `matchLabelKeys`。Pod 标签中不存在的键将被忽略。
-  null 或空列表意味着仅与 `labelSelector` 匹配。
-
   借助 `matchLabelKeys`，你无需在变更 Pod 修订版本时更新 `pod.spec`。
   控制器或 Operator 只需要将不同修订版的标签键设为不同的值。
-  调度器将根据 `matchLabelKeys` 自动确定取值。例如，如果你正在配置一个 Deployment，
-  则你可以使用由 Deployment 控制器自动添加的、以
+  例如，如果你正在配置一个 Deployment，则可以使用由 Deployment
+  控制器自动添加的、以
   [pod-template-hash](/zh-cn/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label)
   为键的标签来区分同一个 Deployment 的不同修订版。
 
@@ -293,6 +324,17 @@ your cluster. Those fields are:
   `matchLabelKeys` 字段是 1.27 中默认启用的一个 Beta 级别字段。
   你可以通过禁用 `MatchLabelKeysInPodTopologySpread`
   [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)来禁用此字段。
+
+  <!--
+  Before v1.34, `matchLabelKeys` was handled implicitly.
+  Since v1.34, key-value labels corresponding to `matchLabelKeys` are explicitly merged into `labelSelector`.
+  You can disable it and revert to the previous behavior by disabling the `MatchLabelKeysInPodTopologySpreadSelectorMerge` 
+  [feature gate](/docs/reference/command-line-tools-reference/feature-gates/) of kube-apiserver.
+  -->
+  在 v1.34 之前，`matchLabelKeys` 是隐式处理的。
+  从 v1.34 开始，与 `matchLabelKeys` 对应的键值标签会被明确地合并到 `labelSelector` 中。
+  你可以通过禁用 kube-apiserver 的 `MatchLabelKeysInPodTopologySpreadSelectorMerge`
+  [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)来禁用此行为并恢复到之前的行为。
   {{< /note >}}
 
 <!--
@@ -312,11 +354,12 @@ your cluster. Those fields are:
 
   {{< note >}}
   <!--
-  The `nodeAffinityPolicy` is a beta-level field and enabled by default in 1.26. You can disable it by disabling the
+  The `nodeAffinityPolicy` became beta in 1.26 and graduated to GA in 1.33.
+  It's enabled by default in beta, you can disable it by disabling the
   `NodeInclusionPolicyInPodTopologySpread` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/).
   -->
-  `nodeAffinityPolicy` 是 1.26 中默认启用的一个 Beta 级别字段。
-  你可以通过禁用 `NodeInclusionPolicyInPodTopologySpread`
+  `nodeAffinityPolicy` 在 1.26 版本中进入 Beta 阶段，并在 1.33 版本中升级为 GA（正式可用）。
+  该功能在 Beta 阶段默认启用，你可以通过禁用 `NodeInclusionPolicyInPodTopologySpread`
   [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)来禁用此字段。
   {{< /note >}}
 
@@ -337,11 +380,12 @@ your cluster. Those fields are:
 
   {{< note >}}
   <!--
-  The `nodeTaintsPolicy` is a beta-level field and enabled by default in 1.26. You can disable it by disabling the
+  The `nodeTaintsPolicy` became beta in 1.26 and graduated to GA in 1.33.
+  It's enabled by default in beta, you can disable it by disabling the
   `NodeInclusionPolicyInPodTopologySpread` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/).
   -->
-  `nodeTaintsPolicy` 是一个 Beta 级别字段，在 1.26 版本默认启用。
-  你可以通过禁用 `NodeInclusionPolicyInPodTopologySpread`
+  `nodeTaintsPolicy` 在 1.26 版本中进入 Beta 阶段，并在 1.33 版本中升级为 GA（正式可用）。
+  该功能在 Beta 阶段默认启用，你可以通过禁用 `NodeInclusionPolicyInPodTopologySpread`
   [特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)来禁用此字段。
   {{< /note >}}
 
@@ -433,12 +477,6 @@ Usually, if you are using a workload controller such as a Deployment, the pod te
 takes care of this for you. If you mix different spread constraints then Kubernetes
 follows the API definition of the field; however, the behavior is more likely to become
 confusing and troubleshooting is less straightforward.
-
-You need a mechanism to ensure that all the nodes in a topology domain (such as a
-cloud provider region) are labelled consistently.
-To avoid you needing to manually label nodes, most clusters automatically
-populate well-known labels such as `kubernetes.io/hostname`. Check whether
-your cluster supports this.
 -->
 ## 一致性 {#Consistency}
 
@@ -448,6 +486,13 @@ your cluster supports this.
 如果你混合不同的分布约束，则 Kubernetes 会遵循该字段的 API 定义；
 但是，该行为可能更令人困惑，并且故障排除也没那么简单。
 
+<!--
+You need a mechanism to ensure that all the nodes in a topology domain (such as a
+cloud provider region) are labelled consistently.
+To avoid you needing to manually label nodes, most clusters automatically
+populate well-known labels such as `kubernetes.io/hostname`. Check whether
+your cluster supports this.
+-->
 你需要一种机制来确保拓扑域（例如云提供商区域）中的所有节点具有一致的标签。
 为了避免你需要手动为节点打标签，大多数集群会自动填充知名的标签，
 例如 `kubernetes.io/hostname`。检查你的集群是否支持此功能。
@@ -745,8 +790,8 @@ There are some implicit conventions worth noting here:
 
 - Only the Pods holding the same namespace as the incoming Pod can be matching candidates.
 
-- The scheduler bypasses any nodes that don't have any `topologySpreadConstraints[*].topologyKey`
-  present. This implies that:
+- The scheduler only considers nodes that have all `topologySpreadConstraints[*].topologyKey` present at the same time.
+  Nodes missing any of these `topologyKeys` are bypassed. This implies that:
 
   1. any Pods located on those bypassed nodes do not impact `maxSkew` calculation - in the
      above [example](#example-conflicting-topologyspreadconstraints), suppose the node `node1`
@@ -763,7 +808,8 @@ There are some implicit conventions worth noting here:
 
 - 只有与新来的 Pod 具有相同命名空间的 Pod 才能作为匹配候选者。
 
-- 调度器会忽略没有任何 `topologySpreadConstraints[*].topologyKey` 的节点。这意味着：
+- 调度器只会考虑同时具有全部 `topologySpreadConstraints[*].topologyKey` 的节点。
+  缺少任一 `topologyKey` 的节点将被忽略。这意味着：
 
   1. 位于这些节点上的 Pod 不影响 `maxSkew` 计算，在上面的[例子](#example-conflicting-topologyspreadconstraints)中，
      假设节点 `node1` 没有标签 "zone"，则 2 个 Pod 将被忽略，因此新来的
@@ -820,7 +866,7 @@ An example configuration might look like follows:
 配置的示例可能看起来像下面这个样子：
 
 ```yaml
-apiVersion: kubescheduler.config.k8s.io/v1beta3
+apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 
 profiles:
@@ -892,7 +938,7 @@ empty `defaultConstraints` in the `PodTopologySpread` plugin configuration:
 并将 `PodTopologySpread` 插件配置中的 `defaultConstraints` 参数置空来禁用默认 Pod 分布约束：
 
 ```yaml
-apiVersion: kubescheduler.config.k8s.io/v1beta3
+apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 
 profiles:
@@ -932,8 +978,8 @@ Pod 彼此的调度方式（更密集或更分散）。
 
 `podAntiAffinity`
 : 驱逐 Pod。如果将此设为 `requiredDuringSchedulingIgnoredDuringExecution` 模式，
-则只有单个 Pod 可以调度到单个拓扑域；如果你选择 `preferredDuringSchedulingIgnoredDuringExecution`，
-则你将丢失强制执行此约束的能力。
+  则只有单个 Pod 可以调度到单个拓扑域；如果你选择 `preferredDuringSchedulingIgnoredDuringExecution`，
+  则你将丢失强制执行此约束的能力。
 
 <!--
 For finer control, you can specify topology spread constraints to distribute
@@ -979,7 +1025,7 @@ section of the enhancement proposal about Pod topology spread constraints.
   because, in this case, those topology domains won't be considered until there is
   at least one node in them.
 
-  You can work around this by using a cluster autoscaling tool that is aware of
+  You can work around this by using a Node autoscaler that is aware of
   Pod topology spread constraints and is also aware of the overall set of topology
   domains.
 -->
@@ -988,7 +1034,27 @@ section of the enhancement proposal about Pod topology spread constraints.
   而用户正期望其扩容时，可能会导致调度出现问题。
   因为在这种情况下，调度器不会考虑这些拓扑域，直至这些拓扑域中至少包含有一个节点。
 
-  你可以通过使用感知 Pod 拓扑分布约束并感知整个拓扑域集的集群自动扩缩工具来解决此问题。
+  你可以通过使用感知 Pod 拓扑分布约束并感知整个拓扑域集的节点自动扩缩工具来解决此问题。
+
+<!--
+- Pods that don't match their own labelSelector create "ghost pods". If a pod's
+  labels don't match the `labelSelector` in its topology spread constraint, the pod
+  won't count itself in spread calculations. This means:
+  - Multiple such pods can just accumulate on the same topology (until matching pods are newly created/deleted) because those pod's schedule don't change a spreading calculation result.
+  - The spreading constraint works in an unintended way, most likely not matching your expectations
+
+  Ensure your pod's labels match the `labelSelector` in your spread constraints.
+  Typically, a pod should match its own topology spread constraint selector.
+-->
+- 与自身的 labelSelector 不匹配的 Pod 会产生“幽灵 Pod”。
+  如果某个 Pod 的标签与其拓扑分布约束中的 `labelSelector` 不匹配，
+  那么该 Pod 无法参与拓扑分布的计算。这意味着：
+  - 这类 Pod 可能会持续堆积在同一个拓扑域上（直到新创建或删除了选择算符相匹配的 Pod），
+    因为这些 Pod 的调度不会改变分布计算结果。
+  - 分布约束会以非预期的方式工作，很可能与你的期望不一致。
+  
+  请确保 Pod 的标签与分布约束中的 `labelSelector` 相匹配。
+  通常，Pod 应当能够匹配到它自己定义的拓扑分布约束选择算符。
 
 ## {{% heading "whatsnext" %}}
 

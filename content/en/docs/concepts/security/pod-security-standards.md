@@ -29,9 +29,9 @@ This guide outlines the requirements of each policy.
 **The _Privileged_ policy is purposely-open, and entirely unrestricted.** This type of policy is
 typically aimed at system- and infrastructure-level workloads managed by privileged, trusted users.
 
-The Privileged policy is defined by an absence of restrictions. Allow-by-default
-mechanisms (such as gatekeeper) may be Privileged by default. In contrast, for a deny-by-default mechanism (such as Pod
-Security Policy) the Privileged policy should disable all restrictions.
+The Privileged policy is defined by an absence of restrictions. If you define a Pod where the Privileged
+security policy applies, the Pod you define is able to bypass typical container isolation mechanisms.
+For example, you can define a Pod that has access to the node's host network.
 
 ### Baseline
 
@@ -57,7 +57,7 @@ fail validation.
 		<tr>
 			<td style="white-space: nowrap">HostProcess</td>
 			<td>
-				<p>Windows pods offer the ability to run <a href="/docs/tasks/configure-pod-container/create-hostprocess-pod">HostProcess containers</a> which enables privileged access to the Windows node. Privileged access to the host is disallowed in the baseline policy. {{< feature-state for_k8s_version="v1.26" state="stable" >}}</p>
+				<p>Windows Pods offer the ability to run <a href="/docs/tasks/configure-pod-container/create-hostprocess-pod">HostProcess containers</a> which enables privileged access to the Windows host machine. Privileged access to the host is disallowed in the Baseline policy. {{< feature-state for_k8s_version="v1.26" state="stable" >}}</p>
 				<p><strong>Restricted Fields</strong></p>
 				<ul>
 					<li><code>spec.securityContext.windowsOptions.hostProcess</code></li>
@@ -168,6 +168,40 @@ fail validation.
 			</td>
 		</tr>
 		<tr>
+			<td>Host Probes / Lifecycle Hooks (v1.34+)</td>
+			<td>
+				<p>The Host field in probes and lifecycle hooks must be disallowed.</p>
+				<p><strong>Restricted Fields</strong></p>
+				<ul>
+					<li><code>spec.containers[*].livenessProbe.httpGet.host</code></li>
+					<li><code>spec.containers[*].readinessProbe.httpGet.host</code></li>
+					<li><code>spec.containers[*].startupProbe.httpGet.host</code></li>
+					<li><code>spec.containers[*].livenessProbe.tcpSocket.host</code></li>
+					<li><code>spec.containers[*].readinessProbe.tcpSocket.host</code></li>
+					<li><code>spec.containers[*].startupProbe.tcpSocket.host</code></li>
+					<li><code>spec.containers[*].lifecycle.postStart.tcpSocket.host</code>
+					<li><code>spec.containers[*].lifecycle.preStop.tcpSocket.host</code>
+					<li><code>spec.containers[*].lifecycle.postStart.httpGet.host</code></li>
+					<li><code>spec.containers[*].lifecycle.preStop.httpGet.host</code></li>
+					<li><code>spec.initContainers[*].livenessProbe.httpGet.host</code></li>
+					<li><code>spec.initContainers[*].readinessProbe.httpGet.host</code></li>
+					<li><code>spec.initContainers[*].startupProbe.httpGet.host</code></li>
+					<li><code>spec.initContainers[*].livenessProbe.tcpSocket.host</code></li>
+					<li><code>spec.initContainers[*].readinessProbe.tcpSocket.host</code></li>
+					<li><code>spec.initContainers[*].startupProbe.tcpSocket.host</code></li>
+					<li><code>spec.initContainers[*].lifecycle.postStart.tcpSocket.host</code>
+					<li><code>spec.initContainers[*].lifecycle.preStop.tcpSocket.host</code>
+					<li><code>spec.initContainers[*].lifecycle.postStart.httpGet.host</code></li>
+					<li><code>spec.initContainers[*].lifecycle.preStop.httpGet.host</code></li>
+				</ul>
+				<p><strong>Allowed Values</strong></p>
+				<ul>
+					<li>Undefined/nil</li>
+					<li>""</li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
 			<td style="white-space: nowrap">AppArmor</td>
 			<td>
 				<p>On supported hosts, the <code>RuntimeDefault</code> AppArmor profile is applied by default. The baseline policy should prevent overriding or disabling the default AppArmor profile, or restrict overrides to an allowed set of profiles.</p>
@@ -213,6 +247,7 @@ fail validation.
 					<li><code>container_t</code></li>
 					<li><code>container_init_t</code></li>
 					<li><code>container_kvm_t</code></li>
+					<li><code>container_engine_t</code> (since Kubernetes 1.31)</li>
 				</ul>
 				<hr />
 				<p><strong>Restricted Fields</strong></p>
@@ -303,7 +338,7 @@ applications, as well as lower-trust users. The following listed controls should
 enforced/disallowed:
 
 {{< note >}}
-In this table, wildcards (`*`) indicate all elements in a list. For example, 
+In this table, wildcards (`*`) indicate all elements in a list. For example,
 `spec.containers[*].securityContext` refers to the Security Context object for _all defined
 containers_. If any of the listed containers fails to meet the requirements, the entire pod will
 fail validation.
@@ -317,12 +352,12 @@ fail validation.
 			<td><strong>Policy</strong></td>
 		</tr>
 		<tr>
-			<td colspan="2"><em>Everything from the baseline profile.</em></td>
+			<td colspan="2"><em>Everything from the Baseline policy</em></td>
 		</tr>
 		<tr>
 			<td style="white-space: nowrap">Volume Types</td>
 			<td>
-				<p>The restricted policy only permits the following volume types.</p>
+				<p>The Restricted policy only permits the following volume types.</p>
 				<p><strong>Restricted Fields</strong></p>
 				<ul>
 					<li><code>spec.volumes[*]</code></li>
@@ -473,10 +508,10 @@ of individual policies are not defined here.
 
 {{% thirdparty-content %}}
 
-Other alternatives for enforcing policies are being developed in the Kubernetes ecosystem, such as: 
+Other alternatives for enforcing policies are being developed in the Kubernetes ecosystem, such as:
 
 - [Kubewarden](https://github.com/kubewarden)
-- [Kyverno](https://kyverno.io/policies/pod-security/)
+- [Kyverno](https://kyverno.io/policies)
 - [OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
 
 ## Pod OS field
@@ -488,14 +523,13 @@ workloads. Specifically, many of the Pod `securityContext` fields
 [have no effect on Windows](/docs/concepts/windows/intro/#compatibility-v1-pod-spec-containers-securitycontext).
 
 {{< note >}}
-Kubelets prior to v1.24 don't enforce the pod OS field, and if a cluster has nodes on versions earlier than v1.24 the restricted policies should be pinned to a version prior to v1.25.
+Kubelets prior to v1.24 don't enforce the pod OS field, and if a cluster has nodes on versions earlier than v1.24 the Restricted policies should be pinned to a version prior to v1.25.
 {{< /note >}}
 
 ### Restricted Pod Security Standard changes
-Another important change, made in Kubernetes v1.25 is that the  _restricted_ Pod security
+Another important change, made in Kubernetes v1.25 is that the  _Restricted_ policy
 has been updated to use the `pod.spec.os.name` field. Based on the OS name, certain policies that are specific
 to a particular OS can be relaxed for the other OS.
-
 
 #### OS-specific policy controls
 Restrictions on the following controls are only required if `.spec.os.name` is not `windows`:
@@ -511,10 +545,10 @@ the [documentation](/docs/concepts/workloads/pods/user-namespaces#integration-wi
 
 ## FAQ
 
-### Why isn't there a profile between privileged and baseline?
+### Why isn't there a profile between Privileged and Baseline?
 
-The three profiles defined here have a clear linear progression from most secure (restricted) to least
-secure (privileged), and cover a broad set of workloads. Privileges required above the baseline
+The three profiles defined here have a clear linear progression from most secure (Restricted) to least
+secure (Privileged), and cover a broad set of workloads. Privileges required above the Baseline
 policy are typically very application specific, so we do not offer a standard profile in this
 niche. This is not to say that the privileged profile should always be used in this case, but that
 policies in this space need to be defined on a case-by-case basis.
@@ -528,14 +562,14 @@ Containers at runtime. Security contexts are defined as part of the Pod and cont
 in the Pod manifest, and represent parameters to the container runtime.
 
 Security profiles are control plane mechanisms to enforce specific settings in the Security Context,
-as well as other related parameters outside the Security Context. As of July 2021, 
+as well as other related parameters outside the Security Context. As of July 2021,
 [Pod Security Policies](/docs/concepts/security/pod-security-policy/) are deprecated in favor of the
-built-in [Pod Security Admission Controller](/docs/concepts/security/pod-security-admission/). 
+built-in [Pod Security Admission Controller](/docs/concepts/security/pod-security-admission/).
 
 
 ### What about sandboxed Pods?
 
-There is not currently an API standard that controls whether a Pod is considered sandboxed or
+There is currently no API standard that controls whether a Pod is considered sandboxed or
 not. Sandbox Pods may be identified by the use of a sandboxed runtime (such as gVisor or Kata
 Containers), but there is no standard definition of what a sandboxed runtime is.
 

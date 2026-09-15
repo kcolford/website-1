@@ -28,6 +28,9 @@ Kubernetes documentation contributors:
 - Create new content
 - Translate the documentation
 - Manage and publish the documentation parts of the Kubernetes release cycle
+
+The blog team, part of SIG Docs, helps manage the official blogs. Read
+[contributing to Kubernetes blogs](/docs/contribute/blog/) to learn more.
 -->
 本网站由 [Kubernetes SIG Docs](/zh-cn/docs/contribute/#get-involved-with-SIG-Docs)（文档特别兴趣小组）维护。
 Kubernetes 项目欢迎所有贡献者（无论是新手还是经验丰富的贡献者）提供帮助！
@@ -38,6 +41,9 @@ Kubernetes 文档项目的贡献者：
 - 创建新内容
 - 翻译文档
 - 管理并发布 Kubernetes 周期性发行版的文档
+
+博客团队是 SIG Docs 的一部分，负责管理官方博客。
+阅读[参与 Kubernetes 博客贡献](/zh-cn/docs/contribute/blog/)以了解更多信息。
 
 ---
 
@@ -65,7 +71,7 @@ to work effectively in the Kubernetes community.
 -->
 ## 入门 {#getting-started}
 
-任何人都可以提出文档方面的问题（issue），或贡献一个变更，用拉取请求（PR）的方式提交到
+任何人都可以提出文档方面的问题（Issue），或贡献一个变更，用拉取请求（PR）的方式提交到
 [GitHub 上的 `kubernetes/website` 仓库](https://github.com/kubernetes/website)。
 当然你需要熟练使用 [git](https://git-scm.com/) 和 [GitHub](https://lab.github.com/)
 才能在 Kubernetes 社区中有效工作。
@@ -73,7 +79,7 @@ to work effectively in the Kubernetes community.
 <!--
 To get involved with documentation:
 
-1. Sign the CNCF [Contributor License Agreement](https://github.com/kubernetes/community/blob/master/CLA.md).
+1. Sign the CNCF [Contributor License Agreement](https://github.com/kubernetes/community/blob/main/CLA.md).
 2. Familiarize yourself with the [documentation repository](https://github.com/kubernetes/website)
    and the website's [static site generator](https://gohugo.io).
 3. Make sure you understand the basic processes for
@@ -82,7 +88,7 @@ To get involved with documentation:
 -->
 如何参与文档编制：
 
-1. 签署 CNCF 的[贡献者许可协议](https://github.com/kubernetes/community/blob/master/CLA.md)。
+1. 签署 CNCF 的[贡献者许可协议](https://github.com/kubernetes/community/blob/main/CLA.md)。
 2. 熟悉[文档仓库](https://github.com/kubernetes/website)和网站的[静态站点生成器](https://gohugo.io)。
 3. 确保理解[发起 PR](/zh-cn/docs/contribute/new-content/open-a-pr/)
    和[审查变更](/zh-cn/docs/contribute/review/reviewing-prs/)的基本流程。
@@ -159,7 +165,7 @@ roles and permissions.
 ## Your first contribution
 
 You can prepare for your first contribution by reviewing several steps beforehand.
-Figure 2 outlines the steps and the details follow. 
+Figure 2 outlines the steps and the details follow.
 -->
 ## 第一次贡献 {#your-first-contribution}
 
@@ -247,25 +253,6 @@ and get your queries resolved here.
 [新贡献者见面会](https://www.kubernetes.dev/resources/calendar/)，
 你可以在此处与新贡献者大使互动并解决你的疑问。
 
-<!--
-## Next steps
-
-- Learn to [work from a local clone](/docs/contribute/new-content/open-a-pr/#fork-the-repo)
-  of the repository.
-- Document [features in a release](/docs/contribute/new-content/new-features/).
-- Participate in [SIG Docs](/docs/contribute/participate/), and become a
-  [member or reviewer](/docs/contribute/participate/roles-and-responsibilities/).
-
-- Start or help with a [localization](/docs/contribute/localization/).
--->
-## 下一步 {#next-teps}
-
-- 学习在仓库的[本地克隆中工作](/zh-cn/docs/contribute/new-content/open-a-pr/#fork-the-repo)。
-- 为[发行版的特性](/zh-cn/docs/contribute/new-content/new-features/)编写文档。
-- 加入 [SIG Docs](/zh-cn/docs/contribute/participate/)，
-  并成为[成员或评审者](/zh-cn/docs/contribute/participate/roles-and-responsibilities/)。
-- 开始或帮助[本地化](/zh-cn/docs/contribute/localization/)工作。
-
 <!-- 
 ## Get involved with SIG Docs
 
@@ -288,19 +275,19 @@ SIG Docs 的几种沟通方式：
   introduce yourself!
 - [Join the `kubernetes-sig-docs` mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-docs),
   where broader discussions take place and official decisions are recorded.
-- Join the [SIG Docs video meeting](https://github.com/kubernetes/community/tree/master/sig-docs)
+- Join the [SIG Docs video meeting](https://github.com/kubernetes/community/tree/main/sig-docs)
   held every two weeks. Meetings are always announced on `#sig-docs` and added to the
   [Kubernetes community meetings calendar](https://calendar.google.com/calendar/embed?src=cgnt364vd8s86hr2phapfjc6uk%40group.calendar.google.com&ctz=America/Los_Angeles).
   You'll need to download the [Zoom client](https://zoom.us/download) or dial in using a phone.
 - Join the SIG Docs async Slack standup meeting on those weeks when the in-person Zoom
   video meeting does not take place. Meetings are always announced on `#sig-docs`.
-  You can contribute to any one of the threads up to 24 hours after meeting announcement. 
+  You can contribute to any one of the threads up to 24 hours after meeting announcement.
 -->
 - [加入 Kubernetes 在 Slack 上的 `#sig-docs` 频道](https://slack.k8s.io/)。
   一定记得自我介绍!
 - [加入 `kubernetes-sig-docs` 邮件列表](https://groups.google.com/forum/#!forum/kubernetes-sig-docs)，
   这里有更广泛的讨论，和官方决策的记录。
-- 参加每两周召开一次的 [SIG Docs 视频会议](https://github.com/kubernetes/community/tree/master/sig-docs)。
+- 参加每两周召开一次的 [SIG Docs 视频会议](https://github.com/kubernetes/community/tree/main/sig-docs)。
   会议总是在 `#sig-docs` 上发出公告，同时添加到
   [Kubernetes 社区会议日历](https://calendar.google.com/calendar/embed?src=cgnt364vd8s86hr2phapfjc6uk%40group.calendar.google.com&ctz=America/Los_Angeles)。
   你需要下载 [Zoom 客户端软件](https://zoom.us/download)，或电话拨号接入。
@@ -317,7 +304,8 @@ SIG Docs 的几种沟通方式：
   to get involved with Kubernetes feature development.
 - Visit the contributor site to learn more about [Kubernetes Contributors](https://www.kubernetes.dev/)
   and [additional contributor resources](https://www.kubernetes.dev/resources/).
-- Submit a [blog post or case study](/docs/contribute/new-content/blogs-case-studies/).
+- Learn how to [contribute to the official blogs](/docs/contribute/blog/)
+- Submit a [case study](/docs/contribute/new-content/case-studies/)
 -->
 ## 其他贡献方式 {#other-ways-to-contribute}
 
@@ -327,4 +315,24 @@ SIG Docs 的几种沟通方式：
   参与 Kubernetes 功能开发。
 - 访问贡献者网站，进一步了解有关 [Kubernetes 贡献者](https://www.kubernetes.dev/)
   和[更多贡献者资源](https://www.kubernetes.dev/resources/)的信息。
-- 提交一篇[博客文章或案例研究](/zh-cn/docs/contribute/new-content/blogs-case-studies/)。
+- 了解如何[参与官方博客的贡献](/zh-cn/docs/contribute/blog/)
+- 提交一份[案例研究](/zh-cn/docs/contribute/new-content/case-studies/)
+
+<!--
+## Next steps
+
+- Learn to [work from a local clone](/docs/contribute/new-content/open-a-pr/#fork-the-repo)
+  of the repository.
+- Document [features in a release](/docs/contribute/new-content/new-features/).
+- Participate in [SIG Docs](/docs/contribute/participate/), and become a
+  [member or reviewer](/docs/contribute/participate/roles-and-responsibilities/).
+
+- Start or help with a [localization](/docs/contribute/localization/).
+-->
+## 下一步 {#next-teps}
+
+- 学习在仓库的[本地克隆中工作](/zh-cn/docs/contribute/new-content/open-a-pr/#fork-the-repo)。
+- 为[发行版的特性](/zh-cn/docs/contribute/new-content/new-features/)编写文档。
+- 加入 [SIG Docs](/zh-cn/docs/contribute/participate/)，
+  并成为[成员或评审者](/zh-cn/docs/contribute/participate/roles-and-responsibilities/)。
+- 开始或帮助[本地化](/zh-cn/docs/contribute/localization/)工作。

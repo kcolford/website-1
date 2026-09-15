@@ -4,110 +4,123 @@
 # schedule-builder -uc data/releases/schedule.yaml -e data/releases/eol.yaml
 ---
 schedules:
-- endOfLifeDate: "2025-06-28"
-  maintenanceModeStartDate: "2025-04-28"
+- endOfLifeDate: "2027-10-28"
+  maintenanceModeStartDate: "2027-08-28"
   next:
-    cherryPickDeadline: "2024-08-09"
-    release: 1.30.4
-    targetDate: "2024-08-13"
-  previousPatches:
-  - cherryPickDeadline: "2024-07-12"
-    release: 1.30.3
-    targetDate: "2024-07-16"
-  - cherryPickDeadline: "2024-06-07"
-    release: 1.30.2
-    targetDate: "2024-06-11"
-  - cherryPickDeadline: "2024-05-10"
-    release: 1.30.1
-    targetDate: "2024-05-15"
-  - release: 1.30.0
-    targetDate: "2024-04-17"
-  release: "1.30"
-  releaseDate: "2024-04-17"
-- endOfLifeDate: "2025-02-28"
-  maintenanceModeStartDate: "2024-12-28"
+    cherryPickDeadline: "2026-09-11"
+    release: 1.37.1
+    targetDate: "2026-09-15"
+  release: "1.37"
+  releaseDate: "2026-08-26"
+- endOfLifeDate: "2027-06-28"
+  maintenanceModeStartDate: "2027-04-28"
   next:
-    cherryPickDeadline: "2024-08-09"
-    release: 1.29.8
-    targetDate: "2024-08-13"
+    cherryPickDeadline: "2026-09-11"
+    release: 1.36.5
+    targetDate: "2026-09-15"
   previousPatches:
-  - cherryPickDeadline: "2024-07-12"
-    release: 1.29.7
-    targetDate: "2024-07-16"
-  - cherryPickDeadline: "2024-06-07"
-    release: 1.29.6
-    targetDate: "2024-06-11"
-  - cherryPickDeadline: "2024-05-10"
-    release: 1.29.5
-    targetDate: "2024-05-14"
-  - cherryPickDeadline: "2024-04-12"
-    release: 1.29.4
-    targetDate: "2024-04-16"
-  - cherryPickDeadline: "2024-03-08"
-    release: 1.29.3
-    targetDate: "2024-03-12"
-  - cherryPickDeadline: "2024-02-09"
-    release: 1.29.2
-    targetDate: "2024-02-14"
-  - cherryPickDeadline: "2024-01-12"
-    release: 1.29.1
-    targetDate: "2024-01-17"
-  - release: 1.29.0
-    targetDate: "2023-12-13"
-  release: "1.29"
-  releaseDate: "2023-12-13"
-- endOfLifeDate: "2024-10-28"
-  maintenanceModeStartDate: "2024-08-28"
+  - cherryPickDeadline: "2026-08-07"
+    release: 1.36.4
+    targetDate: "2026-08-11"
+  - cherryPickDeadline: "2026-07-10"
+    release: 1.36.3
+    targetDate: "2026-07-14"
+  - cherryPickDeadline: "2026-06-05"
+    release: 1.36.2
+    targetDate: "2026-06-09"
+  - cherryPickDeadline: "2026-05-08"
+    release: 1.36.1
+    targetDate: "2026-05-13"
+  release: "1.36"
+  releaseDate: "2026-04-22"
+- endOfLifeDate: "2027-02-28"
+  maintenanceModeStartDate: "2026-12-28"
   next:
-    cherryPickDeadline: "2024-08-09"
-    release: 1.28.13
-    targetDate: "2024-08-13"
+    cherryPickDeadline: "2026-09-11"
+    release: 1.35.9
+    targetDate: "2026-09-15"
   previousPatches:
-  - cherryPickDeadline: "2024-07-12"
-    release: 1.28.12
-    targetDate: "2024-07-16"
-  - cherryPickDeadline: "2024-06-07"
-    release: 1.28.11
-    targetDate: "2024-06-11"
-  - cherryPickDeadline: "2024-05-10"
-    release: 1.28.10
-    targetDate: "2024-05-14"
-  - cherryPickDeadline: "2024-04-12"
-    release: 1.28.9
-    targetDate: "2024-04-16"
-  - cherryPickDeadline: "2024-03-08"
-    release: 1.28.8
-    targetDate: "2024-03-12"
-  - cherryPickDeadline: "2024-02-09"
-    release: 1.28.7
-    targetDate: "2024-02-14"
-  - cherryPickDeadline: "2023-01-12"
-    release: 1.28.6
-    targetDate: "2024-01-17"
-  - cherryPickDeadline: "2023-12-15"
-    release: 1.28.5
-    targetDate: "2023-12-20"
-  - note: Out of band release to fix [CVE-2023-5528](https://groups.google.com/g/kubernetes-announce/c/c3py6Fw0DTI/m/cScFSdk1BwAJ)
-    release: 1.28.4
-    targetDate: "2023-11-14"
-  - cherryPickDeadline: "2023-10-13"
-    release: 1.28.3
-    targetDate: "2023-10-18"
-  - cherryPickDeadline: "2023-09-08"
-    release: 1.28.2
-    targetDate: "2023-09-13"
-  - cherryPickDeadline: N/A
-    note: Unplanned release to include CVE fixes
-    release: 1.28.1
-    targetDate: "2023-08-23"
-  - release: 1.28.0
-    targetDate: "2023-08-15"
-  release: "1.28"
-  releaseDate: "2023-08-15"
+  - cherryPickDeadline: "2026-08-07"
+    release: 1.35.8
+    targetDate: "2026-08-11"
+  - cherryPickDeadline: "2026-07-10"
+    release: 1.35.7
+    targetDate: "2026-07-14"
+  - cherryPickDeadline: "2026-06-05"
+    release: 1.35.6
+    targetDate: "2026-06-09"
+  - cherryPickDeadline: "2026-05-08"
+    release: 1.35.5
+    targetDate: "2026-05-12"
+  - cherryPickDeadline: "2026-04-10"
+    release: 1.35.4
+    targetDate: "2026-04-14"
+  - cherryPickDeadline: "2026-03-13"
+    release: 1.35.3
+    targetDate: "2026-03-19"
+  - cherryPickDeadline: "2026-02-26"
+    note: Out of band patch release to pick up a new version of Go to [address several
+      Go CVEs](https://groups.google.com/g/golang-dev/c/ytMTMwK7QBk/m/hpcstrxADwAJ).
+      No other changes.
+    release: 1.35.2
+    targetDate: "2026-02-26"
+  - cherryPickDeadline: "2026-02-06"
+    note: January 2026 patches consolidated with February
+    release: 1.35.1
+    targetDate: "2026-02-10"
+  release: "1.35"
+  releaseDate: "2025-12-17"
+- endOfLifeDate: "2026-10-27"
+  maintenanceModeStartDate: "2026-08-27"
+  next:
+    cherryPickDeadline: "2026-09-11"
+    release: 1.34.12
+    targetDate: "2026-09-15"
+  previousPatches:
+  - cherryPickDeadline: "2026-08-07"
+    release: 1.34.11
+    targetDate: "2026-08-11"
+  - cherryPickDeadline: "2026-07-10"
+    release: 1.34.10
+    targetDate: "2026-07-14"
+  - cherryPickDeadline: "2026-06-05"
+    release: 1.34.9
+    targetDate: "2026-06-09"
+  - cherryPickDeadline: "2026-05-08"
+    release: 1.34.8
+    targetDate: "2026-05-12"
+  - cherryPickDeadline: "2026-04-10"
+    release: 1.34.7
+    targetDate: "2026-04-14"
+  - cherryPickDeadline: "2026-03-13"
+    release: 1.34.6
+    targetDate: "2026-03-19"
+  - cherryPickDeadline: "2026-02-26"
+    note: Out of band patch release to pick up a new version of Go to [address several
+      Go CVEs](https://groups.google.com/g/golang-dev/c/ytMTMwK7QBk/m/hpcstrxADwAJ).
+      No other changes.
+    release: 1.34.5
+    targetDate: "2026-02-26"
+  - cherryPickDeadline: "2026-02-06"
+    note: January 2026 patches consolidated with February
+    release: 1.34.4
+    targetDate: "2026-02-10"
+  - cherryPickDeadline: "2025-12-05"
+    release: 1.34.3
+    targetDate: "2025-12-09"
+  - cherryPickDeadline: "2025-11-07"
+    note: October 2025 patches consolidated with November
+    release: 1.34.2
+    targetDate: "2025-11-11"
+  - cherryPickDeadline: "2025-09-05"
+    release: 1.34.1
+    targetDate: "2025-09-09"
+  release: "1.34"
+  releaseDate: "2025-08-27"
 upcoming_releases:
-- cherryPickDeadline: "2024-08-09"
-  targetDate: "2024-08-13"
-- cherryPickDeadline: "2024-09-06"
-  targetDate: "2024-09-10"
-- cherryPickDeadline: "2024-10-11"
-  targetDate: "2024-10-15"
+- cherryPickDeadline: "2026-09-11"
+  targetDate: "2026-09-15"
+- cherryPickDeadline: "2026-10-09"
+  targetDate: "2026-10-13"
+- cherryPickDeadline: "2026-11-06"
+  targetDate: "2026-11-10"

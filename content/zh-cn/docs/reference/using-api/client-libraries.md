@@ -48,9 +48,9 @@ format to read the credentials and the API Server address.
 
 <!--
 The following client libraries are officially maintained by
-[Kubernetes SIG API Machinery](https://github.com/kubernetes/community/tree/master/sig-api-machinery).
+[Kubernetes SIG API Machinery](https://github.com/kubernetes/community/tree/main/sig-api-machinery).
 -->
-以下客户端库由 [Kubernetes SIG API Machinery](https://github.com/kubernetes/community/tree/master/sig-api-machinery)
+以下客户端库由 [Kubernetes SIG API Machinery](https://github.com/kubernetes/community/tree/main/sig-api-machinery)
 正式维护。
 
 <!--
@@ -113,10 +113,12 @@ their authors, not the Kubernetes team.
 | PHP                  | [github.com/maclof/kubernetes-client](https://github.com/maclof/kubernetes-client) |
 | PHP                  | [github.com/travisghansen/kubernetes-client-php](https://github.com/travisghansen/kubernetes-client-php) |
 | PHP                  | [github.com/renoki-co/php-k8s](https://github.com/renoki-co/php-k8s) |
+| Python               | [github.com/cloudcoil/cloudcoil](https://github.com/cloudcoil/cloudcoil) |
 | Python               | [github.com/fiaas/k8s](https://github.com/fiaas/k8s) |
 | Python               | [github.com/gtsystem/lightkube](https://github.com/gtsystem/lightkube) |
 | Python               | [github.com/kr8s-org/kr8s](https://github.com/kr8s-org/kr8s) |
 | Python               | [github.com/mnubo/kubernetes-py](https://github.com/mnubo/kubernetes-py) |
+| Python               | [github.com/puzl-cloud/kubesdk](https://github.com/puzl-cloud/kubesdk) |
 | Python               | [github.com/tomplus/kubernetes_asyncio](https://github.com/tomplus/kubernetes_asyncio) |
 | Python               | [github.com/Frankkkkk/pykorm](https://github.com/Frankkkkk/pykorm) |
 | Ruby                 | [github.com/abonas/kubeclient](https://github.com/abonas/kubeclient) |
@@ -150,10 +152,12 @@ their authors, not the Kubernetes team.
 | PHP                  | [github.com/maclof/kubernetes-client](https://github.com/maclof/kubernetes-client) |
 | PHP                  | [github.com/travisghansen/kubernetes-client-php](https://github.com/travisghansen/kubernetes-client-php) |
 | PHP                  | [github.com/renoki-co/php-k8s](https://github.com/renoki-co/php-k8s) |
+| Python               | [github.com/cloudcoil/cloudcoil](https://github.com/cloudcoil/cloudcoil) |
 | Python               | [github.com/fiaas/k8s](https://github.com/fiaas/k8s) |
 | Python               | [github.com/gtsystem/lightkube](https://github.com/gtsystem/lightkube) |
 | Python               | [github.com/kr8s-org/kr8s](https://github.com/kr8s-org/kr8s) |
 | Python               | [github.com/mnubo/kubernetes-py](https://github.com/mnubo/kubernetes-py) |
+| Python               | [github.com/puzl-cloud/kubesdk](https://github.com/puzl-cloud/kubesdk) |
 | Python               | [github.com/tomplus/kubernetes_asyncio](https://github.com/tomplus/kubernetes_asyncio) |
 | Python               | [github.com/Frankkkkk/pykorm](https://github.com/Frankkkkk/pykorm) |
 | Ruby                 | [github.com/abonas/kubeclient](https://github.com/abonas/kubeclient) |
@@ -165,4 +169,3 @@ their authors, not the Kubernetes team.
 | Scala                | [github.com/hnaderi/scala-k8s](https://github.com/hnaderi/scala-k8s) |
 | Scala                | [github.com/joan38/kubernetes-client](https://github.com/joan38/kubernetes-client) |
 | Swift                | [github.com/swiftkube/client](https://github.com/swiftkube/client) |
-

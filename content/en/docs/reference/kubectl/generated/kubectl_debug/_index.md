@@ -3,6 +3,8 @@ title: kubectl debug
 content_type: tool-reference
 weight: 30
 auto_generated: true
+description: >-
+  Create debugging sessions for troubleshooting workloads and nodes
 no_list: true
 ---
 
@@ -31,6 +33,8 @@ Debug cluster resources using interactive debugging containers.
   *  Workload: Create a copy of an existing pod with certain attributes changed, for example changing the image tag to a new version.
   *  Workload: Add an ephemeral container to an already running pod, for example to add debugging utilities without restarting the pod.
   *  Node: Create a new pod that runs in the node's host namespaces and can access the node's filesystem.
+
+ Note: When a non-root user is configured for the entire target Pod, some capabilities granted by debug profile may not work.
 
 ```
 kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
@@ -104,6 +108,13 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 
 <tr>
+<td colspan="2">--custom string</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Path to a JSON or YAML file containing a partial container spec to customize built-in debug profiles.</p></td>
+</tr>
+
+<tr>
 <td colspan="2">--env stringToString&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
 </tr>
 <tr>
@@ -139,10 +150,52 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 
 <tr>
-<td colspan="2">--profile string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: "legacy"</td>
+<td colspan="2">--keep-annotations</td>
 </tr>
 <tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Options are &quot;legacy&quot;, &quot;general&quot;, &quot;baseline&quot;, &quot;netadmin&quot;, &quot;restricted&quot; or &quot;sysadmin&quot;.</p></td>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>If true, keep the original pod annotations.(This flag only works when used with '--copy-to')</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--keep-init-containers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: true</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Run the init containers for the pod. Defaults to true.(This flag only works when used with '--copy-to')</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--keep-labels</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>If true, keep the original pod labels.(This flag only works when used with '--copy-to')</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--keep-liveness</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>If true, keep the original pod liveness probes.(This flag only works when used with '--copy-to')</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--keep-readiness</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>If true, keep the original pod readiness probes.(This flag only works when used with '--copy-to')</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--keep-startup</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>If true, keep the original startup probes.(This flag only works when used with '--copy-to')</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--profile string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: "general"</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Options are &quot;general&quot;, &quot;baseline&quot;, &quot;restricted&quot;, &quot;netadmin&quot; or &quot;sysadmin&quot;. Defaults to &quot;general&quot;</p></td>
 </tr>
 
 <tr>
@@ -237,6 +290,13 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 
 <tr>
+<td colspan="2">--as-user-extra strings</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>User extras to impersonate for the operation, this flag can be repeated to specify multiple values for the same key.</p></td>
+</tr>
+
+<tr>
 <td colspan="2">--cache-dir string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: "$HOME/.kube/cache"</td>
 </tr>
 <tr>
@@ -265,20 +325,6 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 
 <tr>
-<td colspan="2">--cloud-provider-gce-l7lb-src-cidrs cidrs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 130.211.0.0/22,35.191.0.0/16</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>CIDRs opened in GCE firewall for L7 LB traffic proxy &amp; health checks</p></td>
-</tr>
-
-<tr>
-<td colspan="2">--cloud-provider-gce-lb-src-cidrs cidrs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 130.211.0.0/22,209.85.152.0/22,209.85.204.0/22,35.191.0.0/16</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>CIDRs opened in GCE firewall for L4 LB traffic proxy &amp; health checks</p></td>
-</tr>
-
-<tr>
 <td colspan="2">--cluster string</td>
 </tr>
 <tr>
@@ -290,20 +336,6 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 <tr>
 <td></td><td style="line-height: 130%; word-wrap: break-word;"><p>The name of the kubeconfig context to use</p></td>
-</tr>
-
-<tr>
-<td colspan="2">--default-not-ready-toleration-seconds int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 300</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Indicates the tolerationSeconds of the toleration for notReady:NoExecute that is added by default to every pod that does not already have such a toleration.</p></td>
-</tr>
-
-<tr>
-<td colspan="2">--default-unreachable-toleration-seconds int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: 300</td>
-</tr>
-<tr>
-<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Indicates the tolerationSeconds of the toleration for unreachable:NoExecute that is added by default to every pod that does not already have such a toleration.</p></td>
 </tr>
 
 <tr>
@@ -325,6 +357,13 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 <tr>
 <td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Path to the kubeconfig file to use for CLI requests.</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--kuberc string</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Path to the kuberc file to use for preferences. This can be disabled by exporting KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.</p></td>
 </tr>
 
 <tr>
@@ -353,6 +392,13 @@ kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]
 </tr>
 <tr>
 <td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Name of the file to write the profile to</p></td>
+</tr>
+
+<tr>
+<td colspan="2">--proxy-url string</td>
+</tr>
+<tr>
+<td></td><td style="line-height: 130%; word-wrap: break-word;"><p>Proxy URL to use for requests to the API server</p></td>
 </tr>
 
 <tr>

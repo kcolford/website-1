@@ -378,12 +378,9 @@ kubectl describe pod private-reg
 <!--
 If you then see an event with the reason set to `FailedToRetrieveImagePullSecret`,
 Kubernetes can't find a Secret with name (`regcred`, in this example).
-If you specify that a Pod needs image pull credentials, the kubelet checks that it can
-access that Secret before attempting to pull the image.
 -->
 如果你看到一个原因设为 `FailedToRetrieveImagePullSecret` 的事件，
 那么 Kubernetes 找不到指定名称（此例中为 `regcred`）的 Secret。
-如果你指定 Pod 需要拉取镜像凭据，kubelet 在尝试拉取镜像之前会检查是否可以访问该 Secret。
 
 <!--
 Make sure that the Secret you have specified exists, and that its name is spelled properly.
@@ -397,18 +394,36 @@ Events:
   ...  FailedToRetrieveImagePullSecret  ...  Unable to retrieve some image pull secrets (<regcred>); attempting to pull the image may not succeed.
 ```
 
+<!--
+## Using images from multiple registries
+
+A pod can have multiple containers, each container image can be from a different registry.
+You can use multiple `imagePullSecrets` with one pod, and each can contain multiple credentials.
+-->
+## 使用来自多个仓库的镜像
+
+一个 Pod 可以包含多个容器，每个容器的镜像可以来自不同的仓库。
+你可以在一个 Pod 中使用多个 `imagePullSecrets`，每个 `imagePullSecrets` 可以包含多个凭证。
+
+<!--
+The image pull will be attempted using each credential that matches the registry.
+If no credentials match the registry, the image pull will be attempted without authorization or using custom runtime specific configuration.
+-->
+kubelet 将使用与仓库匹配的每个凭证尝试拉取镜像。
+如果没有凭证匹配仓库，则 kubelet 将尝试在没有授权的情况下拉取镜像，或者使用特定运行时的自定义配置。
+
 ## {{% heading "whatsnext" %}}
 
 <!--
 * Learn more about [Secrets](/docs/concepts/configuration/secret/)
-  * or read the API reference for {{< api-reference page="config-and-storage-resources/secret-v1" >}}
+  * or read the API reference for {{< api-reference page="core/secret-v1" >}}
 * Learn more about [using a private registry](/docs/concepts/containers/images/#using-a-private-registry).
 * Learn more about [adding image pull secrets to a service account](/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
 * See [kubectl create secret docker-registry](/docs/reference/generated/kubectl/kubectl-commands/#-em-secret-docker-registry-em-).
 * See the `imagePullSecrets` field within the [container definitions](/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers) of a Pod
 -->
 * 进一步了解 [Secret](/zh-cn/docs/concepts/configuration/secret/)
-  * 或阅读 {{< api-reference page="config-and-storage-resources/secret-v1" >}} 的 API 参考
+  * 或阅读 {{< api-reference page="core/secret-v1" >}} 的 API 参考
 * 进一步了解[使用私有仓库](/zh-cn/docs/concepts/containers/images/#using-a-private-registry)
 * 进一步了解[为服务账户添加拉取镜像凭据](/zh-cn/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account)
 * 查看 [kubectl 创建 docker-registry 凭据](/docs/reference/generated/kubectl/kubectl-commands/#-em-secret-docker-registry-em-)

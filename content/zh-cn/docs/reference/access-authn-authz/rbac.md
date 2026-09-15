@@ -37,19 +37,37 @@ RBAC 鉴权机制使用 `rbac.authorization.k8s.io`
 
 <!--
 To enable RBAC, start the {{< glossary_tooltip text="API server" term_id="kube-apiserver" >}}
-with the `--authorization-mode` flag set to a comma-separated list that includes `RBAC`;
-for example:
+with the `--authorization-config` flag set to a file that includes the `RBAC` authorizer; for example:
 -->
 要启用 RBAC，在启动 {{< glossary_tooltip text="API 服务器" term_id="kube-apiserver" >}}时将
-`--authorization-mode` 参数设置为一个逗号分隔的列表并确保其中包含 `RBAC`。
+`--authorization-config` 标志设置为包含 `RBAC` 授权者的文件；
+例如：
+
+```yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: AuthorizationConfiguration
+authorizers:
+  ...
+  - type: RBAC
+  ...
+```
+
+<!--
+Or, start the {{< glossary_tooltip text="API server" term_id="kube-apiserver" >}} with
+the `--authorization-mode` flag set to a comma-separated list that includes `RBAC`;
+for example:
+-->
+或者，启动 {{< glossary_tooltip text="API 服务器" term_id="kube-apiserver" >}}时，
+将 `--authorization-mode` 标志设置为包含 `RBAC` 的逗号分隔列表；
+例如：
 
 <!--
 ```shell
-kube-apiserver --authorization-mode=Example,RBAC --other-options --more-options
+kube-apiserver --authorization-mode=...,RBAC --other-options --more-options
 ```
 -->
 ```shell
-kube-apiserver --authorization-mode=Example,RBAC --<其他选项> --<其他选项>
+kube-apiserver --authorization-mode=...,RBAC --<其他选项> --<其他选项>
 ```
 
 <!--
@@ -133,30 +151,7 @@ Here's an example Role in the "default" namespace that can be used to grant read
 下面是一个位于 "default" 名字空间的 Role 的示例，可用来授予对
 {{< glossary_tooltip text="Pod" term_id="pod" >}} 的读访问权限：
 
-<!--
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: default
-  name: pod-reader
-rules:
-- apiGroups: [""] # "" indicates the core API group
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
-```
--->
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: default
-  name: pod-reader
-rules:
-- apiGroups: [""] # "" 标明 core API 组
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
-```
+{{% code_sample file="access/simple-role.yaml" %}}
 
 <!--
 #### ClusterRole example
@@ -191,34 +186,7 @@ or across all namespaces (depending on how it is [bound](#rolebinding-and-cluste
 {{< glossary_tooltip text="Secret" term_id="secret" >}} 授予读访问权限，
 或者跨名字空间的访问权限（取决于该角色是如何[绑定](#rolebinding-and-clusterrolebinding)的）：
 
-<!--
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  # "namespace" omitted since ClusterRoles are not namespaced
-  name: secret-reader
-rules:
-- apiGroups: [""]
-  #
-  # at the HTTP level, the name of the resource for accessing Secret
-  # objects is "secrets"
-  resources: ["secrets"]
-  verbs: ["get", "watch", "list"]
-```
--->
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  # "namespace" 被忽略，因为 ClusterRoles 不受名字空间限制
-  name: secret-reader
-rules:
-- apiGroups: [""]
-  # 在 HTTP 层面，用来访问 Secret 资源的名称为 "secrets"
-  resources: ["secrets"]
-  verbs: ["get", "watch", "list"]
-```
+{{% code_sample file="access/simple-clusterrole.yaml" %}}
 
 <!--
 The name of a Role or a ClusterRole object must be a valid
@@ -234,7 +202,14 @@ It holds a list of *subjects* (users, groups, or service accounts), and a refere
 role being granted.
 A RoleBinding grants permissions within a specific namespace whereas a ClusterRoleBinding
 grants that access cluster-wide.
+-->
+### RoleBinding 和 ClusterRoleBinding   {#rolebinding-and-clusterrolebinding}
+  
+角色绑定（Role Binding）是将角色中定义的权限赋予一个或者一组用户。
+它包含若干**主体（Subject）**（用户、组或服务账户）的列表和对这些主体所获得的角色的引用。
+RoleBinding 在指定的名字空间中执行授权，而 ClusterRoleBinding 在集群范围执行授权。
 
+<!--
 A RoleBinding may reference any Role in the same namespace. Alternatively, a RoleBinding
 can reference a ClusterRole and bind that ClusterRole to the namespace of the RoleBinding.
 If you want to bind a ClusterRole to all the namespaces in your cluster, you use a
@@ -243,16 +218,10 @@ ClusterRoleBinding.
 The name of a RoleBinding or ClusterRoleBinding object must be a valid
 [path segment name](/docs/concepts/overview/working-with-objects/names#path-segment-names).
 -->
-### RoleBinding 和 ClusterRoleBinding   {#rolebinding-and-clusterrolebinding}
-
-角色绑定（Role Binding）是将角色中定义的权限赋予一个或者一组用户。
-它包含若干**主体（Subject）**（用户、组或服务账户）的列表和对这些主体所获得的角色的引用。
-RoleBinding 在指定的名字空间中执行授权，而 ClusterRoleBinding 在集群范围执行授权。
-
 一个 RoleBinding 可以引用同一的名字空间中的任何 Role。
 或者，一个 RoleBinding 可以引用某 ClusterRole 并将该 ClusterRole 绑定到
 RoleBinding 所在的名字空间。
-如果你希望将某  ClusterRole 绑定到集群中所有名字空间，你要使用 ClusterRoleBinding。
+如果你希望将某 ClusterRole 绑定到集群中所有名字空间，你要使用 ClusterRoleBinding。
 
 RoleBinding 或 ClusterRoleBinding 对象的名称必须是合法的
 [路径分段名称](/zh-cn/docs/concepts/overview/working-with-objects/names#path-segment-names)。
@@ -573,6 +542,19 @@ This is similar to the built-in `cluster-admin` role.
 下面的示例对 `example.com` API 组中所有当前和未来资源执行所有动作。
 这类似于内置的 `cluster-admin`。
 
+<!--
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: example.com-superuser # DO NOT USE THIS ROLE, IT IS JUST AN EXAMPLE
+rules:
+- apiGroups: ["example.com"]
+  resources: ["*"]
+  verbs: ["*"]
+```
+-->
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -630,6 +612,22 @@ that are selected by the `aggregationRule`.
 {{< /caution >}}
 
 <!--
+Omit the `rules` field from manifests for aggregated ClusterRoles. Setting it, even to an
+empty list, claims ownership of the field when the manifest is applied with
+[server-side apply](/docs/reference/using-api/server-side-apply/). That ownership causes
+conflicts between the applier and the control plane: subsequent applies either fail with a
+field manager conflict on `.rules`, or (if conflicts are forced, as GitOps controllers
+typically do) repeatedly clear the aggregated rules, which the control plane then fills in
+again.
+-->
+不要在聚合 ClusterRole 的清单中设置 `rules` 字段。
+即使将其设为空列表，也会在清单通过[服务器端应用（Server-Side Apply）](/zh-cn/docs/reference/using-api/server-side-apply/)
+被应用时声明对该字段的所有权。
+这种所有权会在应用者与控制平面之间引发冲突：后续的应用要么因 `.rules`
+上的字段管理器冲突而失败，要么（如同 GitOps 控制器常见做法那样，强制忽略冲突继续应用）
+会反复清空被聚合的规则，而控制平面随后又会把这些规则重新填回。
+
+<!--
 Here is an example aggregated ClusterRole:
 
 ```yaml
@@ -641,7 +639,7 @@ aggregationRule:
   clusterRoleSelectors:
   - matchLabels:
       rbac.example.com/aggregate-to-monitoring: "true"
-rules: [] # The control plane automatically fills in the rules
+# The control plane automatically fills in the rules
 ```
 -->
 下面是一个聚合 ClusterRole 的示例：
@@ -655,7 +653,7 @@ aggregationRule:
   clusterRoleSelectors:
   - matchLabels:
       rbac.example.com/aggregate-to-monitoring: "true"
-rules: [] # 控制面自动填充这里的规则
+# 控制面自动填充这里的规则
 ```
 
 <!--
@@ -674,14 +672,17 @@ ClusterRole labeled `rbac.example.com/aggregate-to-monitoring: true`.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: monitoring-endpoints
+  name: monitoring-endpointslices
   labels:
     rbac.example.com/aggregate-to-monitoring: "true"
-# When you create the "monitoring-endpoints" ClusterRole,
+# When you create the "monitoring-endpointslices" ClusterRole,
 # the rules below will be added to the "monitoring" ClusterRole.
 rules:
 - apiGroups: [""]
-  resources: ["services", "endpointslices", "pods"]
+  resources: ["services", "pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
   verbs: ["get", "list", "watch"]
 ```
 -->
@@ -689,14 +690,17 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: monitoring-endpoints
+  name: monitoring-endpointslices
   labels:
     rbac.example.com/aggregate-to-monitoring: "true"
-# 当你创建 "monitoring-endpoints" ClusterRole 时，
+# 当你创建 "monitoring-endpointslices" ClusterRole 时，
 # 下面的规则会被添加到 "monitoring" ClusterRole 中
 rules:
 - apiGroups: [""]
-  resources: ["services", "endpointslices", "pods"]
+  resources: ["services", "pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
   verbs: ["get", "list", "watch"]
 ```
 
@@ -1001,8 +1005,8 @@ with `system:serviceaccount:`, and belong to groups that have names prefixed wit
 - `system:serviceaccount:` (singular) is the prefix for service account usernames.
 - `system:serviceaccounts:` (plural) is the prefix for service account groups.
 -->
-- `system:serviceaccount:` （单数）是用于服务账户用户名的前缀；
-- `system:serviceaccounts:` （复数）是用于服务账户组名的前缀。
+- `system:serviceaccount:`（单数）是用于服务账户用户名的前缀；
+- `system:serviceaccounts:`（复数）是用于服务账户组名的前缀。
 {{< /note >}}
 
 <!--
@@ -1135,8 +1139,7 @@ that have a `system:` prefix.
 Modifications to these resources can result in non-functional clusters.
 -->
 在修改名称包含 `system:` 前缀的 ClusterRole 和 ClusterRoleBinding
-时要格外小心。
-对这些资源的更改可能导致集群无法正常运作。
+时要格外小心。对这些资源的更改可能导致集群无法正常运作。
 {{< /caution >}}
 
 <!--
@@ -1148,7 +1151,7 @@ This allows the cluster to repair accidental modifications, and helps to keep ro
 up-to-date as permissions and subjects change in new Kubernetes releases.
 
 To opt out of this reconciliation, set the `rbac.authorization.kubernetes.io/autoupdate`
-annotation on a default cluster role or rolebinding to `false`.
+annotation on a default cluster role or default cluster RoleBinding to `false`.
 Be aware that missing default permissions and subjects can result in non-functional clusters.
 
 Auto-reconciliation is enabled by default if the RBAC authorizer is active.
@@ -1160,7 +1163,7 @@ Auto-reconciliation is enabled by default if the RBAC authorizer is active.
 这种自动协商机制允许集群去修复一些不小心发生的修改，
 并且有助于保证角色和角色绑定在新的发行版本中有权限或主体变更时仍然保持最新。
 
-如果要禁止此功能，请将默认 ClusterRole 以及 ClusterRoleBinding 的
+如果要禁止此功能，请将默认 ClusterRole 以及默认 ClusterRoleBinding 的
 `rbac.authorization.kubernetes.io/autoupdate` 注解设置成 `false`。
 注意，缺少默认权限和角色绑定主体可能会导致集群无法正常工作。
 
@@ -1169,9 +1172,9 @@ Auto-reconciliation is enabled by default if the RBAC authorizer is active.
 <!--
 ### API discovery roles {#discovery-roles}
 
-Default role bindings authorize unauthenticated and authenticated users to read API information
+Default cluster role bindings authorize unauthenticated and authenticated users to read API information
 that is deemed safe to be publicly accessible (including CustomResourceDefinitions).
-To disable anonymous unauthenticated access, add `--anonymous-auth=false` to
+To disable anonymous unauthenticated access, add `--anonymous-auth=false` flag to
 the API server configuration.
 
 To view the configuration of these roles via `kubectl` run:
@@ -1179,8 +1182,8 @@ To view the configuration of these roles via `kubectl` run:
 ### API 发现角色  {#discovery-roles}
 
 无论是经过身份验证的还是未经过身份验证的用户，
-默认的角色绑定都授权他们读取被认为是可安全地公开访问的 API（包括 CustomResourceDefinitions）。
-如果要禁用匿名的未经过身份验证的用户访问，请在 API 服务器配置中中添加
+默认的集群角色绑定都授权他们读取被认为是可安全地公开访问的 API（包括 CustomResourceDefinitions）。
+如果要禁用匿名的未经过身份验证的用户访问，请在 API 服务器配置中添加
 `--anonymous-auth=false` 的配置选项。
 
 通过运行命令 `kubectl` 可以查看这些角色的配置信息:
@@ -1339,17 +1342,17 @@ Allows admin access, intended to be granted within a namespace using a <b>RoleBi
 If used in a <b>RoleBinding</b>, allows read/write access to most resources in a namespace,
 including the ability to create roles and role bindings within the namespace.
 This role does not allow write access to resource quota or to the namespace itself.
-This role also does not allow write access to EndpointSlices (or Endpoints) in clusters created
+This role also does not allow write access to EndpointSlices in clusters created
 using Kubernetes v1.22+. More information is available in the
-["Write Access for EndpointSlices and Endpoints" section](#write-access-for-endpoints).
+["Write Access for EndpointSlices section](#write-access-for-endpoints).
 -->
 允许管理员访问权限，旨在使用 <b>RoleBinding</b> 在名字空间内执行授权。
 
 如果在 <b>RoleBinding</b> 中使用，则可授予对名字空间中的大多数资源的读/写权限，
 包括创建角色和角色绑定的能力。
 此角色不允许对资源配额或者名字空间本身进行写操作。
-此角色也不允许对 Kubernetes v1.22+ 创建的 EndpointSlices（或 Endpoints）进行写操作。
-更多信息参阅 [“EndpointSlices 和 Endpoints 写权限”小节](#write-access-for-endpoints)。
+此角色也不允许对 Kubernetes v1.22+ 创建的 EndpointSlices 进行写操作。
+更多信息参阅 [“EndpointSlices 写权限”小节](#write-access-for-endpoints)。
 </td>
 </tr>
 <tr>
@@ -1364,17 +1367,17 @@ Allows read/write access to most objects in a namespace.
 This role does not allow viewing or modifying roles or role bindings.
 However, this role allows accessing Secrets and running Pods as any ServiceAccount in
 the namespace, so it can be used to gain the API access levels of any ServiceAccount in
-the namespace. This role also does not allow write access to EndpointSlices (or Endpoints) in
+the namespace. This role also does not allow write access to EndpointSlices in
 clusters created using Kubernetes v1.22+. More information is available in the
-["Write Access for EndpointSlices and Endpoints" section](#write-access-for-endpoints).
+["Write Access for EndpointSlices section](#write-access-for-endpoints).
 -->
 允许对名字空间的大多数对象进行读/写操作。
 
 此角色不允许查看或者修改角色或者角色绑定。
 不过，此角色可以访问 Secret，以名字空间中任何 ServiceAccount 的身份运行 Pod，
 所以可以用来了解名字空间内所有服务账户的 API 访问级别。
-此角色也不允许对 Kubernetes v1.22+ 创建的 EndpointSlices（或 Endpoints）进行写操作。
-更多信息参阅 [“EndpointSlices 和 Endpoints 写操作”小节](#write-access-for-endpoints)。
+此角色也不允许对 Kubernetes v1.22+ 创建的 EndpointSlices 进行写操作。
+更多信息参阅 [“EndpointSlices 写操作”小节](#write-access-for-endpoints)。
 </td>
 </tr>
 <tr>
@@ -1640,12 +1643,14 @@ Allows access to the resources required by most <a href="/docs/concepts/storage/
 Allows read access to control-plane monitoring endpoints
 (i.e. {{< glossary_tooltip term_id="kube-apiserver" text="kube-apiserver" >}} liveness and readiness endpoints
 (<tt>/healthz</tt>, <tt>/livez</tt>, <tt>/readyz</tt>), the individual health-check endpoints
-(<tt>/healthz/*</tt>, <tt>/livez/*</tt>, <tt>/readyz/*</tt>),  and <tt>/metrics</tt>).
+(<tt>/healthz/*</tt>, <tt>/livez/*</tt>, <tt>/readyz/*</tt>), <tt>/metrics</tt>),
+, and causes the kube-apiserver to respect the traceparent header provided with requests for tracing.
  Note that individual health check endpoints and the metric endpoint may expose sensitive information.
 -->
 允许对控制平面监控端点的读取访问（例如：{{< glossary_tooltip term_id="kube-apiserver" text="kube-apiserver" >}}
 存活和就绪端点（<tt>/healthz</tt>、<tt>/livez</tt>、<tt>/readyz</tt>），
-各个健康检查端点（<tt>/healthz/*</tt>、<tt>/livez/*</tt>、<tt>/readyz/*</tt>）和 <tt>/metrics</tt>）。
+各个健康检查端点（<tt>/healthz/*</tt>、<tt>/livez/*</tt>、<tt>/readyz/*</tt>、<tt>/metrics</tt>），
+以及导致 kube-apiserver 尊重跟踪请求中提供的 traceparent 标头。
 请注意，各个运行状况检查端点和度量标准端点可能会公开敏感信息。
 </td>
 </tr>
@@ -1875,7 +1880,7 @@ Creates a Role object defining permissions within a single namespace. Examples:
 -->
 创建 Role 对象，定义在某一名字空间中的权限。例如:
 
-* 创建名称为 “pod-reader” 的 Role 对象，允许用户对 Pods 执行 `get`、`watch` 和 `list` 操作：
+* 创建名称为 `pod-reader` 的 Role 对象，允许用户对 Pod 执行 `get`、`watch` 和 `list` 操作：
 
   ```shell
   kubectl create role pod-reader --verb=get --verb=list --verb=watch --resource=pods
@@ -1884,7 +1889,7 @@ Creates a Role object defining permissions within a single namespace. Examples:
 <!--
 * Create a Role named "pod-reader" with resourceNames specified:
 -->
-* 创建名称为 “pod-reader” 的 Role 对象并指定 `resourceNames`：
+* 创建名称为 `pod-reader` 的 Role 对象并指定 `resourceNames`：
 
   ```shell
   kubectl create role pod-reader --verb=get --resource=pods --resource-name=readablepod --resource-name=anotherpod
@@ -1893,7 +1898,7 @@ Creates a Role object defining permissions within a single namespace. Examples:
 <!--
 * Create a Role named "foo" with apiGroups specified:
 -->
-* 创建名为 “foo” 的 Role 对象并指定 `apiGroups`：
+* 创建名为 `foo` 的 Role 对象并指定 `apiGroups`：
 
   ```shell
   kubectl create role foo --verb=get,list,watch --resource=replicasets.apps
@@ -1902,7 +1907,7 @@ Creates a Role object defining permissions within a single namespace. Examples:
 <!--
 * Create a Role named "foo" with subresource permissions:
 -->
-* 创建名为 “foo” 的 Role 对象并指定子资源权限:
+* 创建名为 `foo` 的 Role 对象并指定子资源权限:
 
   ```shell
   kubectl create role foo --verb=get,list,watch --resource=pods,pods/status
@@ -1911,7 +1916,7 @@ Creates a Role object defining permissions within a single namespace. Examples:
 <!--
 * Create a Role named "my-component-lease-holder" with permissions to get/update a resource with a specific name:
 -->
-* 创建名为 “my-component-lease-holder” 的 Role 对象，使其具有对特定名称的资源执行
+* 创建名为 `my-component-lease-holder` 的 Role 对象，使其具有对特定名称的资源执行
   get/update 的权限：
 
   ```shell
@@ -1927,7 +1932,7 @@ Creates a ClusterRole. Examples:
 -->
 创建 ClusterRole 对象。例如：
 
-* 创建名称为 “pod-reader” 的 ClusterRole 对象，允许用户对 Pods 对象执行 `get`、
+* 创建名称为 `pod-reader` 的 ClusterRole 对象，允许用户对 Pods 对象执行 `get`、
   `watch` 和 `list` 操作：
 
   ```shell
@@ -1937,7 +1942,7 @@ Creates a ClusterRole. Examples:
 <!--
 * Create a ClusterRole named "pod-reader" with resourceNames specified:
 -->
-* 创建名为 “pod-reader” 的 ClusterRole 对象并指定 `resourceNames`：
+* 创建名为 `pod-reader` 的 ClusterRole 对象并指定 `resourceNames`：
 
   ```shell
   kubectl create clusterrole pod-reader --verb=get --resource=pods --resource-name=readablepod --resource-name=anotherpod
@@ -1946,7 +1951,7 @@ Creates a ClusterRole. Examples:
 <!--
 * Create a ClusterRole named "foo" with apiGroups specified:
 -->
-* 创建名为 “foo” 的 ClusterRole 对象并指定 `apiGroups`：
+* 创建名为 `foo` 的 ClusterRole 对象并指定 `apiGroups`：
 
   ```shell
   kubectl create clusterrole foo --verb=get,list,watch --resource=replicasets.apps
@@ -1955,7 +1960,7 @@ Creates a ClusterRole. Examples:
 <!--
 * Create a ClusterRole named "foo" with subresource permissions:
 -->
-* 创建名为 “foo” 的 ClusterRole 对象并指定子资源:
+* 创建名为 `foo` 的 ClusterRole 对象并指定子资源:
 
   ```shell
   kubectl create clusterrole foo --verb=get,list,watch --resource=pods,pods/status
@@ -1964,7 +1969,7 @@ Creates a ClusterRole. Examples:
 <!--
 * Create a ClusterRole named "foo" with nonResourceURL specified:
 -->
-* 创建名为 “foo” 的 ClusterRole 对象并指定 `nonResourceURL`：
+* 创建名为 `foo` 的 ClusterRole 对象并指定 `nonResourceURL`：
 
   ```shell
   kubectl create clusterrole "foo" --verb=get --non-resource-url=/logs/*
@@ -1973,7 +1978,7 @@ Creates a ClusterRole. Examples:
 <!--
 * Create a ClusterRole named "monitoring" with an aggregationRule specified:
 -->
-* 创建名为 “monitoring” 的 ClusterRole 对象并指定 `aggregationRule`：
+* 创建名为 `monitoring` 的 ClusterRole 对象并指定 `aggregationRule`：
 
   ```shell
   kubectl create clusterrole monitoring --aggregation-rule="rbac.example.com/aggregate-to-monitoring=true"
@@ -1988,7 +1993,7 @@ Grants a Role or ClusterRole within a specific namespace. Examples:
 -->
 在特定的名字空间中对 `Role` 或 `ClusterRole` 授权。例如：
 
-* 在名字空间 “acme” 中，将名为 `admin` 的 ClusterRole 中的权限授予名称 “bob” 的用户:
+* 在名字空间 `acme` 中，将名为 `admin` 的 ClusterRole 中的权限授予名称 `bob` 的用户:
 
   ```shell
   kubectl create rolebinding bob-admin-binding --clusterrole=admin --user=bob --namespace=acme
@@ -1997,7 +2002,7 @@ Grants a Role or ClusterRole within a specific namespace. Examples:
 <!--
 * Within the namespace "acme", grant the permissions in the "view" ClusterRole to the service account in the namespace "acme" named "myapp":
 -->
-* 在名字空间 “acme” 中，将名为 `view` 的 ClusterRole 中的权限授予名字空间 “acme”
+* 在名字空间 `acme` 中，将名为 `view` 的 ClusterRole 中的权限授予名字空间 `acme`
   中名为 `myapp` 的服务账户：
 
   ```shell
@@ -2007,8 +2012,8 @@ Grants a Role or ClusterRole within a specific namespace. Examples:
 <!--
 * Within the namespace "acme", grant the permissions in the "view" ClusterRole to a service account in the namespace "myappnamespace" named "myapp":
 -->
-* 在名字空间 “acme” 中，将名为 `view` 的 ClusterRole 对象中的权限授予名字空间
-  “myappnamespace” 中名称为 `myapp` 的服务账户：
+* 在名字空间 `acme` 中，将名为 `view` 的 ClusterRole 对象中的权限授予名字空间
+  `myappnamespace` 中名称为 `myapp` 的服务账户：
 
   ```shell
   kubectl create rolebinding myappnamespace-myapp-view-binding --clusterrole=view --serviceaccount=myappnamespace:myapp --namespace=acme
@@ -2023,7 +2028,8 @@ Grants a ClusterRole across the entire cluster (all namespaces). Examples:
 -->
 在整个集群（所有名字空间）中用 ClusterRole 授权。例如：
 
-* 在整个集群范围，将名为 `cluster-admin` 的 ClusterRole 中定义的权限授予名为 “root” 用户：
+* 在整个集群范围，将名为 `cluster-admin` 的 ClusterRole
+  中定义的权限授予名为 `root` 用户：
 
   ```shell
   kubectl create clusterrolebinding root-cluster-admin-binding --clusterrole=cluster-admin --user=root
@@ -2033,7 +2039,7 @@ Grants a ClusterRole across the entire cluster (all namespaces). Examples:
 * Across the entire cluster, grant the permissions in the "system:node-proxier" ClusterRole to a user named "system:kube-proxy":
 -->
 * 在整个集群范围内，将名为 `system:node-proxier` 的 ClusterRole 的权限授予名为
-  “system:kube-proxy” 的用户：
+  `system:kube-proxy` 的用户：
 
   ```shell
   kubectl create clusterrolebinding kube-proxy-binding --clusterrole=system:node-proxier --user=system:kube-proxy
@@ -2042,8 +2048,8 @@ Grants a ClusterRole across the entire cluster (all namespaces). Examples:
 <!--
 * Across the entire cluster, grant the permissions in the "view" ClusterRole to a service account named "myapp" in the namespace "acme":
 -->
-* 在整个集群范围内，将名为 `view` 的 ClusterRole 中定义的权限授予 “acme” 名字空间中名为
-  “myapp” 的服务账户：
+* 在整个集群范围内，将名为 `view` 的 ClusterRole 中定义的权限授予 `acme` 名字空间中名为
+  `myapp` 的服务账户：
 
   ```shell
   kubectl create clusterrolebinding myapp-view-binding --clusterrole=view --serviceaccount=acme:myapp
@@ -2067,6 +2073,7 @@ Examples:
 使用清单文件来创建或者更新 `rbac.authorization.k8s.io/v1` API 对象。
 
 尚不存在的对象会被创建，如果对应的名字空间也不存在，必要的话也会被创建。
+
 已经存在的角色会被更新，使之包含输入对象中所给的权限。如果指定了
 `--remove-extra-permissions`，可以删除额外的权限。
 
@@ -2140,10 +2147,11 @@ In order from most secure to least secure, the approaches are:
 
    For example, grant read-only permission within "my-namespace" to the "my-sa" service account:
    -->
+   
    这要求应用在其 Pod 规约中指定 `serviceAccountName`，
    并额外创建服务账户（包括通过 API、应用程序清单、`kubectl create serviceaccount` 等）。
 
-   例如，在名字空间 “my-namespace” 中授予服务账户 “my-sa” 只读权限：
+   例如，在名字空间 `my-namespace` 中授予服务账户 `my-sa` 只读权限：
 
    ```shell
    kubectl create rolebinding my-sa-view \
@@ -2155,24 +2163,27 @@ In order from most secure to least secure, the approaches are:
 <!--
 2. Grant a role to the "default" service account in a namespace
 -->
-2. 将角色授予某名字空间中的 “default” 服务账户
+2. 将角色授予某名字空间中的 `default` 服务账户
 
    <!--
    If an application does not specify a `serviceAccountName`, it uses the "default" service account.
    -->
-   如果某应用没有指定 `serviceAccountName`，那么它将使用 “default” 服务账户。
+   
+   如果某应用没有指定 `serviceAccountName`，那么它将使用 `default` 服务账户。
 
    {{< note >}}
    <!--
    Permissions given to the "default" service account are available to any pod
    in the namespace that does not specify a `serviceAccountName`.
    -->
+   
    "default" 服务账户所具有的权限会被授予给名字空间中所有未指定 `serviceAccountName` 的 Pod。
    {{< /note >}}
 
    <!--
    For example, grant read-only permission within "my-namespace" to the "default" service account:
    -->
+   
    例如，在名字空间 "my-namespace" 中授予服务账户 "default" 只读权限：
 
    ```shell
@@ -2188,16 +2199,18 @@ In order from most secure to least secure, the approaches are:
    To allow those add-ons to run with super-user access, grant cluster-admin
    permissions to the "default" service account in the `kube-system` namespace.
    -->
+   
    许多[插件组件](/zh-cn/docs/concepts/cluster-administration/addons/)在 `kube-system`
-   名字空间以 “default” 服务账户运行。
+   名字空间以 `default` 服务账户运行。
    要允许这些插件组件以超级用户权限运行，需要将集群的 `cluster-admin` 权限授予
-   `kube-system` 名字空间中的 “default” 服务账户。
+   `kube-system` 名字空间中的 `default` 服务账户。
 
    {{< caution >}}
    <!--
    Enabling this means the `kube-system` namespace contains Secrets
    that grant super-user access to your cluster's API.
    -->
+   
    启用这一配置意味着在 `kube-system` 名字空间中包含以超级用户账号来访问集群 API 的 Secret。
    {{< /caution >}}
 
@@ -2220,7 +2233,7 @@ In order from most secure to least secure, the approaches are:
    如果你想要名字空间中所有应用都具有某角色，无论它们使用的什么服务账户，
    可以将角色授予该名字空间的服务账户组。
 
-   例如，在名字空间 “my-namespace” 中的只读权限授予该名字空间中的所有服务账户：
+   例如，在名字空间 `my-namespace` 中的只读权限授予该名字空间中的所有服务账户：
 
    ```shell
    kubectl create rolebinding serviceaccounts-view \
@@ -2263,6 +2276,7 @@ In order from most secure to least secure, the approaches are:
    any user with read access to Secrets (or the ability to create any pod)
    full access to your cluster.
    -->
+   
    这样做会允许所有应用都对你的集群拥有完全的访问权限，并将允许所有能够读取
    Secret（或创建 Pod）的用户对你的集群有完全的访问权限。
    {{< /warning >}}
@@ -2274,18 +2288,18 @@ In order from most secure to least secure, the approaches are:
    ```
 
 <!--
-## Write access for EndpointSlices and Endpoints {#write-access-for-endpoints}
+## Write access for EndpointSlices {#write-access-for-endpoints}
 
 Kubernetes clusters created before Kubernetes v1.22 include write access to
-EndpointSlices (and Endpoints) in the aggregated "edit" and "admin" roles.
+EndpointSlices (and the now-deprecated Endpoints API) in the aggregated "edit" and "admin" roles.
 As a mitigation for [CVE-2021-25740](https://github.com/kubernetes/kubernetes/issues/103675),
 this access is not part of the aggregated roles in clusters that you create using
 Kubernetes v1.22 or later.
 -->
-## EndpointSlices 和 Endpoints 写权限 {#write-access-for-endpoints}
+## EndpointSlices 写权限 {#write-access-for-endpoints}
 
 在 Kubernetes v1.22 之前版本创建的集群里，
-“edit” 和 “admin” 聚合角色包含对 EndpointSlices（和 Endpoints）的写权限。
+`edit` 和 `admin` 聚合角色包含对 EndpointSlices（和 现在已经弃用的 Endpoints API）的写权限。
 作为 [CVE-2021-25740](https://github.com/kubernetes/kubernetes/issues/103675) 的缓解措施，
 此访问权限不包含在 Kubernetes 1.22 以及更高版本集群的聚合角色里。
 

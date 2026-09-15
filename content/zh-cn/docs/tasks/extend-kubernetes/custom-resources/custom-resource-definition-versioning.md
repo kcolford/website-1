@@ -158,17 +158,17 @@ Removing an old version:
 
 The CustomResourceDefinition API `versions` field can be used to support multiple versions of custom resources that you
 have developed. Versions can have different schemas, and conversion webhooks can convert custom resources between versions.
-Webhook conversions should follow the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md) wherever applicable.
-Specifically, See the [API change documentation](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md) for a set of useful gotchas and suggestions.
+Webhook conversions should follow the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/main/contributors/devel/sig-architecture/api-conventions.md) wherever applicable.
+Specifically, See the [API change documentation](https://github.com/kubernetes/community/blob/main/contributors/devel/sig-architecture/api_changes.md) for a set of useful gotchas and suggestions.
 -->
 ## 指定多个版本  {#specify-multiple-versions}
 
 CustomResourceDefinition API 的 `versions` 字段可用于支持你所开发的定制资源的多个版本。
 版本可以具有不同的模式，并且转换 Webhook 可以在多个版本之间转换定制资源。
 在适当的情况下，Webhook 转换应遵循
-[Kubernetes API 约定](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md)。
+[Kubernetes API 约定](https://github.com/kubernetes/community/blob/main/contributors/devel/sig-architecture/api-conventions.md)。
 具体来说，请查阅
-[API 变更文档](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md)
+[API 变更文档](https://github.com/kubernetes/community/blob/main/contributors/devel/sig-architecture/api_changes.md)
 以获取一些有用的问题和建议。
 
 {{< note >}}
@@ -194,6 +194,62 @@ YAML 中的注释提供了更多背景信息。
 {{< tabs name="CustomResourceDefinition_versioning_example_1" >}}
 {{% tab name="apiextensions.k8s.io/v1" %}}
 
+<!--
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: crontabs.example.com
+spec:
+  # group name to use for REST API: /apis/<group>/<version>
+  group: example.com
+  # list of versions supported by this CustomResourceDefinition
+  versions:
+  - name: v1beta1
+    # Each version can be enabled/disabled by Served flag.
+    served: true
+    # One and only one version must be marked as the storage version.
+    storage: true
+    # A schema is required
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          host:
+            type: string
+          port:
+            type: string
+  - name: v1
+    served: true
+    storage: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          host:
+            type: string
+          port:
+            type: string
+  # The conversion section is introduced in Kubernetes 1.13+ with a default value of
+  # None conversion (strategy sub-field set to None).
+  conversion:
+    # None conversion assumes the same schema for all versions and only sets the apiVersion
+    # field of custom resources to the proper value
+    strategy: None
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: crontabs
+    # singular name to be used as an alias on the CLI and for display
+    singular: crontab
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: CronTab
+    # shortNames allow shorter string to match your resource on the CLI
+    shortNames:
+    - ct
+-->
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -427,6 +483,7 @@ and should indicate what API group, version, and kind should be used instead, if
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
+metadata:
   name: crontabs.example.com
 spec:
   group: example.com
@@ -502,12 +559,14 @@ An older API version cannot be dropped from a CustomResourceDefinition manifest 
 -->
 ### 版本删除   {#version-removal}
 
-在为所有提供旧版本自定义资源的集群将现有存储数据迁移到新 API 版本，并且从 CustomResourceDefinition 的
-`status.storedVersions` 中删除旧版本之前，无法从 CustomResourceDefinition 清单文件中删除旧 API 版本。
+在为所有提供旧版本自定义资源的集群将现有存储数据迁移到新 API 版本，
+并且从 CustomResourceDefinition 的 `status.storedVersions`
+中删除旧版本之前，无法从 CustomResourceDefinition 清单文件中删除旧 API 版本。
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
+metadata:
   name: crontabs.example.com
 spec:
   group: example.com
@@ -1070,6 +1129,49 @@ for a request to convert `CronTab` objects to `example.com/v1`:
 下面的示例显示了包含在 `ConversionReview` 对象中的数据，
 该请求意在将 `CronTab` 对象转换为 `example.com/v1`：
 
+<!--
+```yaml
+{
+  "apiVersion": "apiextensions.k8s.io/v1",
+  "kind": "ConversionReview",
+  "request": {
+    # Random uid uniquely identifying this conversion call
+    "uid": "705ab4f5-6393-11e8-b7cc-42010a800002",
+    
+    # The API group and version the objects should be converted to
+    "desiredAPIVersion": "example.com/v1",
+    
+    # The list of objects to convert.
+    # May contain one or more objects, in one or more versions.
+    "objects": [
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1beta1",
+        "metadata": {
+          "creationTimestamp": "2019-09-04T14:03:02Z",
+          "name": "local-crontab",
+          "namespace": "default",
+          "resourceVersion": "143",
+          "uid": "3415a7fc-162b-4300-b5da-fd6083580d66"
+        },
+        "hostPort": "localhost:1234"
+      },
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1beta1",
+        "metadata": {
+          "creationTimestamp": "2019-09-03T13:02:01Z",
+          "name": "remote-crontab",
+          "resourceVersion": "12893",
+          "uid": "359a83ec-b575-460d-b553-d859cedde8a0"
+        },
+        "hostPort": "example.com:2345"
+      }
+    ]
+  }
+}
+```
+-->
 {{< tabs name="ConversionReview_request" >}}
 {{% tab name="apiextensions.k8s.io/v1" %}}
 ```yaml
@@ -1113,6 +1215,50 @@ for a request to convert `CronTab` objects to `example.com/v1`:
 }
 ```
 {{% /tab %}}
+<!--
+```yaml
+{
+  # Deprecated in v1.16 in favor of apiextensions.k8s.io/v1
+  "apiVersion": "apiextensions.k8s.io/v1beta1",
+  "kind": "ConversionReview",
+  "request": {
+    # Random uid uniquely identifying this conversion call
+    "uid": "705ab4f5-6393-11e8-b7cc-42010a800002",
+    
+    # The API group and version the objects should be converted to
+    "desiredAPIVersion": "example.com/v1",
+    
+    # The list of objects to convert.
+    # May contain one or more objects, in one or more versions.
+    "objects": [
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1beta1",
+        "metadata": {
+          "creationTimestamp": "2019-09-04T14:03:02Z",
+          "name": "local-crontab",
+          "namespace": "default",
+          "resourceVersion": "143",
+          "uid": "3415a7fc-162b-4300-b5da-fd6083580d66"
+        },
+        "hostPort": "localhost:1234"
+      },
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1beta1",
+        "metadata": {
+          "creationTimestamp": "2019-09-03T13:02:01Z",
+          "name": "remote-crontab",
+          "resourceVersion": "12893",
+          "uid": "359a83ec-b575-460d-b553-d859cedde8a0"
+        },
+        "hostPort": "example.com:2345"
+      }
+    ]
+  }
+}
+```
+-->
 {{% tab name="apiextensions.k8s.io/v1beta1" %}}
 ```yaml
 {
@@ -1187,6 +1333,52 @@ Webhook 响应包含 200 HTTP 状态代码、`Content-Type: application/json`，
 
 Webhook 的最简单成功响应示例：
 
+<!--
+```yaml
+{
+  "apiVersion": "apiextensions.k8s.io/v1",
+  "kind": "ConversionReview",
+  "response": {
+    # must match <request.uid>
+    "uid": "705ab4f5-6393-11e8-b7cc-42010a800002",
+    "result": {
+      "status": "Success"
+    },
+    # Objects must match the order of request.objects, and have apiVersion set to <request.desiredAPIVersion>.
+    # kind, metadata.uid, metadata.name, and metadata.namespace fields must not be changed by the webhook.
+    # metadata.labels and metadata.annotations fields may be changed by the webhook.
+    # All other changes to metadata fields by the webhook are ignored.
+    "convertedObjects": [
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1",
+        "metadata": {
+          "creationTimestamp": "2019-09-04T14:03:02Z",
+          "name": "local-crontab",
+          "namespace": "default",
+          "resourceVersion": "143",
+          "uid": "3415a7fc-162b-4300-b5da-fd6083580d66"
+        },
+        "host": "localhost",
+        "port": "1234"
+      },
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1",
+        "metadata": {
+          "creationTimestamp": "2019-09-03T13:02:01Z",
+          "name": "remote-crontab",
+          "resourceVersion": "12893",
+          "uid": "359a83ec-b575-460d-b553-d859cedde8a0"
+        },
+        "host": "example.com",
+        "port": "2345"
+      }
+    ]
+  }
+}
+```
+-->
 {{< tabs name="ConversionReview_response_success" >}}
 {{% tab name="apiextensions.k8s.io/v1" %}}
 ```yaml
@@ -1234,6 +1426,53 @@ Webhook 的最简单成功响应示例：
 }
 ```
 {{% /tab %}}
+<!--
+```yaml
+{
+  # Deprecated in v1.16 in favor of apiextensions.k8s.io/v1
+  "apiVersion": "apiextensions.k8s.io/v1beta1",
+  "kind": "ConversionReview",
+  "response": {
+    # must match <request.uid>
+    "uid": "705ab4f5-6393-11e8-b7cc-42010a800002",
+    "result": {
+      "status": "Failed"
+    },
+    # Objects must match the order of request.objects, and have apiVersion set to <request.desiredAPIVersion>.
+    # kind, metadata.uid, metadata.name, and metadata.namespace fields must not be changed by the webhook.
+    # metadata.labels and metadata.annotations fields may be changed by the webhook.
+    # All other changes to metadata fields by the webhook are ignored.
+    "convertedObjects": [
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1",
+        "metadata": {
+          "creationTimestamp": "2019-09-04T14:03:02Z",
+          "name": "local-crontab",
+          "namespace": "default",
+          "resourceVersion": "143",
+          "uid": "3415a7fc-162b-4300-b5da-fd6083580d66"
+        },
+        "host": "localhost",
+        "port": "1234"
+      },
+      {
+        "kind": "CronTab",
+        "apiVersion": "example.com/v1",
+        "metadata": {
+          "creationTimestamp": "2019-09-03T13:02:01Z",
+          "name": "remote-crontab",
+          "resourceVersion": "12893",
+          "uid": "359a83ec-b575-460d-b553-d859cedde8a0"
+        },
+        "host": "example.com",
+        "port": "2345"
+      }
+    ]
+  }
+}
+```
+-->
 {{% tab name="apiextensions.k8s.io/v1beta1" %}}
 ```yaml
 {
@@ -1459,16 +1698,43 @@ procedure.
 弃用版本并删除其支持时，请选择存储升级过程。
 
 <!--
-*Option 1:* Use the Storage Version Migrator
+*Option 1:* Use Storage Version Migrator
 
-1. Run the [storage Version migrator](https://github.com/kubernetes-sigs/kube-storage-version-migrator)
-2. Remove the old version from the CustomResourceDefinition `status.storedVersions` field.
+1. Run [Storage Version Migrator](/docs/tasks/manage-kubernetes-objects/storage-version-migration/) for the custom resource.
+
+   For example, you can include a `StorageVersionMigration` resource in the same manifest as your updated `CustomResourceDefinition`:
 -->
-
 **选项 1：** 使用存储版本迁移程序（Storage Version Migrator）
 
-1. 运行[存储版本迁移程序](https://github.com/kubernetes-sigs/kube-storage-version-migrator)
-2. 从 CustomResourceDefinition 的 `status.storedVersions` 字段中去掉老的版本。
+1. 为自定义资源运行[存储版本迁移程序](https://github.com/kubernetes-sigs/kube-storage-version-migrator)
+
+   例如，你可以在与更新的 `CustomResourceDefinition` 相同的清单中包含
+   `StorageVersionMigration` 资源：
+
+   ```yaml
+   apiVersion: apiextensions.k8s.io/v1
+   kind: CustomResourceDefinition
+   metadata:
+     name: crontabs.example.com
+   spec:
+     group: example.com
+     ...
+   ---
+   apiVersion: storagemigration.k8s.io/v1
+   kind: StorageVersionMigration
+   metadata:
+     name: crontabs-migration
+   spec:
+     resource:
+       group: example.com
+       resource: crontabs
+   ```
+
+<!--
+2. Once the migration succeeds, the old version will be removed from the CustomResourceDefinition `status.storedVersions` field.
+-->
+2. 迁移成功后，旧版本将从 CustomResourceDefinition 的 `status.storedVersions`
+   字段中移除。
 
 <!--
 *Option 2:* Manually upgrade the existing objects to a new stored version
@@ -1494,33 +1760,13 @@ The following is an example procedure to upgrade from `v1beta1` to `v1`.
 3. 从 CustomResourceDefinition 的 `status.storedVersions` 字段中删除 `v1beta1`。
 
 {{< note >}}
-<!--
-The flag `--subresource` is used with the kubectl get, patch, edit, and replace commands to
-fetch and update the subresources, `status` and `scale`, for all the API resources that
-support them. This flag is available starting from kubectl version v1.24. Previously, reading
-subresources (like `status`) via kubectl involved using `kubectl --raw`, and updating
-subresources using kubectl was not possible at all. Starting from v1.24, the `kubectl` tool
-can be used to edit or patch the `status` subresource on a CRD object. See [How to patch a Deployment using the subresource flag](/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#scale-kubectl-patch).
--->
-`--subresource` 标志在 kubectl get、patch、edit 和 replace 命令中用于获取和更新所有支持它们的
-API 资源的子资源、`status` 和 `scale`。此标志从 kubectl 版本 v1.24 开始可用。
-以前通过 kubectl 读取子资源（如 `status`）涉及使用 `kubectl --raw`，并且根本不可能使用 kubectl 更新子资源。
-从 v1.24 开始，`kubectl` 工具可用于编辑或修补有关 CRD 对象的 `status` 子资源。
-请参阅[如何使用子资源标志修补 Deployment](/zh-cn/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#scale-kubectl-patch)。
 
 <!--
-This page is part of the documentation for Kubernetes v{{< skew currentVersion >}}.
-If you are running a different version of Kubernetes, consult the documentation for that release.
-
 Here is an example of how to patch the `status` subresource for a CRD object using `kubectl`:
 -->
-此页面是 Kubernetes v{{< skew currentVersion >}} 文档的一部分。
-如果你运行的是不同版本的 Kubernetes，请查阅相应版本的文档。
-
 以下是如何使用 `kubectl` 为一个 CRD 对象修补 `status` 子资源的示例：
 
 ```bash
 kubectl patch customresourcedefinitions <CRD_Name> --subresource='status' --type='merge' -p '{"status":{"storedVersions":["v1"]}}'
 ```
 {{< /note >}}
-

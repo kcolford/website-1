@@ -12,7 +12,7 @@ weight: 10
 
 <!-- overview -->
 
-*Custom resources* are extensions of the Kubernetes API. This page discusses when to add a custom
+*Custom resources* are instances of resource types added to Kubernetes through API extensions. This page discusses when to add a custom
 resource to your Kubernetes cluster and when to use a standalone service. It describes the two
 methods for adding custom resources and how to choose between them.
 
@@ -161,8 +161,9 @@ The [CustomResourceDefinition](/docs/tasks/extend-kubernetes/custom-resources/cu
 API resource allows you to define custom resources.
 Defining a CRD object creates a new custom resource with a name and schema that you specify.
 The Kubernetes API serves and handles the storage of your custom resource.
-The name of a CRD object must be a valid
-[DNS subdomain name](/docs/concepts/overview/working-with-objects/names#dns-subdomain-names).
+The name of the CRD object itself must be a valid
+[DNS subdomain name](/docs/concepts/overview/working-with-objects/names#dns-subdomain-names) derived from the defined resource name and its API group; see [how to create a CRD](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions#create-a-customresourcedefinition) for more details.
+Further, the name of an object whose kind/resource is defined by a CRD must also be a valid DNS subdomain name.
 
 This frees you from writing your own API server to handle the custom resource,
 but the generic nature of the implementation means you have less flexibility than with
@@ -212,7 +213,7 @@ Aggregated APIs offer more advanced API features and customization of other feat
 
 | Feature | Description | CRDs | Aggregated API |
 | ------- | ----------- | ---- | -------------- |
-| Validation | Help users prevent errors and allow you to evolve your API independently of your clients. These features are most useful when there are many clients who can't all update at the same time. | Yes.  Most validation can be specified in the CRD using [OpenAPI v3.0 validation](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation). [CRDValidationRatcheting](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation-ratcheting) feature gate allows failing validations specified using OpenAPI also can be ignored if the failing part of the resource was unchanged.  Any other validations supported by addition of a [Validating Webhook](/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook-alpha-in-1-8-beta-in-1-9). | Yes, arbitrary validation checks |
+| Validation | Help users prevent errors and allow you to evolve your API independently of your clients. These features are most useful when there are many clients who can't all update at the same time. | Yes.  Most validation can be specified in the CRD using [OpenAPI v3.0 validation](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation). The [CRDValidationRatcheting](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation-ratcheting) feature gate allows failing validations specified using OpenAPI to be ignored if the failing part of the resource was unchanged.  Any other validations are supported by the addition of a [Validating Webhook](/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook-alpha-in-1-8-beta-in-1-9). | Yes, arbitrary validation checks |
 | Defaulting | See above | Yes, either via [OpenAPI v3.0 validation](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#defaulting) `default` keyword (GA in 1.17), or via a [Mutating Webhook](/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook) (though this will not be run when reading from etcd for old objects). | Yes |
 | Multi-versioning | Allows serving the same object through two API versions. Can help ease API changes like renaming fields. Less important if you control your client versions. | [Yes](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning) | Yes |
 | Custom Storage | If you need storage with a different performance mode (for example, a time-series database instead of key-value store) or isolation for security (for example, encryption of sensitive information, etc.) | No | Yes |
@@ -223,6 +224,7 @@ Aggregated APIs offer more advanced API features and customization of other feat
 | strategic-merge-patch | The new endpoints support PATCH with `Content-Type: application/strategic-merge-patch+json`. Useful for updating objects that may be modified both locally, and by the server. For more information, see ["Update API Objects in Place Using kubectl patch"](/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/) | No | Yes |
 | Protocol Buffers | The new resource supports clients that want to use Protocol Buffers | No | Yes |
 | OpenAPI Schema | Is there an OpenAPI (swagger) schema for the types that can be dynamically fetched from the server? Is the user protected from misspelling field names by ensuring only allowed fields are set? Are types enforced (in other words, don't put an `int` in a `string` field?) | Yes, based on the [OpenAPI v3.0 validation](/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation) schema (GA in 1.16). | Yes |
+| Instance Name | Does this extension mechanism impose any constraints on the names of objects whose kind/resource is defined this way? | Yes, such an object's name must be a valid DNS subdomain name. | No |
 
 ### Common Features
 
@@ -263,6 +265,12 @@ Installing an Aggregated API server always involves running a new Deployment.
 
 Custom resources consume storage space in the same way that ConfigMaps do. Creating too many
 custom resources may overload your API server's storage space.
+
+Custom resources are placed into storage based upon the current storage
+version of the resource, defined in the CRD spec. Any update to a custom
+resource will use the currently defined storage version to store the resource.
+All other versions either need to have all the fields of that version or define
+conversions to work properly.
 
 Aggregated API servers may use the same storage as the main API server, in which case the same
 warning applies.
@@ -313,13 +321,9 @@ may also be used with field selectors when included in the `spec.versions[*].sel
 
 {{< feature-state feature_gate_name="CustomResourceFieldSelectors" >}}
 
-You need to enable the `CustomResourceFieldSelectors`
-[feature gate](/docs/reference/command-line-tools-reference/feature-gates/) to
-use this behavior, which then applies to all CustomResourceDefinitions in your
-cluster.
-
 The `spec.versions[*].selectableFields` field of a {{< glossary_tooltip term_id="CustomResourceDefinition" text="CustomResourceDefinition" >}} may be used to
 declare which other fields in a custom resource may be used in field selectors.
+
 The following example adds the `.spec.color` and `.spec.size` fields as
 selectable fields.
 

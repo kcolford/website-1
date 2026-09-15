@@ -2,12 +2,6 @@
 title: "Scheduling, Preemption and Eviction"
 weight: 95
 content_type: concept
-description: >
-  In Kubernetes, scheduling refers to making sure that Pods are matched to Nodes
-  so that the kubelet can run them. Preemption is the process of terminating 
-  Pods with lower Priority so that Pods with higher Priority can schedule on 
-  Nodes. Eviction is the process of proactively terminating one or more Pods on
-  resource-starved Nodes.
 no_list: true
 ---
 
@@ -26,11 +20,15 @@ of terminating one or more Pods on Nodes.
 * [Pod Topology Spread Constraints](/docs/concepts/scheduling-eviction/topology-spread-constraints/)
 * [Taints and Tolerations](/docs/concepts/scheduling-eviction/taint-and-toleration/)
 * [Scheduling Framework](/docs/concepts/scheduling-eviction/scheduling-framework)
-* [Dynamic Resource Allocation](/docs/concepts/scheduling-eviction/dynamic-resource-allocation)
 * [Scheduler Performance Tuning](/docs/concepts/scheduling-eviction/scheduler-perf-tuning/)
 * [Resource Bin Packing for Extended Resources](/docs/concepts/scheduling-eviction/resource-bin-packing/)
 * [Pod Scheduling Readiness](/docs/concepts/scheduling-eviction/pod-scheduling-readiness/)
+* [PodGroup Scheduling](/docs/concepts/scheduling-eviction/podgroup-scheduling/)
+* [Gang Scheduling](/docs/concepts/scheduling-eviction/gang-scheduling/)
+* [Topology-aware Scheduling](/docs/concepts/scheduling-eviction/topology-aware-scheduling/)
+* [Workload-aware preemption](/docs/concepts/scheduling-eviction/workload-aware-preemption/)
 * [Descheduler](https://github.com/kubernetes-sigs/descheduler#descheduler-for-kubernetes)
+* [Node Declared Features](/docs/concepts/scheduling-eviction/node-declared-features/)
 
 ## Pod Disruption
 

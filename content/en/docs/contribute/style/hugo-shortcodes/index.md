@@ -129,33 +129,33 @@ which renders as:
 
 You can link to a page of the Kubernetes API reference using the
 `api-reference` shortcode, for example to the
-{{< api-reference page="workload-resources/pod-v1" >}} reference:
+{{< api-reference page="core/pod-v1" >}} reference:
 
 ```
-{{</* api-reference page="workload-resources/pod-v1" */>}}
+{{</* api-reference page="core/pod-v1" */>}}
 ```
 
 The content of the `page` parameter is the suffix of the URL of the API reference page.
 
 
 You can link to a specific place into a page by specifying an `anchor`
-parameter, for example to the {{< api-reference page="workload-resources/pod-v1" anchor="PodSpec" >}}
-reference or the {{< api-reference page="workload-resources/pod-v1" anchor="environment-variables" >}}
+parameter, for example to the {{< api-reference page="core/pod-v1" anchor="PodSpec" >}}
+reference or the {{< api-reference page="core/pod-v1" anchor="environment-variables" >}}
 section of the page:
 
 ```
-{{</* api-reference page="workload-resources/pod-v1" anchor="PodSpec" */>}}
-{{</* api-reference page="workload-resources/pod-v1" anchor="environment-variables" */>}}
+{{</* api-reference page="core/pod-v1" anchor="PodSpec" */>}}
+{{</* api-reference page="core/pod-v1" anchor="environment-variables" */>}}
 ```
 
 
 You can change the text of the link by specifying a `text` parameter, for
 example by linking to the
-{{< api-reference page="workload-resources/pod-v1" anchor="environment-variables" text="Environment Variables">}}
+{{< api-reference page="core/pod-v1" anchor="environment-variables" text="Environment Variables">}}
 section of the page:
 
 ```
-{{</* api-reference page="workload-resources/pod-v1" anchor="environment-variables" text="Environment Variable" */>}}
+{{</* api-reference page="core/pod-v1" anchor="environment-variables" text="Environment Variable" */>}}
 ```
 
 ## Table captions
@@ -231,7 +231,7 @@ The tab **name** in a `tabs` definition must be unique within a content page.
 {{< tab name="Tab 1" codelang="bash" >}}
 echo "This is tab 1."
 {{< /tab >}}
-{{< tab name="Tab 2" codelang="go" >}}
+{{< tab codelang="go" >}}
 println "This is tab 2."
 {{< /tab >}}
 {{< /tabs */>}}
@@ -240,11 +240,12 @@ println "This is tab 2."
 Renders to:
 
 {{< tabs name="tab_with_code" >}}
-{{< tab name="Tab 1" codelang="bash" >}}
-echo "This is tab 1."
+{{< tab name="Tab A" codelang="bash" >}}
+echo "This is tab A."
 {{< /tab >}}
-{{< tab name="Tab 2" codelang="go" >}}
-println "This is tab 2."
+{{< tab codelang="go" >}}
+// If you don't set a tab name, the site supplies one.
+println "This tab has a default name";
 {{< /tab >}}
 {{< /tabs >}}
 
@@ -369,6 +370,34 @@ Add the shortcode:
 ```
 
 before the item, or just below the heading for the specific item.
+
+## Details
+
+You can render a `<details>` HTML element using a shortcode:
+
+```markdown
+{{</* details summary="More about widgets" */>}}
+The frobnicator extension API implements _widgets_ using example running text.
+
+Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
+adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
+dolore magnam aliquam quaerat voluptatem.
+{{</* /details */>}}
+```
+
+This renders as:
+{{< details summary="More about widgets" >}}
+The frobnicator extension API implements _widgets_ using example running text.
+
+Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
+adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
+dolore magnam aliquam quaerat voluptatem.
+{{< /details >}}
+
+{{< note >}}
+Use this shortcode sparingly; it is usually best to have all of the text directly shown
+to readers.
+{{< /note >}}
 
 ## Version strings
 

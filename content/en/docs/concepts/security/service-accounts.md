@@ -186,6 +186,23 @@ following methods:
   (which was enabled by default from Kubernetes v1.24 to v1.26),  prevented Kubernetes from automatically creating these tokens for
   ServiceAccounts. The feature gate is removed in v1.27, because it was elevated to GA status; you can still create indefinite service account tokens manually, but should take into account the security implications.
 
+#### Node audience restriction for service account tokens {#node-audience-restriction}
+
+{{< feature-state feature_gate_name="ServiceAccountNodeAudienceRestriction" >}}
+
+When the `ServiceAccountNodeAudienceRestriction` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
+is enabled, the [NodeRestriction](/docs/reference/access-authn-authz/admission-controllers#noderestriction)
+admission plugin limits which audiences a kubelet can request when creating service
+account tokens via the `TokenRequest` API. By default, the kubelet can only request
+tokens for audiences already referenced by pods on that node (through projected service
+account token volumes or CSI driver token requests). Administrators can grant
+kubelets access to additional audiences using RBAC rules with the
+`request-serviceaccounts-token-audience` verb.
+
+This restriction applies only to kubelets (node identities) and does not affect other
+callers of the `TokenRequest` API. For details and RBAC examples,
+see [Service account token audience restriction](/docs/reference/access-authn-authz/node/#service-account-token-audience-restriction).
+
 {{< note >}}
 For applications running outside your Kubernetes cluster, you might be considering
 creating a long-lived ServiceAccount token that is stored in a Secret. This allows authentication, but the Kubernetes project recommends you avoid this approach.
@@ -197,7 +214,13 @@ or using a custom mechanism such as an [authentication webhook](/docs/reference/
 You can also use TokenRequest to obtain short-lived tokens for your external application.
 {{< /note >}}
 
-### Restricting access to Secrets {#enforce-mountable-secrets}
+### Restricting access to Secrets (deprecated) {#enforce-mountable-secrets}
+
+{{< feature-state for_k8s_version="v1.32" state="deprecated" >}}
+
+{{< note >}}
+`kubernetes.io/enforce-mountable-secrets` is deprecated since Kubernetes v1.32. Use separate namespaces to isolate access to mounted secrets.
+{{< /note >}}
 
 Kubernetes provides an annotation called `kubernetes.io/enforce-mountable-secrets`
 that you can add to your ServiceAccounts. When this annotation is applied,

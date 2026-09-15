@@ -13,7 +13,7 @@ card:
 
 <!-- overview -->
 
-Kubernetes reserves all labels and annotations in the `kubernetes.io` and `k8s.io` namespaces.
+Kubernetes reserves all labels, annotations and taints in the `kubernetes.io` and `k8s.io` namespaces.
 
 This document serves both as a reference to the values and as a coordination point for assigning values.
 
@@ -289,6 +289,21 @@ in the StatefulSet topic for more details.
 Note the [PodIndexLabel](/docs/reference/command-line-tools-reference/feature-gates/)
 feature gate must be enabled for this label to be added to pods.
 
+### resource.kubernetes.io/pod-claim-name
+
+Type: Annotation
+
+Example: `resource.kubernetes.io/pod-claim-name: "my-pod-claim"`
+
+Used on: ResourceClaim
+
+This annotation is assigned to generated ResourceClaims.
+Its value corresponds to the name of the resource claim in the `.spec` of any Pod(s) for which the ResourceClaim was created.
+Within [dynamic resource allocation](/docs/concepts/resource-management/dynamic-resource-allocation/), the
+discoverable device metadata feature uses this annotation to map a generated ResourceClaim
+back to the Pod claim name (`pod.spec.resourceClaims[].name`) for template-based claims.
+Kubernetes manages this annotation, so you should not modify it.
+
 ### cluster-autoscaler.kubernetes.io/safe-to-evict
 
 Type: Annotation
@@ -340,6 +355,109 @@ The tutorial illustrates using AppArmor to restrict a container's abilities and 
 
 The profile specified dictates the set of rules and restrictions that the containerized process must
 adhere to. This helps enforce security policies and isolation for your containers.
+
+### csi.alpha.kubernetes.io/node-id (deprecated) {#csi-alpha-kubernetes-io-node-id}
+
+Type: Annotation
+
+Example: `csi.alpha.kubernetes.io/node-id: "node-12345"`
+
+Used on: VolumeAttachments
+
+This annotation records the node identifier used by a CSI driver, as a fallback when the
+[CSINode](/docs/reference/kubernetes-api/storage/csi-node-v1/) object is not available.
+The CSI external-attacher sidecar container populates it before a volume is attached.
+
+It provides a fallback mechanism for detaching volumes when an appropriate CSINode is not present.
+
+Because this annotation is deprecated, the Kubernetes project recommends that you do
+**not** set this on a VolumeAttachment, nor on any other object.
+
+### csi.volume.kubernetes.io/nodeid (deprecated) {#csi-volume-kubernetes-io-nodeid}
+
+Type: Annotation
+
+Example: `csi.volume.kubernetes.io/nodeid: "node-12345"`
+
+Used on: Nodes
+
+This annotation specifies the identifier for a node as understood by the
+Container Storage Interface (CSI) driver. `kubelet` populates this annotation
+by calling the `NodeGetInfo` gRPC method of the CSI driver to retrieve the
+node ID during driver registration. The external-attacher sidecar container
+reads this annotation to get the node ID when attaching or detaching volumes.
+
+This annotation is deprecated in favor of the CSINode object, which provides the same
+functionality via the [`spec.drivers[].nodeID` field](/docs/reference/kubernetes-api/storage/csi-node-v1/#CSINodeDriver).
+
+### deployment.kubernetes.io/desired-replicas
+
+Type: Annotation
+
+Example: `deployment.kubernetes.io/desired-replicas: "3"`
+
+Used on: ReplicaSet
+
+This annotation is set by the Deployment controller on ReplicaSets it manages.
+The value represents the desired number of replicas (`.spec.replicas`) from the Deployment
+that owns this ReplicaSet. The Deployment controller uses this annotation to track the
+desired state during rolling updates and scaling operations.
+
+This is an internal annotation used by the Deployment controller and should not be
+modified manually.
+
+### deployment.kubernetes.io/max-replicas
+
+Type: Annotation
+
+Example: `deployment.kubernetes.io/max-replicas: "5"`
+
+Used on: ReplicaSet
+
+This annotation is set by the Deployment controller on ReplicaSets it manages.
+The value represents the maximum number of replicas that this ReplicaSet is allowed to have
+during a rolling update. This is used to implement the `maxSurge` parameter of the
+Deployment's rolling update strategy, which controls how many extra Pods can be created
+above the desired number during an update.
+
+This is an internal annotation used by the Deployment controller and should not be
+modified manually.
+
+### deployment.kubernetes.io/revision
+
+Type: Annotation
+
+Example: `deployment.kubernetes.io/revision: "2"`
+
+Used on: ReplicaSet
+
+This annotation is set by the Deployment controller on ReplicaSets it manages.
+The value represents the revision number of the Deployment. Each time the Deployment's
+Pod template (`.spec.template`) is changed, the revision number is incremented.
+This annotation is used to track the rollout history and enables rollback to previous
+revisions using `kubectl rollout undo`.
+
+The revision number is also visible when running `kubectl rollout history deployment/<name>`.
+
+This is an internal annotation used by the Deployment controller and should not be
+modified manually.
+
+### deployment.kubernetes.io/revision-history
+
+Type: Annotation
+
+Example: `deployment.kubernetes.io/revision-history: "1,3"`
+
+Used on: ReplicaSet
+
+This annotation is set by the Deployment controller on a ReplicaSet when a rollback
+causes that ReplicaSet to be reused. The value is a comma-separated list of all
+previous revision numbers that the ReplicaSet has served for a Deployment, maintained
+as a history when the `deployment.kubernetes.io/revision` annotation is updated to a
+new revision number.
+
+This is an internal annotation used by the Deployment controller and should not be
+modified manually.
 
 ### internal.config.kubernetes.io/* (reserved prefix) {#internal.config.kubernetes.io-reserved-wildcard}
 
@@ -394,6 +512,170 @@ which is used by Kustomize and similar third-party tools.
 
 A KRM Function **should not** modify this annotation on input objects unless it is modifying the
 referenced files. A KRM Function **may** include this annotation on objects it generates.
+
+### kube-scheduler-simulator.sigs.k8s.io/bind-result
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/bind-result: '{"DefaultBinder":"success"}'`
+
+Used on: Pod
+
+This annotation records the result of bind scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/filter-result
+
+Type: Annotation
+
+Example: 
+
+```yaml
+kube-scheduler-simulator.sigs.k8s.io/filter-result: >-
+      {"node-282x7":{"AzureDiskLimits":"passed","EBSLimits":"passed","GCEPDLimits":"passed","InterPodAffinity":"passed","NodeAffinity":"passed","NodeName":"passed","NodePorts":"passed","NodeResourcesFit":"passed","NodeUnschedulable":"passed","NodeVolumeLimits":"passed","PodTopologySpread":"passed","TaintToleration":"passed","VolumeBinding":"passed","VolumeRestrictions":"passed","VolumeZone":"passed"},"node-gp9t4":{"AzureDiskLimits":"passed","EBSLimits":"passed","GCEPDLimits":"passed","InterPodAffinity":"passed","NodeAffinity":"passed","NodeName":"passed","NodePorts":"passed","NodeResourcesFit":"passed","NodeUnschedulable":"passed","NodeVolumeLimits":"passed","PodTopologySpread":"passed","TaintToleration":"passed","VolumeBinding":"passed","VolumeRestrictions":"passed","VolumeZone":"passed"}}
+```
+
+Used on: Pod
+
+This annotation records the result of filter scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/finalscore-result
+
+Type: Annotation
+
+Example: 
+
+```yaml
+kube-scheduler-simulator.sigs.k8s.io/finalscore-result: >-
+      {"node-282x7":{"ImageLocality":"0","InterPodAffinity":"0","NodeAffinity":"0","NodeNumber":"0","NodeResourcesBalancedAllocation":"76","NodeResourcesFit":"73","PodTopologySpread":"200","TaintToleration":"300","VolumeBinding":"0"},"node-gp9t4":{"ImageLocality":"0","InterPodAffinity":"0","NodeAffinity":"0","NodeNumber":"0","NodeResourcesBalancedAllocation":"76","NodeResourcesFit":"73","PodTopologySpread":"200","TaintToleration":"300","VolumeBinding":"0"}}
+```
+
+Used on: Pod
+
+This annotation records the final scores that the scheduler calculates from the scores from score scheduler plugins,
+used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/permit-result
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/permit-result: '{"CustomPermitPlugin":"success"}'`
+
+Used on: Pod
+
+This annotation records the result of permit scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/permit-result-timeout
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/permit-result-timeout: '{"CustomPermitPlugin":"10s"}'`
+
+Used on: Pod
+
+This annotation records the timeouts returned from permit scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/postfilter-result
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/postfilter-result: '{"DefaultPreemption":"success"}'`
+
+Used on: Pod
+
+This annotation records the result of postfilter scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/prebind-result
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/prebind-result: '{"VolumeBinding":"success"}'`
+
+Used on: Pod
+
+This annotation records the result of prebind scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/prefilter-result
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/prebind-result: '{"NodeAffinity":"[\"node-\a"]"}'`
+
+Used on: Pod
+
+This annotation records the PreFilter result of prefilter scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/prefilter-result-status
+
+Type: Annotation
+
+Example: 
+
+```yaml
+kube-scheduler-simulator.sigs.k8s.io/prefilter-result-status: >-
+      {"InterPodAffinity":"success","NodeAffinity":"success","NodePorts":"success","NodeResourcesFit":"success","PodTopologySpread":"success","VolumeBinding":"success","VolumeRestrictions":"success"}
+```
+
+Used on: Pod
+
+This annotation records the result of prefilter scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/prescore-result
+
+Type: Annotation
+
+Example: 
+
+```yaml
+    kube-scheduler-simulator.sigs.k8s.io/prescore-result: >-
+      {"InterPodAffinity":"success","NodeAffinity":"success","NodeNumber":"success","PodTopologySpread":"success","TaintToleration":"success"}
+```
+
+Used on: Pod
+
+This annotation records the result of prefilter scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/reserve-result
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/reserve-result: '{"VolumeBinding":"success"}'`
+
+Used on: Pod
+
+This annotation records the result of reserve scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/result-history
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/result-history: '[]'`
+
+Used on: Pod
+
+This annotation records all the past scheduling results from scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/score-result
+
+Type: Annotation
+
+```yaml
+    kube-scheduler-simulator.sigs.k8s.io/score-result: >-
+      {"node-282x7":{"ImageLocality":"0","InterPodAffinity":"0","NodeAffinity":"0","NodeNumber":"0","NodeResourcesBalancedAllocation":"76","NodeResourcesFit":"73","PodTopologySpread":"0","TaintToleration":"0","VolumeBinding":"0"},"node-gp9t4":{"ImageLocality":"0","InterPodAffinity":"0","NodeAffinity":"0","NodeNumber":"0","NodeResourcesBalancedAllocation":"76","NodeResourcesFit":"73","PodTopologySpread":"0","TaintToleration":"0","VolumeBinding":"0"}}
+```
+
+Used on: Pod
+
+This annotation records the result of score scheduler plugins, used by https://sigs.k8s.io/kube-scheduler-simulator.
+
+### kube-scheduler-simulator.sigs.k8s.io/selected-node
+
+Type: Annotation
+
+Example: `kube-scheduler-simulator.sigs.k8s.io/selected-node: node-282x7`
+
+Used on: Pod
+
+This annotation records the node that is selected by the scheduling cycle, used by https://sigs.k8s.io/kube-scheduler-simulator.
 
 ### kubernetes.io/arch
 
@@ -572,13 +854,23 @@ There are two possible values:
 
 Type: Annotation
 
-Used on: StatefulSet
+Used on: Service
 
-This annotation on a Service denotes if the Endpoints controller should go ahead and create
-Endpoints for unready Pods. Endpoints of these Services retain their DNS records and continue
-receiving traffic for the Service from the moment the kubelet starts all containers in the pod
-and marks it _Running_, til the kubelet stops all containers and deletes the pod from
-the API server.
+This annotation was formerly used to indicate that the Endpoints controller
+should create Endpoints for unready Pods. Since Kubernetes 1.11, the preferred
+API for this feature has been the `.publishNotReadyAddresses` field on the
+{{< glossary_tooltip term_id="service" >}}. This annotation has no effect in
+Kubernetes {{< skew currentVersion >}}.
+
+### autoscaling.alpha.kubernetes.io/behavior (deprecated) {#autoscaling-alpha-kubernetes-io-behavior}
+
+Type: Annotation
+
+Used on: HorizontalPodAutoscaler
+
+This annotation was used to configure the scaling behavior for a HorizontalPodAutoscaler (HPA) in earlier Kubernetes versions.
+It allowed you to specify how the HPA should scale pods up or down, including setting stabilization windows and scaling policies.
+Setting this annotation has no effect in any supported release of Kubernetes.
 
 ### kubernetes.io/hostname {#kubernetesiohostname}
 
@@ -617,13 +909,17 @@ Used on: All Objects
 
 This annotation is used for describing specific behaviour of given object.
 
-### kubernetes.io/enforce-mountable-secrets {#enforce-mountable-secrets}
+### kubernetes.io/enforce-mountable-secrets (deprecated) {#enforce-mountable-secrets}
 
 Type: Annotation
 
 Example: `kubernetes.io/enforce-mountable-secrets: "true"`
 
 Used on: ServiceAccount
+
+{{< note >}}
+`kubernetes.io/enforce-mountable-secrets` is deprecated since Kubernetes v1.32. Use separate namespaces to isolate access to mounted secrets.
+{{< /note >}}
 
 The value for this annotation must be **true** to take effect.
 When you set this annotation  to "true", Kubernetes enforces the following rules for
@@ -643,6 +939,22 @@ When you create or update a Pod, these rules are checked. If a Pod doesn't follo
 If a Pod is already running and you change the `kubernetes.io/enforce-mountable-secrets` annotation
 to true, or you edit the associated ServiceAccount to remove the reference to a Secret
 that the Pod is already using, the Pod continues to run.
+
+### node.alpha.kubernetes.io/ttl (deprecated)
+
+Type: Label
+
+Example: `node.alpha.kubernetes.io/ttl: "0"`
+
+Used on: Node
+
+This label was used historically by some tools (such as minikube) to set a time-to-live
+value for nodes. The label is deprecated and should not be used in new deployments.
+
+{{< note >}}
+This label is deprecated and has no effect in current Kubernetes versions.
+It may still be set by older tools for backward compatibility.
+{{< /note >}}
 
 ### node.kubernetes.io/exclude-from-external-load-balancers
 
@@ -933,6 +1245,19 @@ you should consider adding the labels manually (or adding support for `Persisten
 With `PersistentVolumeLabel`, the scheduler prevents Pods from mounting volumes in a different zone.
 If your infrastructure doesn't have this constraint, you don't need to add the zone labels to the volumes at all.
 
+### volume.alpha.kubernetes.io/node-affinity (deprecated) {#volume-alpha-kubernetes-io-node-affinity}
+
+Type: Annotation
+
+Used on: PersistentVolume
+
+This annotation stored node affinity rules for a PersistentVolume as a JSON-serialized
+`NodeAffinity` object. The scheduler used these rules to limit which nodes could access the volume.
+
+This annotation has been deprecated since Kubernetes v1.10. Use the
+[`nodeAffinity` field](/docs/concepts/storage/persistent-volumes/#node-affinity) in the
+PersistentVolume spec instead.
+
 ### volume.beta.kubernetes.io/storage-provisioner (deprecated)
 
 Type: Annotation
@@ -1039,10 +1364,14 @@ Type: Label
 
 Example: `service.kubernetes.io/headless: ""`
 
-Used on: Endpoints
+Used on: EndpointSlice, Endpoints
 
-The control plane adds this label to an Endpoints object when the owning Service is headless.
-To learn more, read [Headless Services](/docs/concepts/services-networking/service/#headless-services).
+The {{< glossary_tooltip term_id="control-plane" text="control plane" >}} adds
+this {{< glossary_tooltip term_id="label" text="label" >}} to EndpointSlice and
+Endpoints objects when the owning {{< glossary_tooltip term_id="service" >}} is
+headless (as a hint to the service proxy that it can ignore these endpoints). To
+learn more, read [Headless
+Services](/docs/concepts/services-networking/service/#headless-services).
 
 ### service.kubernetes.io/topology-aware-hints (deprecated) {#servicekubernetesiotopology-aware-hints}
 
@@ -1050,19 +1379,9 @@ Example: `service.kubernetes.io/topology-aware-hints: "Auto"`
 
 Used on: Service
 
-This annotation was used for enabling _topology aware hints_ on Services. Topology aware
-hints have since been renamed: the concept is now called
-[topology aware routing](/docs/concepts/services-networking/topology-aware-routing/).
-Setting the annotation to `Auto`, on a Service, configured the Kubernetes control plane to
-add topology hints on EndpointSlices associated with that Service. You can also explicitly
-set the annotation to `Disabled`.
-
-If you are running a version of Kubernetes older than {{< skew currentVersion >}},
-check the documentation for that Kubernetes version to see how topology aware routing
-works in that release.
-
-There are no other valid values for this annotation. If you don't want topology aware hints
-for a Service, don't add this annotation.
+This is a deprecated alias for the
+[`service.kubernetes.io/topology-mode`](#service-kubernetes-io-topology-mode)
+annotation, which has the same functionality.
 
 ### service.kubernetes.io/topology-mode
 
@@ -1150,6 +1469,23 @@ records the date (ISO 8601 format, UTC time zone) when the control plane detects
 that the auto-generated Secret has not been used for a specified duration
 (defaults to one year).
 
+### endpoints.kubernetes.io/managed-by (deprecated) {#endpoints-kubernetes-io-managed-by}
+
+Type: Label
+
+Example: `endpoints.kubernetes.io/managed-by: endpoint-controller`
+
+Used on: Endpoints
+
+This label is used internally to mark Endpoints objects that were created by
+Kubernetes (as opposed to Endpoints created by users or external controllers).
+
+{{< note >}}
+The [Endpoints](/docs/reference/kubernetes-api/service-resources/endpoints-v1/)
+API is deprecated in favor of
+[EndpointSlice](/docs/reference/kubernetes-api/service-resources/endpoint-slice-v1/).
+{{< /note >}}
+
 ### endpointslice.kubernetes.io/managed-by {#endpointslicekubernetesiomanaged-by}
 
 Type: Label
@@ -1160,7 +1496,9 @@ Used on: EndpointSlices
 
 The label is used to indicate the controller or entity that manages the EndpointSlice. This label
 aims to enable different EndpointSlice objects to be managed by different controllers or entities
-within the same cluster.
+within the same cluster. The value `endpointslice-controller.k8s.io` indicates an
+EndpointSlice object that was created automatically by Kubernetes for a Service with a
+{{< glossary_tooltip text="selectors" term_id="selector" >}}.
 
 ### endpointslice.kubernetes.io/skip-mirror {#endpointslicekubernetesioskip-mirror}
 
@@ -1181,7 +1519,11 @@ Example: `service.kubernetes.io/service-proxy-name: "foo-bar"`
 
 Used on: Service
 
-The kube-proxy has this label for custom proxy, which delegates service control to custom proxy.
+Setting a value for this label tells kube-proxy to ignore this service for proxying purposes.
+This allows for use of alternative proxy implementations for this service (e.g. running
+a DaemonSet that manages nftables its own way). Multiple alternative proxy implementations
+could be active simultaneously using this field, e.g. by having a value unique to each
+alternative proxy implementation to be responsible for their respective services.
 
 ### experimental.windows.kubernetes.io/isolation-type (deprecated) {#experimental-windows-kubernetes-io-isolation-type}
 
@@ -1197,6 +1539,20 @@ The annotation is used to run Windows containers with Hyper-V isolation.
 Starting from v1.20, this annotation is deprecated.
 Experimental Hyper-V support was removed in 1.21.
 {{< /note >}}
+
+### gateway.networking.k8s.io/generator
+
+Type: Annotation
+
+Example: `gateway.networking.k8s.io/generator: "ingress2gateway"`
+
+Used on: Gateway, HTTPRoute, and other Gateway API resources
+
+This annotation is added by tools that automatically generate
+[Gateway API](/docs/concepts/services-networking/gateway/) resources.
+The value identifies the tool that created the resource (for example,
+`ingress2gateway`). The annotation is informational only and does not
+affect the behavior of any Gateway API implementation.
 
 ### ingressclass.kubernetes.io/is-default-class
 
@@ -1218,6 +1574,19 @@ Used on: Ingress
 {{< note >}}
 Starting in v1.18, this annotation is deprecated in favor of `spec.ingressClassName`.
 {{< /note >}}
+
+### kubernetes.io/cluster-service (deprecated) {#kubernetes-io-cluster-service}
+
+Type: Label
+
+Example: `kubernetes.io/cluster-service: "true"`
+
+Used on: Service
+
+This label indicates that the Service provides a service to the cluster, if the value is set to true.
+When you run `kubectl cluster-info`, the tool queries for Services with this label set to true.
+
+However, setting this label on any Service is deprecated.
 
 ### storageclass.kubernetes.io/is-default-class
 
@@ -1272,6 +1641,18 @@ This annotation is used to record the original (expected) creation timestamp for
 when that Job is part of a CronJob.
 The control plane sets the value to that timestamp in RFC3339 format. If the Job belongs to a CronJob
 with a timezone specified, then the timestamp is in that timezone. Otherwise, the timestamp is in controller-manager's local time.
+
+### cronjob.kubernetes.io/instantiate {#cronjob-kubernetes-io-instantiate}
+
+Type: Annotation
+
+Example: `cronjob.kubernetes.io/instantiate: "manual"`
+
+Used on: Jobs
+
+When you use `kubectl create job` with the `--from=cronjob/<cronjob-name>` flag to manually create a Job from an existing CronJob template, `kubectl` sets this annotation on the newly created Job. 
+The value of this annotation is always `manual`. This annotation allows you to distinguish 
+Jobs that were created on demand by a user from Jobs that the CronJob controller automatically creates on their scheduled time.
 
 ### kubectl.kubernetes.io/default-container
 
@@ -1334,11 +1715,11 @@ a separate change could have been made since the last manually triggered rollout
 If you manually set this annotation on a Pod, nothing happens. The restarting side effect comes from
 how workload management and Pod templating works.
 
-### endpoints.kubernetes.io/over-capacity
+### endpoints.kubernetes.io/over-capacity (deprecated) {#endpoints-kubernetes-io-over-capacity}
 
 Type: Annotation
 
-Example: `endpoints.kubernetes.io/over-capacity:truncated`
+Example: `endpoints.kubernetes.io/over-capacity: truncated`
 
 Used on: Endpoints
 
@@ -1350,7 +1731,14 @@ has been truncated to 1000.
 
 If the number of backend endpoints falls below 1000, the control plane removes this annotation.
 
-### endpoints.kubernetes.io/last-change-trigger-time
+{{< note >}}
+The [Endpoints](/docs/reference/kubernetes-api/service-resources/endpoints-v1/)
+API is deprecated in favor of
+[EndpointSlice](/docs/reference/kubernetes-api/service-resources/endpoint-slice-v1/).
+A Service can have multiple EndpointSlice objects. As a result, EndpointSlices do not require truncation.
+{{< /note >}}
+
+### endpoints.kubernetes.io/last-change-trigger-time (deprecated) {#endpoints-kubernetes-io-last-change-trigger-time}
 
 Type: Annotation
 
@@ -1362,6 +1750,12 @@ This annotation set to an [Endpoints](/docs/concepts/services-networking/service
 represents the timestamp (The timestamp is stored in RFC 3339 date-time string format. For example, '2018-10-22T19:32:52.1Z'). This is timestamp
 of the last change in some Pod or Service object, that triggered the change to the Endpoints object.
 
+{{< note >}}
+The [Endpoints](/docs/reference/kubernetes-api/service-resources/endpoints-v1/)
+API is deprecated in favor of
+[EndpointSlice](/docs/reference/kubernetes-api/service-resources/endpoint-slice-v1/).
+{{< /note >}}
+
 ### control-plane.alpha.kubernetes.io/leader (deprecated) {#control-plane-alpha-kubernetes-io-leader}
 
 Type: Annotation
@@ -1370,9 +1764,10 @@ Example: `control-plane.alpha.kubernetes.io/leader={"holderIdentity":"controller
 
 Used on: Endpoints
 
-The {{< glossary_tooltip text="control plane" term_id="control-plane" >}} previously set annotation on
-an [Endpoints](/docs/concepts/services-networking/service/#endpoints) object. This annotation provided
-the following detail:
+The {{< glossary_tooltip text="control plane" term_id="control-plane" >}} previously used
+an [Endpoints](/docs/concepts/services-networking/service/#endpoints) object to
+coordinate leader assignment for the Kubernetes control plane. This Endpoints
+object included an annotation with the following detail:
 
 - Who is the current leader.
 - The time when the current leadership was acquired.
@@ -1574,15 +1969,13 @@ Example: `node.kubernetes.io/out-of-service:NoExecute`
 Used on: Node
 
 A user can manually add the taint to a Node marking it out-of-service.
-If the `NodeOutOfServiceVolumeDetach`
-[feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
-is enabled on `kube-controller-manager`, and a Node is marked out-of-service with this taint,
-the Pods on the node will be forcefully deleted if there are no matching tolerations on it and
+If a Node is marked out-of-service with this taint, the Pods on the node 
+will be forcefully deleted if there are no matching tolerations on it and
 volume detach operations for the Pods terminating on the node will happen immediately.
 This allows the Pods on the out-of-service node to recover quickly on a different node.
 
 {{< caution >}}
-Refer to [Non-graceful node shutdown](/docs/concepts/architecture/nodes/#non-graceful-node-shutdown)
+Refer to [Non-graceful node shutdown](/docs/concepts/cluster-administration/node-shutdown/#non-graceful-node-shutdown)
 for further details about when and how to use this taint.
 {{< /caution >}}
 
@@ -1715,7 +2108,7 @@ if you set the annotation to "true".
 
 ### service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name (beta) {#service-beta-kubernetes-io-aws-load-balancer-access-log-s3-bucket-name}
 
-Example: `service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: example`
+Example: `service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name: example`
 
 Used on: Service
 
@@ -1725,7 +2118,7 @@ writes logs to an S3 bucket with the name you specify.
 
 ### service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-prefix (beta) {#service-beta-kubernetes-io-aws-load-balancer-access-log-s3-bucket-prefix}
 
-Example: `service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "/example"`
+Example: `service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-prefix: "/example"`
 
 Used on: Service
 
@@ -2332,6 +2725,111 @@ Starting in v1.16, this annotation was removed in favor of
 [Pod Priority](/docs/concepts/scheduling-eviction/pod-priority-preemption/).
 {{< /note >}}
 
+### jobset.sigs.k8s.io/jobset-name
+
+Type: Label, Annotation
+
+Example:  `jobset.sigs.k8s.io/jobset-name: "my-jobset"`
+
+Used on: Jobs, Pods
+
+This label/annotation is used to store the name of the JobSet that a Job or Pod belongs to.
+[JobSet](https://jobset.sigs.k8s.io) is an extension API that you can deploy into your Kubernetes cluster.
+
+### jobset.sigs.k8s.io/replicatedjob-replicas
+
+Type: Label, Annotation
+
+Example: `jobset.sigs.k8s.io/replicatedjob-replicas: "5"`
+
+Used on: Jobs, Pods
+
+This label/annotation specifies the number of replicas for a ReplicatedJob.
+
+### jobset.sigs.k8s.io/replicatedjob-name
+
+Type: Label, Annotation
+
+Example: `jobset.sigs.k8s.io/replicatedjob-name: "my-replicatedjob"`
+
+Used on: Jobs, Pods
+
+This label or annotation stores the name of the replicated job that this Job or Pod is part of.
+
+### jobset.sigs.k8s.io/job-index
+
+Type: Label, Annotation
+
+Example: `jobset.sigs.k8s.io/job-index: "0"`
+
+Used on: Jobs, Pods
+
+This label/annotation is set by the JobSet controller on child Jobs and Pods. It contains the index of the Job replica within its parent ReplicatedJob.
+
+### jobset.sigs.k8s.io/job-key
+
+Type: Label, Annotation
+
+Example: `jobset.sigs.k8s.io/job-key: "0f1e93893c4cb372080804ddb9153093cb0d20cefdd37f653e739c232d363feb"`
+
+Used on: Jobs, Pods
+
+The JobSet controller sets this label (and also an annotation with the same key)  on child Jobs and
+Pods of a JobSet. The value is the SHA256 hash of the namespaced Job name.
+
+### alpha.jobset.sigs.k8s.io/exclusive-topology
+
+Type: Annotation
+
+Example: `alpha.jobset.sigs.k8s.io/exclusive-topology: "zone"`
+
+Used on: JobSets, Jobs
+
+You can set this label/annotation on a [JobSet](https://jobset.sigs.k8s.io) to ensure exclusive Job
+placement per topology group. You can also define this label or annotation on a replicated job
+template. Read the documentation for JobSet to learn more.
+
+### alpha.jobset.sigs.k8s.io/node-selector
+
+Type: Annotation
+
+Example: `alpha.jobset.sigs.k8s.io/node-selector: "true"`
+
+Used on: Jobs, Pods
+
+This label/annotation can be applied to a JobSet. When it's set, the JobSet controller modifies the Jobs and their corresponding Pods by adding node selectors and tolerations. This ensures exclusive job placement per topology domain, restricting the scheduling of these Pods to specific nodes based on the strategy.
+
+### alpha.jobset.sigs.k8s.io/namespaced-job
+
+Type: Label
+
+Example: `alpha.jobset.sigs.k8s.io/namespaced-job: "default_myjobset-replicatedjob-0"`
+
+Used on: Nodes
+
+This label is either set manually or automatically (for example, a cluster autoscaler) on the nodes. When `alpha.jobset.sigs.k8s.io/node-selector` is set to  `"true"`, the  JobSet controller adds a nodeSelector to this node label (along with the toleration to the taint `alpha.jobset.sigs.k8s.io/no-schedule` discussed next).
+
+### alpha.jobset.sigs.k8s.io/no-schedule
+
+Type: Taint
+
+Example: `alpha.jobset.sigs.k8s.io/no-schedule: "NoSchedule"`
+
+Used on: Nodes
+
+This taint is either set manually or automatically (for example, a cluster autoscaler) on the nodes. When `alpha.jobset.sigs.k8s.io/node-selector` is set to  `"true"`, the  JobSet controller adds a toleration to this node taint (along with the node selector to the label `alpha.jobset.sigs.k8s.io/namespaced-job` discussed previously).
+
+### jobset.sigs.k8s.io/coordinator
+
+Type: Annotation, Label
+
+Example: `jobset.sigs.k8s.io/coordinator: "myjobset-workers-0-0.headless-svc"`
+
+Used on: Jobs, Pods
+
+This annotation/label is used on Jobs and Pods to store a stable network endpoint where the coordinator
+pod can be reached if the [JobSet](https://jobset.sigs.k8s.io) spec defines the `.spec.coordinator` field.
+
 ## Annotations used for audit
 
 <!-- sorted by annotation -->
@@ -2348,7 +2846,7 @@ See more details on [Audit Annotations](/docs/reference/labels-annotations-taint
 
 ## kubeadm
 
-### kubeadm.alpha.kubernetes.io/cri-socket
+### kubeadm.alpha.kubernetes.io/cri-socket (deprecated) {#kubeadm-alpha-kubernetes-io-cri-socket}
 
 Type: Annotation
 
@@ -2356,10 +2854,10 @@ Example: `kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/contain
 
 Used on: Node
 
-Annotation that kubeadm uses to preserve the CRI socket information given to kubeadm at
-`init`/`join` time for later use. kubeadm annotates the Node object with this information.
-The annotation remains "alpha", since ideally this should be a field in KubeletConfiguration
-instead.
+{{< note >}}
+Starting from v1.34, this annotation is deprecated, kubeadm will no longer actively set and use it.
+{{< /note >}}
+
 
 ### kubeadm.kubernetes.io/etcd.advertise-client-urls
 
@@ -2411,6 +2909,22 @@ only onto these nodes, or to avoid running Pods on the control plane.
 If this label is set, the [EndpointSlice controller](/docs/concepts/services-networking/topology-aware-routing/#implementation-control-plane)
 ignores that node while calculating Topology Aware Hints.
 
+### node-role.kubernetes.io/*
+
+Type: Label
+
+Example: `node-role.kubernetes.io/gpu: gpu`
+
+Used on: Node
+
+This optional label is applied to a node when you want to mark a node role. 
+The node role (text following `/` in the label key) can be set, as long as the overall key follows the
+[syntax](/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set) rules for
+object labels.
+
+Kubernetes defines one specific node role, **control-plane**. A label you can use to mark that node
+role is [`node-role.kubernetes.io/control-plane`](#node-role-kubernetes-io-control-plane).
+
 ### node-role.kubernetes.io/control-plane {#node-role-kubernetes-io-control-plane-taint}
 
 Type: Taint
@@ -2442,3 +2956,20 @@ Taint that kubeadm previously applied on control plane nodes to allow only criti
 workloads to schedule on them. Replaced by the
 [`node-role.kubernetes.io/control-plane`](#node-role-kubernetes-io-control-plane-taint)
 taint. kubeadm no longer sets or uses this deprecated taint.
+
+### resource.kubernetes.io/admin-access {resource-kubernetes-io-admin-access}
+
+Type: Label
+
+Example: `resource.kubernetes.io/admin-access: "true"`
+
+Used on: Namespace
+
+Used to grant administrative access to certain resource.k8s.io API types within
+a namespace. When this label is set on a namespace with the value `"true"`
+(case-sensitive), it allows the use of `adminAccess: true` in any namespaced
+`resource.k8s.io` API types. Currently, this permission applies to
+`ResourceClaim` and `ResourceClaimTemplate` objects.
+
+See [Dynamic Resource Allocation Admin access](/docs/concepts/resource-management/dynamic-resource-allocation/dra-api/#admin-access)
+for more information.

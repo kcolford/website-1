@@ -1,6 +1,4 @@
 ---
-reviewers:
--
 title: リソースの管理
 content_type: concept
 weight: 40
@@ -21,7 +19,7 @@ weight: 40
 多くのアプリケーションではDeploymentやServiceなど複数のリソースの作成を要求します。複数のリソースの管理は、同一のファイルにひとまとめにしてグループ化すると簡単になります(YAMLファイル内で`---`で区切る)。
 例えば:
 
-{{% codenew file="application/nginx-app.yaml" %}}
+{{% code_sample file="application/nginx-app.yaml" %}}
 
 複数のリソースは単一のリソースと同様の方法で作成できます。
 
@@ -163,7 +161,7 @@ persistentvolumeclaim/my-pvc created
 
 これまで取り上げた例では、リソースに対して最大1つのラベルを適用してきました。リソースのセットを他のセットと区別するために、複数のラベルが必要な状況があります。
 
-例えば、異なるアプリケーション間では、異なる`app`ラベルを使用したり、[ゲストブックの例](https://github.com/kubernetes/examples/tree/master/guestbook/)のようなマルチティアーのアプリケーションでは、各ティアーを区別する必要があります。frontendというティアーでは下記のラベルを持ちます。:
+例えば、異なるアプリケーション間では、異なる`app`ラベルを使用したり、[ゲストブックの例](https://github.com/kubernetes/examples/tree/master/web/guestbook/)のようなマルチティアーのアプリケーションでは、各ティアーを区別する必要があります。frontendというティアーでは下記のラベルを持ちます。:
 
 ```yaml
      labels:

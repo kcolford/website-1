@@ -148,29 +148,29 @@ Services provide load balancing across a set of pods. There are several common p
 not work properly.  The following instructions should help debug Service problems.
 
 First, verify that there are endpoints for the service. For every Service object,
-the apiserver makes an `endpoints` resource available.
+the apiserver makes one or more `EndpointSlice` resources available.
 
-You can view this resource with:
+You can view these resources with:
 
 ```shell
-kubectl get endpoints ${SERVICE_NAME}
+kubectl get endpointslices -l kubernetes.io/service-name=${SERVICE_NAME}
 ```
 
-Make sure that the endpoints match up with the number of pods that you expect to be members of your service.
+Make sure that the endpoints in the EndpointSlices match up with the number of pods that you expect to be members of your service.
 For example, if your Service is for an nginx container with 3 replicas, you would expect to see three different
-IP addresses in the Service's endpoints.
+IP addresses in the Service's endpoint slices.
 
 #### My service is missing endpoints
 
-If you are missing endpoints, try listing pods using the labels that Service uses.
-Imagine that you have a Service where the labels are:
+If you are missing endpoints, try listing Pods using the labels in the Service selector.
+For example, that you have a Service with the following selector:
 
 ```yaml
 ...
 spec:
-  - selector:
-     name: nginx
-     type: frontend
+  selector:
+    name: nginx
+    type: frontend
 ```
 
 You can use:
@@ -180,7 +180,7 @@ kubectl get pods --selector=name=nginx,type=frontend
 ```
 
 to list pods that match this selector. Verify that the list matches the Pods that you expect to provide your Service.
-Verify that the pod's `containerPort` matches up with the Service's `targetPort`
+Verify that the pod's `containerPort` matches the Service's `targetPort`
 
 #### Network traffic is not forwarded
 

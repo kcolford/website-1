@@ -106,19 +106,7 @@ For example, suppose you have a set of Pods that each listen on TCP port 9376
 and are labelled as `app.kubernetes.io/name=MyApp`. You can define a Service to
 publish that TCP listener:
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app.kubernetes.io/name: MyApp
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 9376
-```
+{{% code_sample file="service/simple-service.yaml" %}}
 
 Applying this manifest creates a new Service named "my-service" with the default
 ClusterIP [service type](#publishing-services-service-types). The Service
@@ -133,7 +121,7 @@ match its selector, and then makes any necessary updates to the set of
 EndpointSlices for the Service.
 
 The name of a Service object must be a valid
-[RFC 1035 label name](/docs/concepts/overview/working-with-objects/names#rfc-1035-label-names).
+[RFC 1123 label name](/docs/concepts/overview/working-with-objects/names#rfc-1123-label-names).
 
 
 {{< note >}}
@@ -150,6 +138,20 @@ of the Service to the Pod port in the following way:
 
 ```yaml
 apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app.kubernetes.io/name: proxy
+  ports:
+  - name: name-of-service-port
+    protocol: TCP
+    port: 80
+    targetPort: http-web-svc
+
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: nginx
@@ -162,20 +164,6 @@ spec:
     ports:
       - containerPort: 80
         name: http-web-svc
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-spec:
-  selector:
-    app.kubernetes.io/name: proxy
-  ports:
-  - name: name-of-service-port
-    protocol: TCP
-    port: 80
-    targetPort: http-web-svc
 ```
 
 This works even if there is a mixture of Pods in the Service using a single
@@ -225,8 +213,8 @@ spec:
       targetPort: 9376
 ```
 
-Because this Service has no selector, the corresponding EndpointSlice (and
-legacy Endpoints) objects are not created automatically. You can map the Service
+Because this Service has no selector, the corresponding EndpointSlice
+objects are not created automatically. You can map the Service
 to the network address and port where it's running, by adding an EndpointSlice
 object manually. For example:
 
@@ -319,14 +307,22 @@ until an extra endpoint needs to be added.
 See [EndpointSlices](/docs/concepts/services-networking/endpoint-slices/) for more
 information about this API.
 
-### Endpoints
+### Endpoints (deprecated) {#endpoints}
 
-In the Kubernetes API, an
+{{< feature-state for_k8s_version="v1.33" state="deprecated" >}}
+
+The EndpointSlice API is the evolution of the older
 [Endpoints](/docs/reference/kubernetes-api/service-resources/endpoints-v1/)
-(the resource kind is plural) defines a list of network endpoints, typically
-referenced by a Service to define which Pods the traffic can be sent to.
+API. The deprecated Endpoints API has several problems relative to
+EndpointSlice:
 
-The EndpointSlice API is the recommended replacement for Endpoints.
+  - It does not support dual-stack clusters.
+  - It does not contain information needed to support newer features, such as
+    [trafficDistribution](/docs/concepts/services-networking/service/#traffic-distribution).
+  - It will truncate the list of endpoints if it is too long to fit in a single object.
+
+Because of this, it is recommended that all clients use the
+EndpointSlice API rather than Endpoints.
 
 #### Over-capacity endpoints
 
@@ -367,7 +363,7 @@ This field follows standard Kubernetes label syntax. Valid values are one of:
 
 | Protocol | Description |
 |----------|-------------|
-| `kubernetes.io/h2c` | HTTP/2 over cleartext as described in [RFC 7540](https://www.rfc-editor.org/rfc/rfc7540) |
+| `kubernetes.io/h2c` | HTTP/2 over cleartext as described in [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113) |
 | `kubernetes.io/ws`  | WebSocket over cleartext as described in [RFC 6455](https://www.rfc-editor.org/rfc/rfc6455) |
 | `kubernetes.io/wss` | WebSocket over TLS as described in [RFC 6455](https://www.rfc-editor.org/rfc/rfc6455) |
 
@@ -525,8 +521,6 @@ spec:
 
 #### Reserve Nodeport ranges to avoid collisions  {#avoid-nodeport-collisions}
 
-{{< feature-state for_k8s_version="v1.29" state="stable" >}}
-
 The policy for assigning ports to NodePort services applies to both the auto-assignment and
 the manual assignment scenarios. When a user wants to create a NodePort service that
 uses a specific port, the target port may conflict with another port that has already been assigned.
@@ -535,32 +529,63 @@ To avoid this problem, the port range for NodePort services is divided into two 
 Dynamic port assignment uses the upper band by default, and it may use the lower band once the 
 upper band has been exhausted. Users can then allocate from the lower band with a lower risk of port collision.
 
-#### Custom IP address configuration for `type: NodePort` Services {#service-nodeport-custom-listen-address}
+When using the default NodePort range 30000-32767, the bands are partitioned as follows: 
 
-You can set up nodes in your cluster to use a particular IP address for serving node port
-services. You might want to do this if each node is connected to multiple networks (for example:
-one network for application traffic, and another network for traffic between nodes and the
-control plane).
+- Static band: 30000-30085
+- Dynamic band: 30086-32767
 
-If you want to specify particular IP address(es) to proxy the port, you can set the
-`--nodeport-addresses` flag for kube-proxy or the equivalent `nodePortAddresses`
-field of the [kube-proxy configuration file](/docs/reference/config-api/kube-proxy-config.v1alpha1/)
-to particular IP block(s).
+See [Avoid Collisions Assigning Ports to NodePort Services](/blog/2023/05/11/nodeport-dynamic-and-static-allocation/)
+for more details on how the static and dynamic bands are calculated.
 
-This flag takes a comma-delimited list of IP blocks (e.g. `10.0.0.0/8`, `192.0.2.0/25`)
-to specify IP address ranges that kube-proxy should consider as local to this node.
+#### IP address configuration for `type: NodePort` Services {#service-nodeport-custom-listen-address}
 
-For example, if you start kube-proxy with the `--nodeport-addresses=127.0.0.0/8` flag,
-kube-proxy only selects the loopback interface for NodePort Services.
-The default for `--nodeport-addresses` is an empty list.
-This means that kube-proxy should consider all available network interfaces for NodePort.
-(That's also compatible with earlier Kubernetes releases.)
-{{< note >}}
-This Service is visible as `<NodeIP>:spec.ports[*].nodePort` and `.spec.clusterIP:spec.ports[*].port`.
-If the `--nodeport-addresses` flag for kube-proxy or the equivalent field
-in the kube-proxy configuration file is set, `<NodeIP>` would be a filtered
-node IP address (or possibly IP addresses).
-{{< /note >}}
+When using kube-proxy in [`iptables`
+mode](/docs/reference/networking/virtual-ips/#proxy-mode-iptables), NodePort Services are
+available on all node IPs by default. When using [`nftables`
+mode](/docs/reference/networking/virtual-ips/#proxy-mode-nftables), they are only
+available only on the node's primary IP (or dual-stack primary IPs) by default.
+
+You can change the set of node IPs that NodePort Services are available on with the
+`--nodeport-addresses` flag for kube-proxy, or the equivalent `nodePortAddresses`
+field of the [kube-proxy configuration file](/docs/reference/config-api/kube-proxy-config.v1alpha1/).
+It accepts a comma-delimited list of IP blocks (e.g. `10.0.0.0/8`, `192.0.2.0/25`) or one
+of more of the following keywords:
+
+- `primary` - the node's primary IPv4 and/or IPv6 address, according to the Node object.
+  (This is the default value for `nftables` mode.)
+- `localhost` - the node's loopback addresses (`127.0.0.0/8`, `::1/128`).
+- `all` - all addresses. (This is the default value for `iptables` and `ipvs` mode.)
+
+For example, if you start kube-proxy with the flag `--nodeport-addresses=192.168.0.0/24`,
+then kube-proxy will try to find a local IP address on that subnet on each node, and serve
+NodePort Services only via that IP.
+
+#### `type: NodePort` Services via localhost {#localhost-nodeports}
+
+The mechanisms used by service proxies to implement NodePort Services do not always
+support providing NodePort Services on localhost. For kube-proxy:
+
+  - When using `iptables` mode, with a `--nodeport-addresses` value that includes
+    `127.0.0.1`, NodePort services will be available on `127.0.0.1`. However, this
+    requires enabling a kernel sysctl (`route_localnet`) that may have insecure side
+    effects in some clusters. IPTables localhost NodePorts can be disabled by passing
+    `--iptables-localhost-nodeports false` to kube-proxy, or by setting
+    `--nodeport-addresses` to a range that does not include `127.0.0.1`.
+
+  - When using `ipvs` mode, or `iptables` mode in a single-stack IPv6 clusters, NodePorts
+    Services are not available on localhost.
+
+{{< feature-state feature_gate_name="KubeProxyNFTablesLocalhostNodePorts" >}}
+
+  - When using `nftables` mode, NodePort Services will be available on localhost when the
+    `KubeProxyNFTablesLocalhostNodePorts` feature gate is enabled, and
+    `--nodeport-addresses` is set to a value that explicitly includes `localhost`.
+    (Setting it to just `all` will _not_ enable localhost NodePort Services.) This is
+    implemented by redirecting localhost NodePort connections through a userspace proxy,
+    so it is not as efficient as ordinary service proxying.
+
+Third-party network plugins that have their own service proxy implementations may or may
+not support localhost NodePorts; consult the documentation for those plugins.
 
 ### `type: LoadBalancer` {#loadbalancer}
 
@@ -683,14 +708,9 @@ The value of `spec.loadBalancerClass` must be a label-style identifier,
 with an optional prefix such as "`internal-vip`" or "`example.com/internal-vip`".
 Unprefixed names are reserved for end-users.
 
-#### Specifying IPMode of load balancer status {#load-balancer-ip-mode}
+#### Load balancer IP address mode {#load-balancer-ip-mode}
 
-{{< feature-state feature_gate_name="LoadBalancerIPMode" >}}
-
-As a Beta feature in Kubernetes 1.30,
-a [feature gate](/docs/reference/command-line-tools-reference/feature-gates/) 
-named `LoadBalancerIPMode` allows you to set the `.status.loadBalancer.ingress.ipMode` 
-for a Service with `type` set to `LoadBalancer`. 
+For a Service of `type: LoadBalancer`, a controller can set `.status.loadBalancer.ingress.ipMode`. 
 The `.status.loadBalancer.ingress.ipMode` specifies how the load-balancer IP behaves. 
 It may be specified only when the `.status.loadBalancer.ingress.ip` field is also specified.
 
@@ -736,7 +756,7 @@ metadata:
 metadata:
   name: my-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
 ```
 
 {{% /tab %}}
@@ -992,28 +1012,26 @@ to control how Kubernetes routes traffic to healthy (“ready”) backends.
 
 See [Traffic Policies](/docs/reference/networking/virtual-ips/#traffic-policies) for more details.
 
-### Traffic distribution
-
-{{< feature-state feature_gate_name="ServiceTrafficDistribution" >}}
+### Traffic distribution control {#traffic-distribution}
 
 The `.spec.trafficDistribution` field provides another way to influence traffic
 routing within a Kubernetes Service. While traffic policies focus on strict
 semantic guarantees, traffic distribution allows you to express _preferences_
 (such as routing to topologically closer endpoints). This can help optimize for
-performance, cost, or reliability. This optional field can be used if you have
-enabled the `ServiceTrafficDistribution` [feature
-gate](/docs/reference/command-line-tools-reference/feature-gates/) for your
-cluster and all of its nodes. In Kubernetes {{< skew currentVersion >}}, the
-following field value is supported: 
+performance, cost, or reliability. In Kubernetes {{< skew currentVersion >}}, the
+following values are supported:
 
-`PreferClose`
-: Indicates a preference for routing traffic to endpoints that are topologically
-  proximate to the client. The interpretation of "topologically proximate" may
-  vary across implementations and could encompass endpoints within the same
-  node, rack, zone, or even region. Setting this value gives implementations
-  permission to make different tradeoffs, e.g. optimizing for proximity rather
-  than equal distribution of load. Users should not set this value if such
-  tradeoffs are not acceptable.
+`PreferSameZone`
+: Indicates a preference for routing traffic to endpoints that are in the same
+  zone as the client.
+
+`PreferSameNode`
+: Indicates a preference for routing traffic to endpoints that are on the same
+  node as the client.
+
+`PreferClose` (deprecated)
+: This is an older alias for `PreferSameZone` that is less clear about
+  the semantics.
 
 If the field is not set, the implementation will apply its default routing strategy.
 
@@ -1029,6 +1047,12 @@ IP address. Read [session affinity](/docs/reference/networking/virtual-ips/#sess
 to learn more.
 
 ## External IPs
+
+{{< feature-state for_k8s_version="v1.36" state="deprecated" >}}
+
+All users should begin migrating away from `externalIPs`.
+Consider using an external load balancer controller or a Gateway API
+implementation instead.
 
 If there are external IPs that route to one or more cluster nodes, Kubernetes Services
 can be exposed on those `externalIPs`. When network traffic arrives into the cluster, with

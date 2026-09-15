@@ -32,25 +32,28 @@ A policy is generally made up of three resources:
 - The `ValidatingAdmissionPolicy` describes the abstract logic of a policy
   (think: "this policy makes sure a particular label is set to a particular value").
 
-- A `ValidatingAdmissionPolicyBinding` links the above resources together and provides scoping.
-  If you only want to require an `owner` label to be set for `Pods`, the binding is where you would
-  specify this restriction.
-
 - A parameter resource provides information to a ValidatingAdmissionPolicy to make it a concrete
   statement (think "the `owner` label must be set to something that ends in `.company.com`").
   A native type such as ConfigMap or a CRD defines the schema of a parameter resource.
   `ValidatingAdmissionPolicy` objects specify what Kind they are expecting for their parameter resource.
 
+- A `ValidatingAdmissionPolicyBinding` links the above resources together and provides scoping.
+  If you only want to require an `owner` label to be set for `Pods`, the binding is where you would
+  specify this restriction.
+
 At least a `ValidatingAdmissionPolicy` and a corresponding  `ValidatingAdmissionPolicyBinding`
 must be defined for a policy to have an effect.
 
+{{< note >}}
+Names ending in `.static.k8s.io` are reserved for
+[manifest-based admission control](/docs/reference/access-authn-authz/manifest-admission-control/)
+and cannot be used for API-based policies or bindings. This reservation is
+enforced when the `ManifestBasedAdmissionControlConfig`
+[feature gate](/docs/reference/command-line-tools-reference/feature-gates/#ManifestBasedAdmissionControlConfig) is enabled.
+{{< /note >}}
+
 If a `ValidatingAdmissionPolicy` does not need to be configured via parameters, simply leave
 `spec.paramKind` in  `ValidatingAdmissionPolicy` not specified.
-
-## {{% heading "prerequisites" %}}
-
-- Ensure the `ValidatingAdmissionPolicy` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/) is enabled.
-- Ensure that the `admissionregistration.k8s.io/v1beta1` API is enabled.
 
 ## Getting Started with Validating Admission Policy
 
@@ -186,7 +189,7 @@ not been bound, so for policies requiring a parameter resource, it can be useful
 ensure one has been bound. A parameter resource will not be bound and `params` will be null
 if `paramKind` of the policy, or `paramRef` of the binding are not specified.
 
-For the use cases require parameter configuration, we recommend to add a param check in
+For the use cases requiring parameter configuration, we recommend to add a param check in
 `spec.validations[0].expression`:
 
 ```
@@ -197,7 +200,8 @@ For the use cases require parameter configuration, we recommend to add a param c
 #### Optional parameters
 
 It can be convenient to be able to have optional parameters as part of a parameter resource, and
-only validate them if present. CEL provides `has()`, which checks if the key passed to it exists.
+only validate them if present. CEL provides the `has()` macro, which checks whether a field
+is present before a CEL expression accesses the field's value.
 CEL also implements Boolean short-circuiting. If the first half of a logical OR evaluates to true,
 it won’t evaluate the other half (since the result of the entire OR will be true regardless). 
 
@@ -205,7 +209,7 @@ Combining the two, we can provide a way to validate optional parameters:
 
 `!has(params.optionalNumber) || (params.optionalNumber >= 5 && params.optionalNumber <= 10)`
 
-Here, we first check that the optional parameter is present with `!has(params.optionalNumber)`. 
+Here, we first check whether the optional parameter is absent with `!has(params.optionalNumber)`.
 
 - If `optionalNumber` hasn’t been defined, then the expression short-circuits since
   `!has(params.optionalNumber)` will evaluate to true. 
@@ -213,6 +217,13 @@ Here, we first check that the optional parameter is present with `!has(params.op
   evaluated, and optionalNumber will be checked to ensure that it contains a value between 5 and
   10 inclusive.
 
+Use `has()` to check field presence. To check whether a map contains a key, use the `in`
+operator instead. For example,
+`has(object.metadata.labels) && 'example.com/environment' in object.metadata.labels` checks that
+the `metadata.labels` field is present and that the map contains the `example.com/environment` key.
+For multi-level optional field access, prefer CEL optional syntax (Kubernetes 1.29+):
+`object.?metadata.labels['example.com/block'].orValue('')` safely traverses absent intermediate
+fields and returns the given default value.
 
 #### Per-namespace Parameters
 
@@ -253,6 +264,52 @@ User is expected to have `read` access to the resources referenced by `paramKind
 Note that if a resource in `paramKind` fails resolving via the restmapper, `read` access to all
 resources of groups is required.
 
+#### `paramRef`
+
+The `paramRef` field specifies the parameter resource used by the policy. It has the following fields:
+
+- **name**: The name of the parameter resource.
+- **namespace**: The namespace of the parameter resource.
+- **selector**: A label selector to match multiple parameter resources.
+- **parameterNotFoundAction**: (Required) Controls the behavior when the specified parameters are not found.
+
+  - **Allowed Values**:
+    - **`Allow`**: The absence of matched parameters is treated as a successful validation by the binding.
+    - **`Deny`**: The absence of matched parameters is subject to the `failurePolicy` of the policy.
+
+One of `name` or `selector` must be set, but not both.
+
+{{< note >}}
+The `parameterNotFoundAction` field in `paramRef` is **required**. It specifies the action to take when no parameters are found matching the `paramRef`. If not specified, the policy binding may be considered invalid and will be ignored or could lead to unexpected behavior.
+
+- **`Allow`**: If set to `Allow`, and no parameters are found, the binding treats the absence of parameters as a successful validation, and the policy is considered to have passed.
+- **`Deny`**: If set to `Deny`, and no parameters are found, the binding enforces the `failurePolicy` of the policy. If the `failurePolicy` is `Fail`, the request is rejected.
+
+Make sure to set `parameterNotFoundAction` according to the desired behavior when parameters are missing.
+{{< /note >}}
+
+#### Handling Missing Parameters with `parameterNotFoundAction`
+
+When using `paramRef` with a selector, it's possible that no parameters match the selector. The `parameterNotFoundAction` field determines how the binding behaves in this scenario.
+
+**Example:**
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1alpha1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: example-binding
+spec:
+  policyName: example-policy
+  paramRef:
+    selector:
+      matchLabels:
+        environment: test
+    parameterNotFoundAction: Allow
+  validationActions:
+  - Deny
+```  
+
 ### Failure Policy
 
 `failurePolicy` defines how mis-configurations and CEL expressions evaluating to error from the
@@ -283,14 +340,18 @@ variables as well as some other useful variables:
   The value is null if the incoming object is cluster-scoped.
 - `authorizer` - A CEL Authorizer. May be used to perform authorization checks for the principal
   (authenticated user) of the request. See
+  [AuthzSelectors](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#AuthzSelectors) and
   [Authz](https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz) in the Kubernetes CEL library
   documentation for more details.
 - `authorizer.requestResource` - A shortcut for an authorization check configured with the request
   resource (group, resource, (subresource), namespace, name).
 	
-The `apiVersion`, `kind`, `metadata.name` and `metadata.generateName` are always accessible from
-the root of the object. No other metadata properties are accessible.
-	
+In CEL expressions, variables like `object` and `oldObject` are strongly-typed.
+You can access any field in the object's schema, such as `object.metadata.labels` and fields in `spec`.
+
+For any Kubernetes object, including schemaless Custom Resources, CEL guarantees access to a minimal set of properties:
+`apiVersion`, `kind`, `metadata.name`, and `metadata.generateName`.
+
 Equality on arrays with list type of 'set' or 'map' ignores element order, i.e. [1, 2] == [2, 1].
 Concatenation on arrays with x-kubernetes-list-type use the semantics of the list type:
 
@@ -307,7 +368,7 @@ Concatenation on arrays with x-kubernetes-list-type use the semantics of the lis
 | `object.minReplicas <= object.replicas && object.replicas <= object.maxReplicas`             | Validate that the three fields defining replicas are ordered appropriately        |
 | `'Available' in object.stateCounts`                                                          | Validate that an entry with the 'Available' key exists in a map                   |
 | `(size(object.list1) == 0) != (size(object.list2) == 0)`                                     | Validate that one of two lists is non-empty, but not both                         |
-| <code>!('MY_KEY' in object.map1) &#124;&#124; object['MY_KEY'].matches('^[a-zA-Z]*$')</code> | Validate the value of a map for a specific key, if it is in the map               |
+| <code>!('MY_KEY' in object.map1) &#124;&#124; object.map1['MY_KEY'].matches('^[a-zA-Z]*$')</code> | Validate the value of a map for a specific key, if it is in the map        |
 | `object.envars.filter(e, e.name == 'MY_ENV').all(e, e.value.matches('^[a-zA-Z]*$')`          | Validate the 'value' field of a listMap entry where key field 'name' is 'MY_ENV'  |
 | `has(object.expired) && object.created + object.ttl < object.expired`                        | Validate that 'expired' date is after a 'create' date plus a 'ttl' duration       |
 | `object.health.startsWith('ok')`                                                             | Validate a 'health' string field has the prefix 'ok'                              |
@@ -377,7 +438,7 @@ When an API request is validated with this admission policy, the resulting audit
 In this example the annotation will only be included if the `spec.replicas` of the Deployment is more than
 50, otherwise the CEL expression evaluates to null and the annotation will not be included.
 
-Note that audit annotation keys are prefixed by the name of the `ValidatingAdmissionWebhook` and a `/`. If
+Note that audit annotation keys are prefixed by the name of the `ValidatingAdmissionPolicy` and a `/`. If
 another admission controller, such as an admission webhook, uses the exact same audit annotation key, the 
 value of the first admission controller to include the audit annotation will be included in the audit
 event and all other values will be ignored.
@@ -504,3 +565,42 @@ The error message is similar to this.
 ```console
 error: failed to create deployment: deployments.apps "invalid" is forbidden: ValidatingAdmissionPolicy 'image-matches-namespace-environment.policy.example.com' with binding 'demo-binding-test.example.com' denied request: only prod images are allowed in namespace default
 ```
+
+## API kinds exempt from admission validation
+
+There are certain API kinds that are exempt from admission-time validation checks. For example, you can't create a ValidatingAdmissionPolicy that prevents changes to ValidatingAdmissionPolicyBindings.
+
+The following admission configuration kinds are exempt from policies created
+via the REST API, to prevent circular dependencies:
+
+* [ValidatingAdmissionPolicies]({{< relref "/docs/reference/kubernetes-api/admissionregistration/validating-admission-policy-v1/" >}})
+* [ValidatingAdmissionPolicyBindings]({{< relref "/docs/reference/kubernetes-api/admissionregistration/validating-admission-policy-binding-v1/" >}})
+* MutatingAdmissionPolicies
+* MutatingAdmissionPolicyBindings
+
+{{< note >}}
+When configured via
+[manifest-based admission control](/docs/reference/access-authn-authz/manifest-admission-control/),
+a ValidatingAdmissionPolicy can intercept the admission configuration kinds
+listed above. This bypasses the restrictions usually applied to policies
+created via the REST API, allowing you to validate even admission
+configuration and security-sensitive resources. Unlike the REST API, a bad
+manifest-based admission policy intercepting these resources would not be
+unrecoverable since it is defined on disk rather than through the API.
+{{< /note >}}
+
+Additionally, the following non-persisted (virtual) authentication and
+authorization API kinds are exempt from all admission policies, including
+manifest-based policies, because intercepting them could lock the cluster out
+of its own authentication and authorization path:
+
+* [TokenReviews]({{< relref "/docs/reference/kubernetes-api/definitions/token-review-v1-authentication/" >}})
+* [SelfSubjectReviews]({{< relref "/docs/reference/kubernetes-api/definitions/self-subject-review-v1-authentication/" >}})
+* [LocalSubjectAccessReviews]({{< relref "/docs/reference/kubernetes-api/definitions/local-subject-access-review-v1-authorization/" >}})
+* [SelfSubjectAccessReviews]({{< relref "/docs/reference/kubernetes-api/definitions/self-subject-access-review-v1-authorization/" >}})
+* [SelfSubjectRulesReviews]({{< relref "/docs/reference/kubernetes-api/definitions/self-subject-rules-review-v1-authorization/" >}})
+* [SubjectAccessReviews]({{< relref "/docs/reference/kubernetes-api/definitions/subject-access-review-v1-authorization/" >}})
+
+Starting with Kubernetes v1.37,
+[admission webhooks](/docs/reference/access-authn-authz/extensible-admission-controllers/#excluded-virtual-resources)
+also exclude these virtual resources by default.

@@ -213,10 +213,10 @@ spec:
         name: log-config
         items:
           - key: log_level
-            path: log_level
+            path: log_level.conf
 ```
 
-`log-config`ConfigMapはボリュームとしてマウントされ、その`log_level`エントリに格納されているすべてのコンテンツは、パス`/etc/config/log_level`のPodにマウントされます。
+`log-config`ConfigMapはボリュームとしてマウントされ、その`log_level`エントリに格納されているすべてのコンテンツは、パス`/etc/config/log_level.conf`のPodにマウントされます。
 このパスはボリュームの`mountPath`と`log_level`をキーとする`path`から派生することに注意してください。
 
 
@@ -293,8 +293,6 @@ spec:
 {{< note >}}
 Kubernetesホストがアクセスできるように、事前にこれらのLUN(ボリューム)をターゲットWWNに割り当ててマスクするようにFCSANゾーニングを構成する必要があります。
 {{< /note >}}
-
-詳細については[fibre channelの例](https://github.com/kubernetes/examples/tree/master/staging/volumes/fibre_channel)を参照してください。
 
 ### flocker (非推奨) {#flocker}
 
@@ -571,8 +569,6 @@ iSCSIの特徴として、複数のコンシューマーから同時に読み取
 残念ながら、iSCSIボリュームは1つのコンシューマによってのみ読み書きモードでマウントすることができます。
 同時に書き込みを行うことはできません。
 
-詳細については[iSCSIの例](https://github.com/kubernetes/examples/tree/master/volumes/iscsi)を参照してください。
-
 ### local
 
 `local`ボリュームは、ディスク、パーティション、ディレクトリなど、マウントされたローカルストレージデバイスを表します。
@@ -614,7 +610,7 @@ spec:
 ```
 
 ローカルボリュームを使用する場合は、PersistentVolume `nodeAffinity`を設定する必要があります。
-KubernetesのスケジューラはPersistentVolume `nodeAffinity`を使用して、これらのPodを正しいノードにスケジューリングします。
+KubernetesのスケジューラーはPersistentVolume `nodeAffinity`を使用して、これらのPodを正しいノードにスケジューリングします。
 
 PersistentVolume `volumeMode`を(デフォルト値の「Filesystem」ではなく)「Block」に設定して、ローカルボリュームをrawブロックデバイスとして公開できます。
 
@@ -640,12 +636,10 @@ NFSは複数のライターによって同時にマウントすることがで�
 使用する前に、共有をエクスポートしてNFSサーバーを実行する必要があります。
 {{< /note >}}
 
-詳細については[NFSの例](https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs)を参照してください。
-
 ### persistentVolumeClaim {#persistentvolumeclaim}
 
 `PersistentVolumeClaim`ボリュームは[PersistentVolume](/ja/docs/concepts/storage/persistent-volumes/)をPodにマウントするために使用されます。
-PersistentVolumeClaimは、ユーザが特定のクラウド環境の詳細を知らなくても、耐久性のあるストレージ(GCE永続ディスクやiSCSIボリュームなど)を「要求」するための方法です。
+PersistentVolumeClaimは、ユーザーが特定のクラウド環境の詳細を知らなくても、耐久性のあるストレージ(GCE永続ディスクやiSCSIボリュームなど)を「要求」するための方法です。
 
 詳細については[PersistentVolume](/ja/docs/concepts/storage/persistent-volumes/)を参照してください。
 
@@ -682,8 +676,6 @@ spec:
 {{< note >}}
 Podで使用する前に、`pxvol`という名前の既存のPortworxVolumeがあることを確認してください。
 {{< /note >}}
-
-詳細については[Portworxボリューム](https://github.com/kubernetes/examples/tree/master/staging/volumes/portworx/README.md)の例を参照してください。
 
 ### 投影
 
@@ -997,13 +989,13 @@ spec:
 
 CSIとFlexVolumeはどちらも、ボリュームプラグインをKubernetesコードベースとは独立して開発し、拡張機能としてKubernetesクラスターにデプロイ(インストール)することを可能にします。
 
-ツリー外のボリュームプラグインの作成を検討しているストレージベンダーについては、[ボリュームプラグインのFAQ](https://github.com/kubernetes/community/blob/master/sig-storage/volume-plugin-faq.md)を参照してください。
+ツリー外のボリュームプラグインの作成を検討しているストレージベンダーについては、[ボリュームプラグインのFAQ](https://github.com/kubernetes/community/blob/main/sig-storage/volume-plugin-faq.md)を参照してください。
 
 ### csi
 
 [Container Storage Interface](https://github.com/container-storage-interface/spec/blob/master/spec.md)(CSI)は、コンテナオーケストレーションシステム(Kubernetesなど)の標準インターフェースを定義して、任意のストレージシステムをコンテナワークロードに公開します。
 
-詳細については[CSI design proposal](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md)を参照してください。
+詳細については[CSI design proposal](https://github.com/kubernetes/community/blob/main/contributors/design-proposals/storage/container-storage-interface.md)を参照してください。
 
 {{< note >}}
 CSI仕様バージョン0.2および0.3のサポートは、Kubernetes v1.13で非推奨になり、将来のリリースで削除される予定です。
@@ -1069,7 +1061,7 @@ FlexVolumeは、ストレージドライバーとのインターフェースにe
 
 Podは`flexVolume`ツリー内ボリュームプラグインを通してFlexVolumeドライバーと対話します。
 
-詳細については[FlexVolumeのREADME](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-storage/flexvolume.md#readme)を参照してください。
+詳細については[FlexVolumeのREADME](https://github.com/kubernetes/community/blob/main/contributors/devel/sig-storage/flexvolume.md#readme)を参照してください。
 
 {{< note >}}
 FlexVolumeは非推奨です。ツリー外のCSIドライバーを使用することは、外部ストレージをKubernetesと統合するための推奨される方法です。

@@ -47,7 +47,7 @@ usage statistics, then the kubelet can look up those statistics directly
 (using code from [cAdvisor](https://github.com/google/cadvisor)).
 No matter how those statistics arrive, the kubelet then exposes the aggregated pod
 resource usage statistics through the metrics-server Resource Metrics API.
-This API is served at `/metrics/resource/v1beta1` on the kubelet's authenticated and 
+This API is served at `/metrics/resource` on the kubelet's authenticated and 
 read-only ports. 
 
 ## Full metrics pipeline
@@ -94,7 +94,6 @@ your infrastructure platform.
 Learn about additional debugging tools, including:
 
 * [Logging](/docs/concepts/cluster-administration/logging/)
-* [Monitoring](/docs/tasks/debug/debug-cluster/resource-usage-monitoring/)
 * [Getting into containers via `exec`](/docs/tasks/debug/debug-application/get-shell-running-container/)
 * [Connecting to containers via proxies](/docs/tasks/extend-kubernetes/http-proxy-access-api/)
 * [Connecting to containers via port forwarding](/docs/tasks/access-application-cluster/port-forward-access-application-cluster/)

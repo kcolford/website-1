@@ -141,7 +141,7 @@ Pod。实现 PreEnqueue、PreFilter、Filter、Reserve 或 Permit 的插件应�
 
 ### QueueingHint
 
-{{< feature-state for_k8s_version="v1.28" state="beta" >}}
+{{< feature-state feature_gate_name="SchedulerQueueingHints" >}}
 
 <!--
 QueueingHint is a callback function for deciding whether a Pod can be requeued to the active queue or backoff queue.
@@ -154,25 +154,6 @@ QueueingHint 作为一个回调函数，用于决定是否将 Pod 重新排队�
 每当集群中发生某种事件或变化时，此函数就会被执行。
 当 QueueingHint 发现事件可能使 Pod 可调度时，Pod 将被放入活跃队列或回退队列，
 以便调度器可以重新尝试调度 Pod。
-
-{{< note >}}
-<!--
-QueueingHint evaluation during scheduling is a beta-level feature.
-The v1.28 release series initially enabled the associated feature gate; however, after the
-discovery of an excessive memory footprint, the Kubernetes project set that feature gate
-to be disabled by default. In Kubernetes {{< skew currentVersion >}}, this feature gate is
-disabled and you need to enable it manually.
-You can enable it via the
-`SchedulerQueueingHints` [feature gate](/docs/reference/command-line-tools-reference/feature-gates/).
--->
-在调度过程中对 QueueingHint 求值是一个 Beta 级别的特性。
-v1.28 的系列小版本最初都开启了这个特性的门控；但是发现了内存占用过多的问题，
-于是 Kubernetes 项目将该特性门控设置为默认禁用。
-在 Kubernetes 的 {{< skew currentVersion >}} 版本中，这个特性门控被禁用，你需要手动开启它。
-你可以通过 `SchedulerQueueingHints`
-[特性门控](/zh-cn/docs/reference/command-line-tools-reference/feature-gates/)来启用它。
-{{< /note >}}
-
 
 <!--
 ### QueueSort {#queue-sort}
@@ -262,6 +243,31 @@ scores from all plugins according to the configured plugin weights.
 将有一个定义明确的整数范围，代表最小和最大分数。
 在[标准化评分](#normalize-scoring)阶段之后，
 调度器将根据配置的插件权重合并所有插件的节点分数。
+
+<!--
+#### Capacity scoring {#scoring-capacity}
+
+{{< feature-state feature_gate_name="StorageCapacityScoring" >}}
+
+The feature gate `VolumeCapacityPriority` was used in v1.32 to support storage that are
+statically provisioned. Starting from v1.33, the new feature gate `StorageCapacityScoring`
+replaces the old `VolumeCapacityPriority` gate with added support to dynamically provisioned storage.
+When `StorageCapacityScoring` is enabled, the VolumeBinding plugin in the kube-scheduler is extended
+to score Nodes based on the storage capacity on each of them.
+This feature is applicable to CSI volumes that supported [Storage Capacity](/docs/concepts/storage/storage-capacity/),
+including local storage backed by a CSI driver.
+-->
+#### 容量打分 {#scoring-capacity}
+
+{{< feature-state feature_gate_name="StorageCapacityScoring" >}}
+
+在 v1.32 中，特性门控 `VolumeCapacityPriority` 被用于支持静态制备的存储。
+从 v1.33 开始，新的特性门控 `StorageCapacityScoring` 取代了旧的 `VolumeCapacityPriority`，
+并新增了对动态制备存储的支持。
+启用 `StorageCapacityScoring` 后，kube-scheduler 中的 VolumeBinding 插件功能将进行扩展，
+根据每个节点上的存储容量对节点进行打分。
+该特性适用于支持[存储容量](/zh-cn/docs/concepts/storage/storage-capacity/)的 CSI 卷，
+包括由 CSI 驱动程序支持的本地存储。
 
 <!--
 ### NormalizeScore {#normalize-scoring}

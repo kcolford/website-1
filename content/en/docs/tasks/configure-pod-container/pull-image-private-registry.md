@@ -227,8 +227,6 @@ kubectl describe pod private-reg
 
 If you then see an event with the reason set to `FailedToRetrieveImagePullSecret`,
 Kubernetes can't find a Secret with name (`regcred`, in this example).
-If you specify that a Pod needs image pull credentials, the kubelet checks that it can
-access that Secret before attempting to pull the image.
 
 Make sure that the Secret you have specified exists, and that its name is spelled properly.
 ```shell
@@ -238,10 +236,18 @@ Events:
   ...  FailedToRetrieveImagePullSecret  ...  Unable to retrieve some image pull secrets (<regcred>); attempting to pull the image may not succeed.
 ```
 
+## Using images from multiple registries
+
+A pod can have multiple containers, each container image can be from a different registry.
+You can use multiple `imagePullSecrets` with one pod, and each can contain multiple credentials.
+
+The image pull will be attempted using each credential that matches the registry.
+If no credentials match the registry, the image pull will be attempted without authorization or using custom runtime specific configuration.
+
 ## {{% heading "whatsnext" %}}
 
 * Learn more about [Secrets](/docs/concepts/configuration/secret/)
-  * or read the API reference for {{< api-reference page="config-and-storage-resources/secret-v1" >}}
+  * or read the API reference for {{< api-reference page="core/secret-v1" >}}
 * Learn more about [using a private registry](/docs/concepts/containers/images/#using-a-private-registry).
 * Learn more about [adding image pull secrets to a service account](/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
 * See [kubectl create secret docker-registry](/docs/reference/generated/kubectl/kubectl-commands/#-em-secret-docker-registry-em-).

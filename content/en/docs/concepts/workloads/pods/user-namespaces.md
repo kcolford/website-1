@@ -7,7 +7,7 @@ min-kubernetes-server-version: v1.25
 ---
 
 <!-- overview -->
-{{< feature-state for_k8s_version="v1.30" state="beta" >}}
+{{< feature-state feature_gate_name="UserNamespacesSupport" >}}
 
 This page explains how user namespaces are used in Kubernetes pods. A user
 namespace isolates the user running inside the container from the one
@@ -50,34 +50,14 @@ In addition, the container runtime and its underlying OCI runtime must support
 user namespaces. The following OCI runtimes offer support:
 
 * [crun](https://github.com/containers/crun) version 1.9 or greater (it's recommend version 1.13+).
-
-<!-- ideally, update this if a newer minor release of runc comes out, whether or not it includes the idmap support -->
-{{< note >}}
-Many OCI runtimes do not include the support needed for using user namespaces in
-Linux pods. If you use a managed Kubernetes, or have downloaded it from packages
-and set it up, it's likely that nodes in your cluster use a runtime that doesn't
-include this support. For example, the most widely used OCI runtime is `runc`,
-and version `1.1.z` of runc doesn't support all the features needed by the
-Kubernetes implementation of user namespaces.
-
-If there is a newer release of runc than 1.1 available for use, check its
-documentation and release notes for compatibility (look for idmap mounts support
-in particular, because that is the missing feature).
-{{< /note >}}
+* [runc](https://github.com/opencontainers/runc) version 1.2 or greater
 
 To use user namespaces with Kubernetes, you also need to use a CRI
 {{< glossary_tooltip text="container runtime" term_id="container-runtime" >}}
 to use this feature with Kubernetes pods:
 
+* containerd: version 2.0 (and later) supports user namespaces for containers.
 * CRI-O: version 1.25 (and later) supports user namespaces for containers.
-
-containerd v1.7 is not compatible with the userns support in Kubernetes v1.27 to v{{< skew latestVersion >}}.
-Kubernetes v1.25 and v1.26 used an earlier implementation that **is** compatible with containerd v1.7,
-in terms of userns support.
-If you are using a version of Kubernetes other than {{< skew currentVersion >}},
-check the documentation for that version of Kubernetes for the most relevant information.
-If there is a newer release of containerd than v1.7 available for use, also check the containerd
-documentation for compatibility information.
 
 You can see the status of user namespaces support in cri-dockerd tracked in an [issue][CRI-dockerd-issue]
 on GitHub.
@@ -86,7 +66,7 @@ on GitHub.
 
 ## Introduction
 
-User namespaces is a Linux feature that allows to map users in the container to
+User namespaces is a Linux feature that allows you to map users in the container to
 different users in the host. Furthermore, the capabilities granted to a pod in
 a user namespace are valid only in the namespace and void outside of it.
 
@@ -97,15 +77,29 @@ The kubelet will pick host UIDs/GIDs a pod is mapped to, and will do so in a way
 to guarantee that no two pods on the same node use the same mapping.
 
 The `runAsUser`, `runAsGroup`, `fsGroup`, etc. fields in the `pod.spec` always
-refer to the user inside the container.
+refer to the user inside the container. These users will be used for volume
+mounts (specified in `pod.spec.volumes`) and therefore the host UID/GID will not
+have any effect on writes/reads from volumes the pod can mount. In other words,
+the inodes created/read in volumes mounted by the pod will be the same as if the
+pod wasn't using user namespaces.
 
-The valid UIDs/GIDs when this feature is enabled is the range 0-65535. This
-applies to files and processes (`runAsUser`, `runAsGroup`, etc.).
+This way, a pod can easily enable and disable user namespaces (without affecting
+its volume's file ownerships) and can also share volumes with pods without user
+namespaces by just setting the appropriate users inside the container
+(`RunAsUser`, `RunAsGroup`, `fsGroup`, etc.). This applies to any volume the pod
+can mount, including `hostPath` (if the pod is allowed to mount `hostPath`
+volumes).
+
+By default, the valid UIDs/GIDs when this feature is enabled is the range 0-65535.
+This applies to files and processes (`runAsUser`, `runAsGroup`, etc.).
 
 Files using a UID/GID outside this range will be seen as belonging to the
 overflow ID, usually 65534 (configured in `/proc/sys/kernel/overflowuid` and
 `/proc/sys/kernel/overflowgid`). However, it is not possible to modify those
 files, even by running as the 65534 user/group.
+
+If the range 0-65535 is extended with a configuration knob, the aforementioned
+restrictions apply to the extended range.
 
 Most applications that need to run as root but don't access other host
 namespaces or resources, should continue to run fine without any changes needed
@@ -126,7 +120,7 @@ isolate the users in the container from the users in the node.
 
 This means containers can run as root and be mapped to a non-root user on the
 host. Inside the container the process will think it is running as root (and
-therefore tools like `apt`, `yum`, etc. work fine), while in reality the process
+therefore tools like `apt`, `dnf`, etc. work fine), while in reality the process
 doesn't have privileges on the host. You can verify this, for example, if you
 check which user the container process is running by executing `ps aux` from
 the host. The user `ps` shows is not the same as the user you see if you
@@ -211,31 +205,62 @@ these entries for the `kubelet` user:
 #   name:firstID:count of IDs
 # where
 # - firstID is 65536 (the minimum value possible)
-# - count of IDs is 110 (default limit for number of) * 65536
+# - count of IDs is 110 * 65536
+#   (110 is the default limit for number of pods on the node)
+
 kubelet:65536:7208960
 ```
+
+### Note if you reconfigure a node
+
+If you have an existing node that is running pods with user-namespaces and want to make the
+aforementioned configurations, here are some important notes.
+
+The configuration should be changed when no pods using user-namespaces are running on the node.
+When changing this in a node that is running any Pods with user namespaces,
+you need to first {{< glossary_tooltip text="drain" term_id="drain" >}} the
+node before applying the configuration and restarting the kubelet. 
+When you drain the node, bear in mind that DaemonSet Pods, or other Pods
+that tolerate the unschedulable taint will **not** be evicted.
+
+The reason why no pods using user-namespaces can be running is that they can be using any range,
+potentially outside the new configured range. The kubelet will fail to start if it can't honor the
+new configuration for existing pods on the node.
 
 [CVE-2021-25741]: https://github.com/kubernetes/kubernetes/issues/104980
 [shadow-utils]: https://github.com/shadow-maint/shadow
 
-## Integration with Pod security admission checks
+## ID count for each of Pods
+Starting with Kubernetes v1.33, the ID count for each of Pods can be set in
+[`KubeletConfiguration`](/docs/reference/config-api/kubelet-config.v1beta1/).
 
-{{< feature-state state="alpha" for_k8s_version="v1.29" >}}
+```yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+userNamespaces:
+  idsPerPod: 1048576
+```
+
+The value of `idsPerPod` (uint32) must be a multiple of 65536.
+The default value is 65536.
+This value only applies to containers created after the kubelet was started with
+this `KubeletConfiguration`.
+Running containers are not affected by this config.
+
+In Kubernetes prior to v1.33, the ID count for each of Pods was hard-coded to
+65536.
+
+## Integration with Pod security admission checks
 
 For Linux Pods that enable user namespaces, Kubernetes relaxes the application of
 [Pod Security Standards](/docs/concepts/security/pod-security-standards) in a controlled way.
-This behavior can be controlled by the [feature
-gate](/docs/reference/command-line-tools-reference/feature-gates/)
-`UserNamespacesPodSecurityStandards`, which allows an early opt-in for end
-users. Admins have to ensure that user namespaces are enabled by all nodes
-within the cluster if using the feature gate.
 
-If you enable the associated feature gate and create a Pod that uses user
+If you create a Pod that uses user
 namespaces, the following fields won't be constrained even in contexts that enforce the
 _Baseline_ or _Restricted_ pod security standard. This behavior does not
 present a security concern because `root` inside a Pod with user namespaces
 actually refers to the user inside the container, that is never mapped to a
-privileged user on the host. Here's the list of fields that are **not** checks for Pods in those
+privileged user on the host. Here's the list of fields that are **not** checked for Pods in those
 circumstances:
 
 - `spec.securityContext.runAsNonRoot`
@@ -247,6 +272,17 @@ circumstances:
 - `spec.initContainers[*].securityContext.runAsUser`
 - `spec.ephemeralContainers[*].securityContext.runAsUser`
 
+Further, if the pod is in a context with the _Baseline_ pod security standard,
+validation for the following fields will similarly be relaxed:
+
+- `spec.containers[*].securityContext.procMount`
+- `spec.initContainers[*].securityContext.procMount`
+- `spec.ephemeralContainers[*].securityContext.procMount`
+
+with the _Restricted_ pod security standard, a pod still must only use the
+default or empty ProcMount.
+
+
 ## Limitations
 
 When using a user namespace for the pod, it is disallowed to use other host
@@ -256,6 +292,31 @@ allowed to set any of:
  * `hostNetwork: true`
  * `hostIPC: true`
  * `hostPID: true`
+
+No container can use `volumeDevices` (raw block volumes, like /dev/sda) either.
+This includes all the container arrays in the pod spec:
+ * `containers`
+ * `initContainers`
+ * `ephemeralContainers`
+ 
+### Filesystem support
+
+Pods that use a user namespace require the filesystem to support idmap mounts.
+Some filesystems don't support idmap mounts, and therefore cannot be used with user namespaces.
+In such cases, the following events will be generated. Please note that the warning details depend on the container runtime you are using.
+
+```
+Warning  Failed 1s kubelet Error: failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: failed to fulfil mount request: failed to set MOUNT_ATTR_IDMAP on ${your mount path} invalid argument (maybe the filesystem used doesn't support idmap mounts on this kernel?): unknown
+```
+
+NFS volumes cannot be mounted in a user-namespace pod because the Linux NFS client doesn't yet support idmap mounts.
+For the current list of supported filesystems, see the Linux kernel’s [`mount_setattr(2)` man page](https://man7.org/linux/man-pages/man2/mount_setattr.2.html).
+
+## Metrics and observability
+
+The kubelet exports two prometheus metrics specific to user-namespaces:
+ * `started_user_namespaced_pods_total`: a counter that tracks the number of user namespaced pods that are attempted to be created.
+ * `started_user_namespaced_pods_errors_total`: a counter that tracks the number of errors creating user namespaced pods.
 
 ## {{% heading "whatsnext" %}}
 

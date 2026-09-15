@@ -24,7 +24,7 @@ Kubernetesは各Podにそれぞれ固有のクラスタープライベートなI
 これは前出の例でも行いましたが、もう一度やってみて、ネットワークからの観点に着目してみましょう。
 nginx Podを作成し、コンテナのポート指定も記載します:
 
-{{% codenew file="service/networking/run-my-nginx.yaml" %}}
+{{% code_sample file="service/networking/run-my-nginx.yaml" %}}
 
 この設定で、あなたのクラスターにはどのノードからもアクセス可能になります。Podを実行中のノードを確認してみましょう:
 
@@ -79,7 +79,7 @@ service/my-nginx exposed
 
 これは`kubectl apply -f`を以下のyamlに対して実行するのと同じです:
 
-{{% codenew file="service/networking/nginx-svc.yaml" %}}
+{{% code_sample file="service/networking/nginx-svc.yaml" %}}
 
 この指定は、`run: my-nginx`ラベルの付いた任意のPod上のTCPポート80を宛先とし、それを抽象化されたServiceポート(`targetPort`はコンテナがトラフィックを許可するポート、`port`は抽象化されたServiceポートで、ほかのPodがServiceにアクセスするのに使う任意のポートです)で公開するServiceを作成します。
 Service定義内でサポートされているフィールドのリストを見るには、[Service](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#service-v1-core) APIオブジェクトを参照してください。
@@ -234,7 +234,7 @@ Serviceをインターネットに公開する前に、通信経路がセキュ�
 * 証明書を使うよう設定されたnginxサーバー
 * 証明書をPodからアクセスできるようにする[Secret](/ja/docs/concepts/configuration/secret/)
 
-これら全ては[nginx https example](https://github.com/kubernetes/examples/tree/master/staging/https-nginx/)から取得できます。
+これら全ては[nginx https example](https://github.com/kubernetes/examples/tree/master/_archived/https-nginx/)から取得できます。
 go環境とmakeツールのインストールが必要です
 (もしこれらをインストールしたくないときには、後述の手動手順に従ってください)。簡潔には:
 
@@ -272,8 +272,8 @@ nginxconfigmap   1      114s
 # 公開鍵と秘密鍵のペアを作成する
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /d/tmp/nginx.key -out /d/tmp/nginx.crt -subj "/CN=my-nginx/O=my-nginx"
 # 鍵をbase64エンコーディングに変換する
-cat /d/tmp/nginx.crt | base64
-cat /d/tmp/nginx.key | base64
+cat /d/tmp/nginx.crt | base64 | tr -d '\n'
+cat /d/tmp/nginx.key | base64 | tr -d '\n'
 ```
 
 以下のようなyamlファイルを作成するために、前のコマンドからの出力を使います。
@@ -287,8 +287,9 @@ metadata:
   namespace: "default"
 type: kubernetes.io/tls
 data:
-  tls.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURIekNDQWdlZ0F3SUJBZ0lKQUp5M3lQK0pzMlpJTUEwR0NTcUdTSWIzRFFFQkJRVUFNQ1l4RVRBUEJnTlYKQkFNVENHNW5hVzU0YzNaak1SRXdEd1lEVlFRS0V3aHVaMmx1ZUhOMll6QWVGdzB4TnpFd01qWXdOekEzTVRKYQpGdzB4T0RFd01qWXdOekEzTVRKYU1DWXhFVEFQQmdOVkJBTVRDRzVuYVc1NGMzWmpNUkV3RHdZRFZRUUtFd2h1CloybHVlSE4yWXpDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBSjFxSU1SOVdWM0IKMlZIQlRMRmtobDRONXljMEJxYUhIQktMSnJMcy8vdzZhU3hRS29GbHlJSU94NGUrMlN5ajBFcndCLzlYTnBwbQppeW1CL3JkRldkOXg5UWhBQUxCZkVaTmNiV3NsTVFVcnhBZW50VWt1dk1vLzgvMHRpbGhjc3paenJEYVJ4NEo5Ci82UVRtVVI3a0ZTWUpOWTVQZkR3cGc3dlVvaDZmZ1Voam92VG42eHNVR0M2QURVODBpNXFlZWhNeVI1N2lmU2YKNHZpaXdIY3hnL3lZR1JBRS9mRTRqakxCdmdONjc2SU90S01rZXV3R0ljNDFhd05tNnNTSzRqYUNGeGpYSnZaZQp2by9kTlEybHhHWCtKT2l3SEhXbXNhdGp4WTRaNVk3R1ZoK0QrWnYvcW1mMFgvbVY0Rmo1NzV3ajFMWVBocWtsCmdhSXZYRyt4U1FVQ0F3RUFBYU5RTUU0d0hRWURWUjBPQkJZRUZPNG9OWkI3YXc1OUlsYkROMzhIYkduYnhFVjcKTUI4R0ExVWRJd1FZTUJhQUZPNG9OWkI3YXc1OUlsYkROMzhIYkduYnhFVjdNQXdHQTFVZEV3UUZNQU1CQWY4dwpEUVlKS29aSWh2Y05BUUVGQlFBRGdnRUJBRVhTMW9FU0lFaXdyMDhWcVA0K2NwTHI3TW5FMTducDBvMm14alFvCjRGb0RvRjdRZnZqeE04Tzd2TjB0clcxb2pGSW0vWDE4ZnZaL3k4ZzVaWG40Vm8zc3hKVmRBcStNZC9jTStzUGEKNmJjTkNUekZqeFpUV0UrKzE5NS9zb2dmOUZ3VDVDK3U2Q3B5N0M3MTZvUXRUakViV05VdEt4cXI0Nk1OZWNCMApwRFhWZmdWQTRadkR4NFo3S2RiZDY5eXM3OVFHYmg5ZW1PZ05NZFlsSUswSGt0ejF5WU4vbVpmK3FqTkJqbWZjCkNnMnlwbGQ0Wi8rUUNQZjl3SkoybFIrY2FnT0R4elBWcGxNSEcybzgvTHFDdnh6elZPUDUxeXdLZEtxaUMwSVEKQ0I5T2wwWW5scE9UNEh1b2hSUzBPOStlMm9KdFZsNUIyczRpbDlhZ3RTVXFxUlU9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
-  tls.key: "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRQ2RhaURFZlZsZHdkbFIKd1V5eFpJWmVEZWNuTkFhbWh4d1NpeWF5N1AvOE9ta3NVQ3FCWmNpQ0RzZUh2dGtzbzlCSzhBZi9WemFhWm9zcApnZjYzUlZuZmNmVUlRQUN3WHhHVFhHMXJKVEVGSzhRSHA3VkpMcnpLUC9QOUxZcFlYTE0yYzZ3MmtjZUNmZitrCkU1bEVlNUJVbUNUV09UM3c4S1lPNzFLSWVuNEZJWTZMMDUrc2JGQmd1Z0ExUE5JdWFubm9UTWtlZTRuMG4rTDQKb3NCM01ZUDhtQmtRQlAzeE9JNHl3YjREZXUraURyU2pKSHJzQmlIT05Xc0RadXJFaXVJMmdoY1kxeWIyWHI2UAozVFVOcGNSbC9pVG9zQngxcHJHclk4V09HZVdPeGxZZmcvbWIvNnBuOUYvNWxlQlkrZStjSTlTMkQ0YXBKWUdpCkwxeHZzVWtGQWdNQkFBRUNnZ0VBZFhCK0xkbk8ySElOTGo5bWRsb25IUGlHWWVzZ294RGQwci9hQ1Zkank4dlEKTjIwL3FQWkUxek1yall6Ry9kVGhTMmMwc0QxaTBXSjdwR1lGb0xtdXlWTjltY0FXUTM5SjM0VHZaU2FFSWZWNgo5TE1jUHhNTmFsNjRLMFRVbUFQZytGam9QSFlhUUxLOERLOUtnNXNrSE5pOWNzMlY5ckd6VWlVZWtBL0RBUlBTClI3L2ZjUFBacDRuRWVBZmI3WTk1R1llb1p5V21SU3VKdlNyblBESGtUdW1vVlVWdkxMRHRzaG9reUxiTWVtN3oKMmJzVmpwSW1GTHJqbGtmQXlpNHg0WjJrV3YyMFRrdWtsZU1jaVlMbjk4QWxiRi9DSmRLM3QraTRoMTVlR2ZQegpoTnh3bk9QdlVTaDR2Q0o3c2Q5TmtEUGJvS2JneVVHOXBYamZhRGR2UVFLQmdRRFFLM01nUkhkQ1pKNVFqZWFKClFGdXF4cHdnNzhZTjQyL1NwenlUYmtGcVFoQWtyczJxWGx1MDZBRzhrZzIzQkswaHkzaE9zSGgxcXRVK3NHZVAKOWRERHBsUWV0ODZsY2FlR3hoc0V0L1R6cEdtNGFKSm5oNzVVaTVGZk9QTDhPTm1FZ3MxMVRhUldhNzZxelRyMgphRlpjQ2pWV1g0YnRSTHVwSkgrMjZnY0FhUUtCZ1FEQmxVSUUzTnNVOFBBZEYvL25sQVB5VWs1T3lDdWc3dmVyClUycXlrdXFzYnBkSi9hODViT1JhM05IVmpVM25uRGpHVHBWaE9JeXg5TEFrc2RwZEFjVmxvcG9HODhXYk9lMTAKMUdqbnkySmdDK3JVWUZiRGtpUGx1K09IYnRnOXFYcGJMSHBzUVpsMGhucDBYSFNYVm9CMUliQndnMGEyOFVadApCbFBtWmc2d1BRS0JnRHVIUVV2SDZHYTNDVUsxNFdmOFhIcFFnMU16M2VvWTBPQm5iSDRvZUZKZmcraEppSXlnCm9RN3hqWldVR3BIc3AyblRtcHErQWlSNzdyRVhsdlhtOElVU2FsbkNiRGlKY01Pc29RdFBZNS9NczJMRm5LQTQKaENmL0pWb2FtZm1nZEN0ZGtFMXNINE9MR2lJVHdEbTRpb0dWZGIwMllnbzFyb2htNUpLMUI3MkpBb0dBUW01UQpHNDhXOTVhL0w1eSt5dCsyZ3YvUHM2VnBvMjZlTzRNQ3lJazJVem9ZWE9IYnNkODJkaC8xT2sybGdHZlI2K3VuCnc1YytZUXRSTHlhQmd3MUtpbGhFZDBKTWU3cGpUSVpnQWJ0LzVPbnlDak9OVXN2aDJjS2lrQ1Z2dTZsZlBjNkQKckliT2ZIaHhxV0RZK2Q1TGN1YSt2NzJ0RkxhenJsSlBsRzlOZHhrQ2dZRUF5elIzT3UyMDNRVVV6bUlCRkwzZAp4Wm5XZ0JLSEo3TnNxcGFWb2RjL0d5aGVycjFDZzE2MmJaSjJDV2RsZkI0VEdtUjZZdmxTZEFOOFRwUWhFbUtKCnFBLzVzdHdxNWd0WGVLOVJmMWxXK29xNThRNTBxMmk1NVdUTThoSDZhTjlaMTltZ0FGdE5VdGNqQUx2dFYxdEYKWSs4WFJkSHJaRnBIWll2NWkwVW1VbGc9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
+  # 注意: 以下の値はご自身で base64 エンコードした証明書と鍵に置き換えてください。
+  tls.crt: "REPLACE_WITH_BASE64_CERT" 
+  tls.key: "REPLACE_WITH_BASE64_KEY"
 ```
 では、このファイルを使ってSecretを作成します:
 
@@ -303,12 +304,12 @@ nginxsecret           kubernetes.io/tls                     2         1m
 
 Secretにある証明書を使ってhttpsサーバーを開始するために、nginxレプリカを変更します。また、Serviceは(80および443の)両方のポートを公開するようにします:
 
-{{% codenew file="service/networking/nginx-secure-app.yaml" %}}
+{{% code_sample file="service/networking/nginx-secure-app.yaml" %}}
 
 nginx-secure-appマニフェストの注目すべきポイント:
 
 - DeploymentとServiceの指定の両方が同じファイルに含まれています。
-- [nginxサーバー](https://github.com/kubernetes/examples/tree/master/staging/https-nginx/default.conf)は、ポート80でHTTPトラフィック、ポート443でHTTPSトラフィックをサービスし、nginx Serviceは両方のポートを公開します。
+- [nginxサーバー](https://github.com/kubernetes/examples/blob/master/_archived/https-nginx/default.conf)は、ポート80でHTTPトラフィック、ポート443でHTTPSトラフィックをサービスし、nginx Serviceは両方のポートを公開します。
 - 各コンテナは、`/etc/nginx/ssl`にマウントされたボリューム経由で鍵にアクセスできます。
   これはnginxサーバーが開始する*前*にセットアップされます。
 
@@ -335,7 +336,7 @@ node $ curl -k https://10.244.3.5
 Serviceを作成することで、証明書で使われているCNameと、PodがServiceルックアップ時に使う実際のDNS名とがリンクされます。
 Podからこれをテストしてみましょう(単純化のため同じSecretが再利用されるので、ServiceにアクセスするのにPodが必要なのはnginx.crtだけです):
 
-{{% codenew file="service/networking/curlpod.yaml" %}}
+{{% code_sample file="service/networking/curlpod.yaml" %}}
 
 ```shell
 kubectl apply -f ./curlpod.yaml

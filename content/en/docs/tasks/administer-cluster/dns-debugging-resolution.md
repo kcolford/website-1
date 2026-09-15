@@ -15,8 +15,7 @@ This page provides hints on diagnosing DNS problems.
 
 {{< include "task-tutorial-prereqs.md" >}}  
 Your cluster must be configured to use the CoreDNS
-{{< glossary_tooltip text="addon" term_id="addons" >}} or its precursor,
-kube-dns.  
+{{< glossary_tooltip text="addon" term_id="addons" >}}.
 
 {{% version-check %}}
 
@@ -84,7 +83,7 @@ nameserver 10.0.0.10
 options ndots:5
 ```
 
-Errors such as the following indicate a problem with the CoreDNS (or kube-dns)
+Errors such as the following indicate a problem with the CoreDNS
 add-on or with associated Services:
 
 ```shell
@@ -125,7 +124,8 @@ coredns-7b96bf9f76-mvmmt   1/1       Running   0           1h
 ```
 
 {{< note >}}
-The value for label `k8s-app` is `kube-dns` for both CoreDNS and kube-dns deployments.
+The value for label `k8s-app` for CoreDNS is `kube-dns`, for backward
+compatibility with the original kube-dns.
 {{< /note >}}
 
 
@@ -170,7 +170,8 @@ kube-dns     ClusterIP   10.0.0.10      <none>        53/UDP,53/TCP        1h
 ```
 
 {{< note >}}
-The service name is `kube-dns` for both CoreDNS and kube-dns deployments.
+The Service for CoreDNS is named `kube-dns`, for backward compatibility with the
+original kube-dns.
 {{< /note >}}
 
 
@@ -182,23 +183,19 @@ more information.
 
 ### Are DNS endpoints exposed?
 
-You can verify that DNS endpoints are exposed by using the `kubectl get endpoints`
+You can verify that DNS endpoints are exposed by using the `kubectl get endpointslice`
 command.
 
 ```shell
-kubectl get endpoints kube-dns --namespace=kube-system
+kubectl get endpointslice -l kubernetes.io/service-name=kube-dns --namespace=kube-system
 ```
 ```
-NAME       ENDPOINTS                       AGE
-kube-dns   10.180.3.17:53,10.180.3.17:53    1h
+NAME             ADDRESSTYPE   PORTS   ENDPOINTS                  AGE
+coredns-zxoja    IPv4          53      10.180.3.17,10.180.3.17    1h
 ```
 
 If you do not see the endpoints, see the endpoints section in the
 [debugging Services](/docs/tasks/debug/debug-application/debug-service/) documentation.
-
-For additional Kubernetes DNS examples, see the
-[cluster-dns examples](https://github.com/kubernetes/examples/tree/master/staging/cluster-dns)
-in the Kubernetes GitHub repository.
 
 ### Are DNS queries being received/processed?
 
@@ -256,8 +253,8 @@ linux/amd64, go1.10.3, 2e322f6
 ### Does CoreDNS have sufficient permissions?
 
 CoreDNS must be able to list {{< glossary_tooltip text="service"
-term_id="service" >}} and {{< glossary_tooltip text="endpoint"
-term_id="endpoint" >}} related resources to properly resolve service names.
+term_id="service" >}} and {{< glossary_tooltip text="endpointslice"
+term_id="endpoint-slice" >}} related resources to properly resolve service names.
 
 Sample error message:
 ```
